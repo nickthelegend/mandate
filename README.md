@@ -51,10 +51,9 @@ in the money path.
 
 | What was proven | Transaction |
 |---|---|
-| Deploy | [`0x50bc19ac`](https://sepolia.etherscan.io/tx/0x50bc19ac49fea1ac0f669fc2b305e845c81530d362d32aa6f63f4eb5063e50c9) |
-| Claim — money into escrow, payee unpaid | [`0xfa011b92`](https://sepolia.etherscan.io/tx/0xfa011b922cd40278201eaafab9b931fdd0e5d2d8267f414ab3181f0375930ddd) |
-| Release after a proven transfer | [`0xd1f4ceca`](https://sepolia.etherscan.io/tx/0xd1f4ceca2a6272790c87916a2b996d3589aaf849756a95efdf51e4596c7567a5) |
-| Work that mined and moved nothing | [`0xca97ca0e`](https://sepolia.etherscan.io/tx/0xca97ca0ef125d7cb421c89d114cad381070ad218c505e1ae5cd45dedaa049377) |
+| Deploy | [`0x81534a1e`](https://sepolia.etherscan.io/tx/0x81534a1e9c623a4f7d33e679df3c65990f12c2ddd796d8cb5b0182e1f7c1630b) |
+| Claim — money into escrow, payee unpaid | [`0x9117b580`](https://sepolia.etherscan.io/tx/0x9117b5804879c0aaed2978cb769c90ecede443d9329a9de0654d0adc4ad1c865) |
+| Work that mined and moved nothing → refunded | [`0xf2c4055d`](https://sepolia.etherscan.io/tx/0xf2c4055d08d9b52ca5f4f89fe2cd6c670e2204c2458e4731fd3c0ae0eda5073c) |
 | Agent did the work, unprompted | [`0x749a8459`](https://sepolia.etherscan.io/tx/0x749a8459508963b5a85533767b934c20bc3c38656984d711380046cd5346665a) |
 | Agent proved it and got itself paid | [`0x6cf46523`](https://sepolia.etherscan.io/tx/0x6cf465234f8a08b01b74719e707b4c0a1ab005a5ab36de8c79b0e15cb22c9fe2) |
 
