@@ -18,6 +18,9 @@
  * owes them a readable record of why.
  */
 
+import { appendFileSync, readFileSync, existsSync, mkdirSync } from "node:fs";
+import { dirname } from "node:path";
+
 import { JsonRpcProvider, Contract, keccak256, toUtf8Bytes } from "ethers";
 import { KeeperHubClient } from "../vendor-kh/client.ts";
 import { verifyTransfer } from "./verify.ts";
@@ -39,7 +42,34 @@ export type Env = {
   chainId: number;
 };
 
-/** Append-only in-process record of every decision, newest last. */
+/**
+ * Where the decision record lives.
+ *
+ * On disk, not in memory. An audit log that empties when the process restarts
+ * is not an audit log -- it is a debug buffer, and the first thing anyone asks
+ * it is what happened before the crash. Append-only JSON lines: one write per
+ * decision, no rewrite path, so a corrupted tail costs one entry rather than
+ * the file.
+ */
+const AUDIT_PATH = process.env.OUTCOME_AUDIT_LOG ?? ".outcome/audit.jsonl";
+
+function readAudit(path: string): AuditEntry[] {
+  if (!existsSync(path)) return [];
+  return readFileSync(path, "utf8")
+    .split("\n")
+    .filter(Boolean)
+    .flatMap((line) => {
+      try {
+        return [JSON.parse(line) as AuditEntry];
+      } catch {
+        // A half-written final line survives a crash mid-append. Skipping it
+        // loses one decision; throwing would lose every earlier one.
+        return [];
+      }
+    });
+}
+
+/** Append-only record of every decision, newest last. */
 export type AuditEntry = {
   at: string;
   tool: string;
@@ -48,9 +78,17 @@ export type AuditEntry = {
   detail: string;
 };
 
-export function createTools(env: Env, audit: AuditEntry[] = []) {
+export function createTools(env: Env, opts: { auditPath?: string | null } = {}) {
+  // `null` opts out of persistence, which only the tests do.
+  const path = opts.auditPath === undefined ? AUDIT_PATH : opts.auditPath;
+  const audit: AuditEntry[] = path ? readAudit(path) : [];
+
   const log = (e: Omit<AuditEntry, "at">) => {
-    audit.push({ at: new Date().toISOString(), ...e });
+    const entry: AuditEntry = { at: new Date().toISOString(), ...e };
+    audit.push(entry);
+    if (!path) return;
+    mkdirSync(dirname(path), { recursive: true });
+    appendFileSync(path, JSON.stringify(entry) + "\n");
   };
 
   return {
