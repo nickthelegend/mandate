@@ -1,0 +1,131 @@
+"use client";
+
+/**
+ * Every intent the escrow has seen, assembled from events in the browser.
+ *
+ * The refunded rows are the ones to read. Each carries the verifier's own words
+ * for why the money went back, recorded on chain at the time of the decision --
+ * not a status this page inferred afterwards.
+ */
+
+import { useIntents, useEscrowed } from "outcome-sdk/react";
+import { ExternalLink, Loader2 } from "lucide-react";
+
+import { VerdictBadge } from "@/components/verdict";
+import { amount, short, tx, DEPLOYMENT } from "@/lib/outcome";
+import { cn } from "@/lib/utils";
+
+function Stat({ label, value, hint }: { label: string; value: string; hint?: string }) {
+  return (
+    <div className="rounded-xl border border-border/60 bg-secondary/20 p-4">
+      <div className="font-mono text-xs uppercase tracking-wide text-muted-foreground">{label}</div>
+      <div className="mt-1.5 font-mono text-2xl font-semibold tabular-nums">{value}</div>
+      {hint && <div className="mt-1 text-xs text-muted-foreground">{hint}</div>}
+    </div>
+  );
+}
+
+export default function ExplorerPage() {
+  const { data: rows, loading, error } = useIntents();
+  const { data: escrowed } = useEscrowed();
+
+  const released = rows?.filter((r) => r.state === "released").length ?? 0;
+  const refunded = rows?.filter((r) => r.state === "refunded").length ?? 0;
+  const open = rows?.filter((r) => r.state === "open").length ?? 0;
+
+  return (
+    <div className="mx-auto max-w-6xl px-5 py-14">
+      <h1 className="text-3xl font-semibold tracking-tight">Every intent, read from the chain.</h1>
+      <p className="mt-3 max-w-2xl text-pretty leading-relaxed text-muted-foreground">
+        Assembled from {DEPLOYMENT.chainName} events in your browser. Nothing here is seeded, cached,
+        or served from a database — each row is an event this contract emitted.
+      </p>
+
+      <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <Stat label="Intents" value={rows ? String(rows.length) : "—"} />
+        <Stat label="Released" value={String(released)} hint="work proven on chain" />
+        <Stat label="Refunded" value={String(refunded)} hint="work not proven" />
+        <Stat
+          label="In escrow"
+          value={escrowed === undefined ? "—" : amount(escrowed)}
+          hint={open ? `${open} awaiting a verdict` : "nothing outstanding"}
+        />
+      </div>
+
+      {loading && (
+        <div className="mt-10 flex items-center gap-2 font-mono text-sm text-muted-foreground">
+          <Loader2 className="size-4 animate-spin" /> reading the chain…
+        </div>
+      )}
+
+      {error && (
+        <p className="mt-10 rounded-lg border border-border/70 bg-secondary/40 p-4 font-mono text-sm text-muted-foreground">
+          {error}
+        </p>
+      )}
+
+      {rows && rows.length > 0 && (
+        <div className="mt-8 overflow-x-auto rounded-xl border border-border/60">
+          <table className="w-full min-w-[820px] text-sm">
+            <thead>
+              <tr className="border-b border-border/60 bg-secondary/30 text-left font-mono text-xs uppercase tracking-wide text-muted-foreground">
+                <th className="px-4 py-3 font-medium">Intent</th>
+                <th className="px-4 py-3 font-medium">Amount</th>
+                <th className="px-4 py-3 font-medium">Outcome</th>
+                <th className="px-4 py-3 font-medium">Why</th>
+                <th className="px-4 py-3 font-medium">Tx</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((r) => (
+                <tr key={r.intentId} className="border-b border-border/40 last:border-0">
+                  <td className="px-4 py-3 font-mono text-xs text-muted-foreground">
+                    {short(r.intentId, 8, 6)}
+                  </td>
+                  <td className="px-4 py-3 font-mono tabular-nums">
+                    {amount(r.amount)}{" "}
+                    <span className="text-xs text-muted-foreground">{DEPLOYMENT.tokenSymbol}</span>
+                  </td>
+                  <td className="px-4 py-3">
+                    {r.state === "open" ? (
+                      <span className="inline-flex items-center gap-1.5 rounded-full border border-border/70 px-2.5 py-0.5 font-mono text-xs text-muted-foreground">
+                        awaiting verdict
+                      </span>
+                    ) : (
+                      <VerdictBadge proven={r.state === "released"} />
+                    )}
+                  </td>
+                  <td
+                    className={cn(
+                      "max-w-[380px] px-4 py-3 font-mono text-xs leading-relaxed",
+                      r.state === "refunded" ? "text-amber-200/80" : "text-muted-foreground"
+                    )}
+                  >
+                    {r.reason ?? "—"}
+                  </td>
+                  <td className="px-4 py-3">
+                    <a
+                      href={tx(r.outcomeTransactionHash ?? r.claimTransactionHash)}
+                      target="_blank"
+                      rel="noopener"
+                      className="inline-flex items-center gap-1 font-mono text-xs text-muted-foreground transition-colors hover:text-foreground"
+                    >
+                      {short(r.outcomeTransactionHash ?? r.claimTransactionHash)}
+                      <ExternalLink className="size-3" />
+                    </a>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {rows && rows.length === 0 && (
+        <p className="mt-10 font-mono text-sm text-muted-foreground">
+          No intents in the last 45,000 blocks.
+        </p>
+      )}
+    </div>
+  );
+}
