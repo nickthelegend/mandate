@@ -5,5 +5,9 @@
   "scripts": {
     "test": "node --test --experimental-strip-types test/*.test.ts"
   },
-  "dependencies": { "ethers": "^6.17.0" }
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "ethers": "^6.17.0",
+    "zod": "^4.4.3"
+  }
 }
