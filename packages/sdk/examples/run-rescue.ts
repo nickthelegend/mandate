@@ -9,7 +9,7 @@
  * It reverts on chain for a reason the classifier has to read, not a flag.
  */
 import { JsonRpcProvider, Contract, Wallet, keccak256, toUtf8Bytes, parseUnits } from "ethers";
-import { KeeperHubClient } from "../vendor-kh/client.ts";
+import { KeeperHubClient } from "./keeperhub/client.ts";
 import { verifyTransfer } from "./verify.ts";
 import { diagnose, worthRescuing } from "./diagnose.ts";
 import { settle } from "./settle.ts";

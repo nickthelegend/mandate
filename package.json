@@ -1,0 +1,21 @@
+{
+  "name": "outcome-monorepo",
+  "private": true,
+  "description": "Pay agents for verified results, not attempts.",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "build": "npm run build -w outcome-sdk && npm run build -w outcome-mcp",
+    "test": "npm run test -w outcome-sdk && npm run test -w outcome-mcp",
+    "typecheck": "npm run typecheck -w outcome-sdk && npm run typecheck -w outcome-mcp",
+    "test:contracts": "cd contracts && npx hardhat test"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

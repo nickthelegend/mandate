@@ -1,0 +1,91 @@
+{
+  "name": "outcome-sdk",
+  "version": "0.1.0",
+  "description": "Pay agents for verified results, not attempts. Reads the receipt instead of trusting the status byte: on-chain idempotency, escrow, and execution diagnosis for agent payments.",
+  "license": "MIT",
+  "author": "Outcome",
+  "homepage": "https://github.com/nickthelegend/outcome/tree/main/packages/sdk#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nickthelegend/outcome.git",
+    "directory": "packages/sdk"
+  },
+  "bugs": {
+    "url": "https://github.com/nickthelegend/outcome/issues"
+  },
+  "keywords": [
+    "x402",
+    "agent-payments",
+    "escrow",
+    "idempotency",
+    "settlement",
+    "verification",
+    "ethereum",
+    "evm",
+    "erc20",
+    "mcp",
+    "keeperhub"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "main": "./dist/cjs/index.js",
+  "module": "./dist/esm/index.js",
+  "types": "./dist/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.js",
+      "default": "./dist/esm/index.js"
+    },
+    "./node": {
+      "types": "./dist/types/node.d.ts",
+      "import": "./dist/esm/node.js",
+      "require": "./dist/cjs/node.js",
+      "default": "./dist/esm/node.js"
+    },
+    "./react": {
+      "types": "./dist/types/react.d.ts",
+      "import": "./dist/esm/react.js",
+      "require": "./dist/cjs/react.js",
+      "default": "./dist/esm/react.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "clean": "rm -rf dist",
+    "build": "npm run clean && tsc -p tsconfig.esm.json && tsc -p tsconfig.cjs.json && node scripts/mark-dist.mjs",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "node --experimental-strip-types --test test/*.test.ts",
+    "prepublishOnly": "npm run build && node scripts/check-entrypoints.mjs"
+  },
+  "peerDependencies": {
+    "ethers": ">=6",
+    "react": ">=18"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    }
+  },
+  "dependencies": {
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.1",
+    "@types/react": "^18.3.31",
+    "ethers": "^6.17.0",
+    "typescript": "^5.9.3"
+  }
+}

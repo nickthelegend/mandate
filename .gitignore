@@ -1,6 +1,9 @@
-node_modules
-artifacts
-cache
+node_modules/
+dist/
 .env
-typechain-types
 .outcome/
+contracts/artifacts/
+contracts/cache/
+.next/
+out/
+*.tsbuildinfo

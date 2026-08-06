@@ -22,7 +22,7 @@ import { join } from "node:path";
 
 const ARTIFACT = join(
   import.meta.dirname,
-  "../../contracts/artifacts/contracts/OutcomeEscrow.sol/OutcomeEscrow.json"
+  "../../../contracts/artifacts/contracts/OutcomeEscrow.sol/OutcomeEscrow.json"
 );
 const SRC = join(import.meta.dirname, "../src");
 

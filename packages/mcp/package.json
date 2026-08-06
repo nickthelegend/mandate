@@ -1,0 +1,68 @@
+{
+  "name": "outcome-mcp",
+  "version": "0.1.0",
+  "description": "MCP server that lets an agent verify it was actually paid: reads the receipt instead of trusting the status byte, with on-chain idempotency, escrow settlement and execution diagnosis.",
+  "license": "MIT",
+  "author": "Outcome",
+  "homepage": "https://github.com/nickthelegend/outcome/tree/main/packages/mcp#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nickthelegend/outcome.git",
+    "directory": "packages/mcp"
+  },
+  "bugs": {
+    "url": "https://github.com/nickthelegend/outcome/issues"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "x402",
+    "agent-payments",
+    "escrow",
+    "settlement",
+    "verification",
+    "claude",
+    "keeperhub"
+  ],
+  "type": "module",
+  "main": "./dist/server.js",
+  "types": "./dist/server.d.ts",
+  "bin": {
+    "outcome-mcp": "./dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/server.d.ts",
+      "default": "./dist/server.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "clean": "rm -rf dist",
+    "build": "npm run clean && tsc -p tsconfig.json && chmod +x dist/cli.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "node --experimental-strip-types --test test/*.test.ts",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "ethers": "^6.17.0",
+    "outcome-sdk": "^0.1.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.1",
+    "typescript": "^5.9.3"
+  }
+}

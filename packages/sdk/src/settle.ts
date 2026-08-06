@@ -19,8 +19,8 @@
  * result is re-verified from the receipt.
  */
 
-import { KeeperHubClient, encodeArgs, chargeKey } from "../vendor-kh/client.ts";
-import { isKeeperHubError } from "../vendor-kh/errors.ts";
+import { KeeperHubClient, encodeArgs, chargeKey } from "./keeperhub/client.ts";
+import { isKeeperHubError } from "./keeperhub/errors.ts";
 import type { Verdict } from "./verify.ts";
 
 export const ESCROW_ABI = JSON.stringify([
@@ -98,7 +98,7 @@ export async function settle(
       action,
       outcome: "succeeded",
       executionId: status.executionId,
-      transactionHash: status.execution?.transactionHash,
+      transactionHash: status.transactionHash,
     };
   } catch (err) {
     const e = isKeeperHubError(err)

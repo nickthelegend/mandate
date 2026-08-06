@@ -24,7 +24,7 @@ import { JsonRpcProvider, Contract, Wallet, keccak256, toUtf8Bytes } from "ether
 import { appendFileSync, existsSync, readFileSync, mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 
-import { KeeperHubClient } from "../vendor-kh/client.ts";
+import { KeeperHubClient } from "./keeperhub/client.ts";
 import { createTools } from "./tools.ts";
 
 const ESCROW_ABI = [
@@ -115,6 +115,9 @@ export async function work(opts: {
   const reports: AgentReport[] = [];
 
   for (const ev of claims) {
+    // queryFilter widens to Log | EventLog; a topic-filtered query only ever
+    // yields the decoded form, but the type does not know that.
+    if (!("args" in ev)) continue;
     const intentId: string = ev.args.intentId;
     const state = await tools.outcome_get_intent({ intentId });
     if (state.state !== "open") continue;

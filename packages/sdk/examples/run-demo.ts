@@ -8,7 +8,7 @@
  * success has not demonstrated anything.
  */
 import { JsonRpcProvider, Contract, Wallet, keccak256, toUtf8Bytes, parseUnits } from "ethers";
-import { KeeperHubClient } from "../vendor-kh/client.ts";
+import { KeeperHubClient } from "./keeperhub/client.ts";
 import { verifyTransfer } from "./verify.ts";
 import { settle } from "./settle.ts";
 

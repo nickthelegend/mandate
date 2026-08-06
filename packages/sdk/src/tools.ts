@@ -22,7 +22,7 @@ import { appendFileSync, readFileSync, existsSync, mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 
 import { JsonRpcProvider, Contract, keccak256, toUtf8Bytes } from "ethers";
-import { KeeperHubClient } from "../vendor-kh/client.ts";
+import { KeeperHubClient } from "./keeperhub/client.ts";
 import { verifyTransfer } from "./verify.ts";
 import { diagnose, worthRescuing } from "./diagnose.ts";
 import { settle } from "./settle.ts";
