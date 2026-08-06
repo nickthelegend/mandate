@@ -1,0 +1,61 @@
+# Build the console and publish it to GitHub Pages.
+#
+# The site is a static export that reads Sepolia from the visitor's browser, so
+# there is nothing to run server-side and nothing for a deploy to get wrong
+# beyond copying files.
+#
+# basePath is set here rather than committed to next.config.mjs: the app is
+# served from /outcome/ on github.io but from / anywhere else, and hard-coding
+# the repo name would break every other way of running it.
+name: pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      # The web app imports the SDK by name, so the workspace build has to run
+      # before Next can resolve it.
+      - run: npm run build -w outcome-sdk
+
+      - run: npm run build -w outcome-web
+        env:
+          NEXT_PUBLIC_BASE_PATH: /outcome
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: apps/web/out
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4
