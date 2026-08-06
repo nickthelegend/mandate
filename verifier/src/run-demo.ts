@@ -13,14 +13,14 @@ import { verifyTransfer } from "./verify.ts";
 import { settle } from "./settle.ts";
 
 const RPC = process.env.SEPOLIA_RPC_URL!;
-const ESCROW = "0x8Cd5537d9A8E55294f4939e8DBB939828BdAc89A";
+const ESCROW = "0x0ED9d1235cB9FD080D687FD978a38d972a34dC3B";
 const TOKEN = process.env.POLARIS_USDC!;
 const CHAIN = 11155111;
 const link = (h?: string) => (h ? `https://sepolia.etherscan.io/tx/${h}` : "(none)");
 
 const ESCROW_ABI = [
-  "function claim(bytes32,address,uint256,uint64)",
-  "function intents(bytes32) view returns (address payer,address payee,uint256 amount,uint64 refundableAt,uint8 state)",
+  "function claim(bytes32,address,address,uint256,uint64)",
+  "function intents(bytes32) view returns (address payer,address payee,address beneficiary,uint256 amount,uint64 refundableAt,uint8 state)",
 ];
 const ERC20 = [
   "function approve(address,uint256) returns (bool)",
@@ -49,7 +49,7 @@ async function main() {
     console.log(`\n${"=".repeat(60)}\n${scenario}\n${"=".repeat(60)}`);
     console.log("intent :", intentId);
 
-    const c = await escrow.claim(intentId, payee, AMOUNT, 3600);
+    const c = await escrow.claim(intentId, payee, payee, AMOUNT, 3600);
     await c.wait();
     console.log("claim  :", link(c.hash));
 

@@ -28,7 +28,7 @@ import { diagnose, worthRescuing } from "./diagnose.ts";
 import { settle } from "./settle.ts";
 
 const ESCROW_READ_ABI = [
-  "function intents(bytes32) view returns (address payer,address payee,uint256 amount,uint64 refundableAt,uint8 state)",
+  "function intents(bytes32) view returns (address payer,address payee,address beneficiary,uint256 amount,uint64 refundableAt,uint8 state)",
   "function isClaimed(bytes32) view returns (bool)",
   "function escrowed() view returns (uint256)",
 ];
@@ -114,6 +114,7 @@ export function createTools(env: Env, opts: { auditPath?: string | null } = {}) 
         state: STATE[Number(i.state)],
         payer: i.payer,
         payee: i.payee,
+        beneficiary: i.beneficiary,
         amount: i.amount.toString(),
         refundableAt: Number(i.refundableAt),
       };
@@ -168,9 +169,16 @@ export function createTools(env: Env, opts: { auditPath?: string | null } = {}) 
         return { settled: false, reason: `intent is ${state.state}, not open` };
       }
 
+      /*
+       * Verified against the beneficiary, not the payee. The payee is who gets
+       * paid; the beneficiary is who the work had to reach. Checking the payee
+       * would only ever prove an agent paid itself, which is not a job anyone
+       * posts -- and it is what the first live agent run actually did before
+       * the contract recorded the distinction.
+       */
       const v = await this.outcome_verify({
         transactionHash: args.workTransactionHash,
-        recipient: state.payee,
+        recipient: state.beneficiary,
         minAmount: state.amount,
       });
 

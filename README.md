@@ -47,7 +47,7 @@ in the money path.
 
 ## Live on Sepolia
 
-`OutcomeEscrow` — [`0x8Cd5537d9A8E55294f4939e8DBB939828BdAc89A`](https://sepolia.etherscan.io/address/0x8Cd5537d9A8E55294f4939e8DBB939828BdAc89A)
+`OutcomeEscrow` — [`0x0ED9d1235cB9FD080D687FD978a38d972a34dC3B`](https://sepolia.etherscan.io/address/0x0ED9d1235cB9FD080D687FD978a38d972a34dC3B)
 
 | What was proven | Transaction |
 |---|---|
@@ -55,7 +55,8 @@ in the money path.
 | Claim — money into escrow, payee unpaid | [`0xfa011b92`](https://sepolia.etherscan.io/tx/0xfa011b922cd40278201eaafab9b931fdd0e5d2d8267f414ab3181f0375930ddd) |
 | Release after a proven transfer | [`0xd1f4ceca`](https://sepolia.etherscan.io/tx/0xd1f4ceca2a6272790c87916a2b996d3589aaf849756a95efdf51e4596c7567a5) |
 | Work that mined and moved nothing | [`0xca97ca0e`](https://sepolia.etherscan.io/tx/0xca97ca0ef125d7cb421c89d114cad381070ad218c505e1ae5cd45dedaa049377) |
-| Agent-driven end to end | [`0x77ef0dff`](https://sepolia.etherscan.io/tx/0x77ef0dff4888c5e8d425af7b35806dca78cfc83b76c1fd05ec49bd448f09f53b) |
+| Agent did the work, unprompted | [`0x749a8459`](https://sepolia.etherscan.io/tx/0x749a8459508963b5a85533767b934c20bc3c38656984d711380046cd5346665a) |
+| Agent proved it and got itself paid | [`0x6cf46523`](https://sepolia.etherscan.io/tx/0x6cf465234f8a08b01b74719e707b4c0a1ab005a5ab36de8c79b0e15cb22c9fe2) |
 
 Release and refund both execute **through KeeperHub's execute API** — simulated
 before sending, idempotent per attempt, gas sponsored.
@@ -104,7 +105,29 @@ status-only check applies, and it paid nobody.
 node --experimental-strip-types src/run-rescue.ts
 ```
 
-**3. As an agent, 10 seconds.** Six MCP tools over stdio.
+**3. An agent using it, unattended.** A payer posts a job, escrows, and walks
+away. Nothing after that line is driven by a human.
+
+```bash
+node --experimental-strip-types src/run-agent.ts
+```
+
+> agent finds an intent naming it as payee → reads the job the intent commits to
+> → does the work on chain → hands the hash to the verifier → **release**, and it
+> is paid.
+
+The agent does not get to declare its own work complete. It performs the action
+and submits a transaction hash; the verifier reads the receipt and decides. An
+agent that could assert its way to a payout is the thing this project replaces,
+so it is held to the same evidence standard as anyone else — including when it
+is the one being paid. It can also lose: if the work does not land, the payer is
+refunded and the agent earns nothing. That is the intended branch, not an error
+path.
+
+It declines work it cannot describe, rather than guessing at a job whose task
+string it does not hold — it cannot prove work it cannot state.
+
+**4. As a tool, 10 seconds.** Six MCP tools over stdio.
 
 ```bash
 node --experimental-strip-types src/server.ts
@@ -128,11 +151,11 @@ returns nothing. A service deciding whether an agent gets paid owes it an
 account of why. Persisted as append-only JSON lines, so a restart does not empty
 it and a torn write costs one entry rather than the file.
 
-## Tests — 42, all passing
+## Tests — 49, all passing
 
 ```bash
 cd contracts && npx hardhat test      # 12
-cd verifier  && npm test              # 30
+cd verifier  && npm test              # 37
 ```
 
 Written against the failures the promise model permits, not the happy path:
@@ -142,6 +165,14 @@ case running three interleaved intents to three endings that must land the
 balance at zero, a mined transaction with zero logs, a worthless token emitting
 a large Transfer, under-delivery, in-flight classification that must never
 resend, and restart survival.
+
+One suite exists because of a bug this build actually hit. The ABIs here are
+hand-written strings, and a wrong one does not throw — it decodes. Adding
+`beneficiary` to `Intent` left three files on the five-field declaration, so
+`intents()` decoded `refundableAt` as `state`, every open intent read as
+settled, and the agent silently found no work. Nothing errored anywhere. Those
+declarations are now checked against the compiled artifact, not against each
+other — comparing them to one another only proves they drifted together.
 
 ## What is not done
 
@@ -167,6 +198,7 @@ verifier/
   src/diagnose.ts   why it failed, and whether resending can fix it
   src/settle.ts     verdict -> KeeperHub execute
   src/tools.ts      the six agent-facing handlers
+  src/agent.ts      a worker agent that finds jobs, does them, and gets paid
   src/server.ts     MCP transport, deliberately thin
   vendor-kh/        KeeperHub client, carried over with its 45-test history
 index.html    static dashboard, reads the chain with no backend

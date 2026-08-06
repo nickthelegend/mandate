@@ -1,5 +1,5 @@
 const { ethers } = require("hardhat");
-const E = "0x8Cd5537d9A8E55294f4939e8DBB939828BdAc89A";
+const E = "0x0ED9d1235cB9FD080D687FD978a38d972a34dC3B";
 async function main() {
   const p = ethers.provider;
   const c = await ethers.getContractAt("OutcomeEscrow", E);

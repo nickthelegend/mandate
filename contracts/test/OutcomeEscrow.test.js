@@ -32,7 +32,7 @@ describe("OutcomeEscrow", () => {
   describe("claiming an intent", () => {
     it("moves the money into escrow, not to the payee", async () => {
       const id = intent("job-1");
-      await escrow.connect(payer).claim(id, payee.address, AMOUNT, WINDOW);
+      await escrow.connect(payer).claim(id, payee.address, payee.address, AMOUNT, WINDOW);
 
       // The point of the whole contract: after paying, the payee has nothing.
       expect(await token.balanceOf(payee.address)).to.equal(0n);
@@ -47,10 +47,10 @@ describe("OutcomeEscrow", () => {
        * derive the same id and collide here, instead of both paying for it.
        */
       const id = intent("job-1");
-      await escrow.connect(payer).claim(id, payee.address, AMOUNT, WINDOW);
+      await escrow.connect(payer).claim(id, payee.address, payee.address, AMOUNT, WINDOW);
 
       await expect(
-        escrow.connect(payer).claim(id, payee.address, AMOUNT, WINDOW)
+        escrow.connect(payer).claim(id, payee.address, payee.address, AMOUNT, WINDOW)
       ).to.be.revertedWithCustomError(escrow, "AlreadyClaimed");
     });
 
@@ -58,20 +58,20 @@ describe("OutcomeEscrow", () => {
       // An idempotency guard that expires is not a guard. A completed job must
       // not become claimable again just because the money already moved.
       const id = intent("job-1");
-      await escrow.connect(payer).claim(id, payee.address, AMOUNT, WINDOW);
+      await escrow.connect(payer).claim(id, payee.address, payee.address, AMOUNT, WINDOW);
       await escrow.connect(verifier).release(id, ethers.ZeroHash);
 
       await expect(
-        escrow.connect(payer).claim(id, payee.address, AMOUNT, WINDOW)
+        escrow.connect(payer).claim(id, payee.address, payee.address, AMOUNT, WINDOW)
       ).to.be.revertedWithCustomError(escrow, "AlreadyClaimed");
     });
 
     it("rejects a zero amount and a zero payee", async () => {
       await expect(
-        escrow.connect(payer).claim(intent("a"), payee.address, 0n, WINDOW)
+        escrow.connect(payer).claim(intent("a"), payee.address, payee.address, 0n, WINDOW)
       ).to.be.revertedWithCustomError(escrow, "ZeroAmount");
       await expect(
-        escrow.connect(payer).claim(intent("b"), ethers.ZeroAddress, AMOUNT, WINDOW)
+        escrow.connect(payer).claim(intent("b"), ethers.ZeroAddress, payee.address, AMOUNT, WINDOW)
       ).to.be.revertedWithCustomError(escrow, "ZeroAddress");
     });
   });
@@ -80,7 +80,7 @@ describe("OutcomeEscrow", () => {
     let id;
     beforeEach(async () => {
       id = intent("job-1");
-      await escrow.connect(payer).claim(id, payee.address, AMOUNT, WINDOW);
+      await escrow.connect(payer).claim(id, payee.address, payee.address, AMOUNT, WINDOW);
     });
 
     it("pays the payee exactly the escrowed amount on release", async () => {
@@ -136,7 +136,7 @@ describe("OutcomeEscrow", () => {
        * which is the trust assumption escrow exists to remove.
        */
       const id = intent("stranded");
-      await escrow.connect(payer).claim(id, payee.address, AMOUNT, WINDOW);
+      await escrow.connect(payer).claim(id, payee.address, payee.address, AMOUNT, WINDOW);
 
       await expect(escrow.connect(payer).reclaim(id)).to.be.revertedWithCustomError(
         escrow,
@@ -151,7 +151,7 @@ describe("OutcomeEscrow", () => {
 
     it("lets only the payer reclaim", async () => {
       const id = intent("stranded-2");
-      await escrow.connect(payer).claim(id, payee.address, AMOUNT, WINDOW);
+      await escrow.connect(payer).claim(id, payee.address, payee.address, AMOUNT, WINDOW);
       await time.increase(WINDOW + 1);
       await expect(escrow.connect(outsider).reclaim(id)).to.be.revertedWithCustomError(
         escrow,
@@ -166,7 +166,7 @@ describe("OutcomeEscrow", () => {
       // intents, three different endings, one balance that must land at zero.
       const ids = ["a", "b", "c"].map(intent);
       for (const id of ids) {
-        await escrow.connect(payer).claim(id, payee.address, AMOUNT, WINDOW);
+        await escrow.connect(payer).claim(id, payee.address, payee.address, AMOUNT, WINDOW);
       }
       expect(await escrow.escrowed()).to.equal(AMOUNT * 3n);
 

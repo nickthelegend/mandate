@@ -21,7 +21,7 @@ function env(receipt: any) {
   return {
     provider: { send: async () => receipt } as any,
     kh: {} as any,
-    escrow: "0x8Cd5537d9A8E55294f4939e8DBB939828BdAc89A",
+    escrow: "0x0ED9d1235cB9FD080D687FD978a38d972a34dC3B",
     token: TOKEN,
     chainId: 11155111,
   };

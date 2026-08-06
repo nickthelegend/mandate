@@ -14,7 +14,7 @@ const CHAIN = 11155111;
 const env = {
   provider: new JsonRpcProvider(process.env.SEPOLIA_RPC_URL!, CHAIN),
   kh: new KeeperHubClient({ apiKey: process.env.KEEPERHUB_API_KEY! }),
-  escrow: process.env.OUTCOME_ESCROW ?? "0x8Cd5537d9A8E55294f4939e8DBB939828BdAc89A",
+  escrow: process.env.OUTCOME_ESCROW ?? "0x0ED9d1235cB9FD080D687FD978a38d972a34dC3B",
   token: process.env.POLARIS_USDC!,
   chainId: CHAIN,
 };

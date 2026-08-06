@@ -60,6 +60,14 @@ contract OutcomeEscrow is ReentrancyGuard {
     struct Intent {
         address payer;
         address payee;
+        /**
+         * @dev Who the work is for. The escrow pays the payee only if value
+         *      reached this address, which is what lets the payee be a courier
+         *      earning a fee rather than the recipient of its own delivery.
+         *      Without it a verifier can only check delivery to the payee, and
+         *      "prove you paid yourself" is not a job anyone posts.
+         */
+        address beneficiary;
         uint256 amount;
         /// @dev Seconds since epoch after which the payer may self-refund.
         uint64 refundableAt;
@@ -75,6 +83,7 @@ contract OutcomeEscrow is ReentrancyGuard {
         bytes32 indexed intentId,
         address indexed payer,
         address indexed payee,
+        address beneficiary,
         uint256 amount,
         uint64 refundableAt
     );
@@ -124,24 +133,30 @@ contract OutcomeEscrow is ReentrancyGuard {
      *      a duplicate.
      * @param intentId Content-derived identifier for the work.
      * @param payee Who is paid if the outcome is proven.
+     * @param beneficiary Who the work must deliver to. Pass the payee when the
+     *        payee is also the recipient.
      * @param amount Amount held in escrow.
      * @param refundWindow Seconds until the payer may self-refund an unproven
      *        intent. A verifier that goes offline must not be able to strand
      *        funds forever.
      */
-    function claim(bytes32 intentId, address payee, uint256 amount, uint64 refundWindow)
-        external
-        nonReentrant
-    {
+    function claim(
+        bytes32 intentId,
+        address payee,
+        address beneficiary,
+        uint256 amount,
+        uint64 refundWindow
+    ) external nonReentrant {
         if (intents[intentId].state != State.None) revert AlreadyClaimed(intentId);
         if (amount == 0) revert ZeroAmount();
-        if (payee == address(0)) revert ZeroAddress();
+        if (payee == address(0) || beneficiary == address(0)) revert ZeroAddress();
 
         uint64 refundableAt = uint64(block.timestamp) + refundWindow;
 
         intents[intentId] = Intent({
             payer: msg.sender,
             payee: payee,
+            beneficiary: beneficiary,
             amount: amount,
             refundableAt: refundableAt,
             state: State.Open
@@ -149,7 +164,7 @@ contract OutcomeEscrow is ReentrancyGuard {
         escrowed += amount;
 
         token.safeTransferFrom(msg.sender, address(this), amount);
-        emit Claimed(intentId, msg.sender, payee, amount, refundableAt);
+        emit Claimed(intentId, msg.sender, payee, beneficiary, amount, refundableAt);
     }
 
     /**

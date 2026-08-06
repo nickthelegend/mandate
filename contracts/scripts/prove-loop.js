@@ -1,6 +1,6 @@
 const { ethers } = require("hardhat");
 
-const ESCROW = "0x8Cd5537d9A8E55294f4939e8DBB939828BdAc89A";
+const ESCROW = "0x0ED9d1235cB9FD080D687FD978a38d972a34dC3B";
 const TOKEN = "0x49C86277a91002c4943837bf20F6ED41976Db09F";
 const link = (h) => "https://sepolia.etherscan.io/tx/" + h;
 

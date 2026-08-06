@@ -78,7 +78,7 @@
   </p>
   <p class="addr">
     OutcomeEscrow ·
-    <a id="escrow-link" target="_blank" rel="noopener">0x8Cd5537d…c89A</a>
+    <a id="escrow-link" target="_blank" rel="noopener">0x0ED9d123…dC3B</a>
     · Sepolia · settled through KeeperHub
   </p>
 </header>
@@ -130,13 +130,13 @@ import { JsonRpcProvider, Contract, formatUnits, id } from "https://esm.sh/ether
  * for a project about verification should be checkable against the chain by
  * anyone looking at it, not trusted because a server said so.
  */
-const ESCROW = "0x8Cd5537d9A8E55294f4939e8DBB939828BdAc89A";
+const ESCROW = "0x0ED9d1235cB9FD080D687FD978a38d972a34dC3B";
 const RPC = "https://ethereum-sepolia-rpc.publicnode.com";
 const SCAN = "https://sepolia.etherscan.io";
 const WINDOW = 45_000; // ~6 days of Sepolia blocks; the contract is younger than this
 
 const ABI = [
-  "event Claimed(bytes32 indexed intentId, address indexed payer, address indexed payee, uint256 amount, uint64 refundableAt)",
+  "event Claimed(bytes32 indexed intentId, address indexed payer, address indexed payee, address beneficiary, uint256 amount, uint64 refundableAt)",
   "event Released(bytes32 indexed intentId, address indexed payee, uint256 amount, bytes32 proof)",
   "event Refunded(bytes32 indexed intentId, address indexed payer, uint256 amount, string reason)",
   "function escrowed() view returns (uint256)",
