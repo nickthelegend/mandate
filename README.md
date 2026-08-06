@@ -60,6 +60,21 @@ in the money path.
 Release and refund both execute **through KeeperHub's execute API** — simulated
 before sending, idempotent per attempt, gas sponsored.
 
+## Dashboard
+
+`web/index.html` — a single static page that reads the escrow directly from a
+public Sepolia RPC. No backend and no database on purpose: a dashboard for a
+project about verification should be checkable against the chain by anyone
+looking at it, not trusted because a server said so.
+
+```bash
+cd web && python3 -m http.server 4177
+```
+
+Every row is an event this contract emitted. The refunded row carries the
+verifier's actual reason, read off chain -- *no Transfer of \<token\> to
+\<recipient\> in 1 log(s)* -- for a transaction that mined with `status: 0x1`.
+
 ## 60-second demo
 
 ```bash
@@ -152,4 +167,5 @@ verifier/
   src/tools.ts      the six agent-facing handlers
   src/server.ts     MCP transport, deliberately thin
   vendor-kh/        KeeperHub client, carried over with its 45-test history
+web/          static dashboard, reads the chain with no backend
 ```
