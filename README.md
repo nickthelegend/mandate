@@ -62,13 +62,15 @@ before sending, idempotent per attempt, gas sponsored.
 
 ## Dashboard
 
-`web/index.html` — a single static page that reads the escrow directly from a
+**[nickthelegend.github.io/outcome](https://nickthelegend.github.io/outcome/)** — a single static page that reads the escrow directly from a
 public Sepolia RPC. No backend and no database on purpose: a dashboard for a
 project about verification should be checkable against the chain by anyone
 looking at it, not trusted because a server said so.
 
+Live, no install. To run it locally instead:
+
 ```bash
-cd web && python3 -m http.server 4177
+python3 -m http.server 4177
 ```
 
 Every row is an event this contract emitted. The refunded row carries the
@@ -167,5 +169,5 @@ verifier/
   src/tools.ts      the six agent-facing handlers
   src/server.ts     MCP transport, deliberately thin
   vendor-kh/        KeeperHub client, carried over with its 45-test history
-web/          static dashboard, reads the chain with no backend
+index.html    static dashboard, reads the chain with no backend
 ```
