@@ -32,8 +32,11 @@ import {
 } from "outcome-sdk/x402";
 
 import { createFacilitator, type FacilitatorMode } from "./facilitator.ts";
+import { runPurchase } from "./flow.ts";
 
 const PORT = Number(process.env.PORT ?? 4402);
+/** Where this server is reachable, for the self-call the demo endpoint makes. */
+const PUBLIC_URL = process.env.PUBLIC_URL ?? `http://localhost:${PORT}`;
 const NETWORK = "sepolia";
 const CHAIN_ID = 11155111;
 
@@ -106,16 +109,88 @@ const json = (res: import("node:http").ServerResponse, code: number, body: unkno
   res.end(payload);
 };
 
+/*
+ * A crude rate limit on /demo.
+ *
+ * Every call signs a real authorisation, settles a real transaction and burns
+ * KeeperHub execution quota. Public and unmetered, one person holding down
+ * refresh drains the testnet float and the demo stops working for everyone
+ * else -- which is a worse outcome than making them wait a few seconds.
+ *
+ * In-memory and per-process on purpose: this is one small server, and a shared
+ * store would be more machinery than the problem deserves.
+ */
+const DEMO_COOLDOWN_MS = 15_000;
+const lastDemoAt = new Map<string, number>();
+
+function demoAllowed(ip: string): number {
+  const now = Date.now();
+  const last = lastDemoAt.get(ip) ?? 0;
+  const waitMs = last + DEMO_COOLDOWN_MS - now;
+  if (waitMs > 0) return waitMs;
+  lastDemoAt.set(ip, now);
+  return 0;
+}
+
 const server = createServer(async (req, res) => {
-  const url = new URL(req.url ?? "/", `http://localhost:${PORT}`);
+  const url = new URL(req.url ?? "/", PUBLIC_URL);
+
+  // The console is served from a different origin, so preflight has to answer.
+  if (req.method === "OPTIONS") {
+    res.writeHead(204, {
+      "access-control-allow-origin": "*",
+      "access-control-allow-headers": "content-type, x-payment",
+      "access-control-allow-methods": "GET, OPTIONS",
+    });
+    return res.end();
+  }
 
   if (url.pathname === "/health") return json(res, 200, { ok: true, asset: ASSET, payTo: PAY_TO, facilitator: wallet.address });
+
+  /*
+   * The whole purchase, run server-side, returned as a trace.
+   *
+   * A browser cannot sign an EIP-3009 authorisation without a key, and putting
+   * one in a page would be worse than having no demo. So the server plays the
+   * payer -- the same code path the CLI client uses, not a reimplementation --
+   * and hands back what happened at each step.
+   *
+   * Every step is real: a real 402, a real signature, a real Sepolia
+   * settlement. Nothing is replayed from a recording.
+   */
+  if (url.pathname === "/demo") {
+    const ip =
+      (req.headers["x-forwarded-for"] as string | undefined)?.split(",")[0]?.trim() ??
+      req.socket.remoteAddress ??
+      "unknown";
+    const waitMs = demoAllowed(ip);
+    if (waitMs > 0) {
+      return json(res, 429, {
+        error: "one demo run at a time, please - each one is a real transaction",
+        retryAfterSeconds: Math.ceil(waitMs / 1000),
+      });
+    }
+
+    const mode = url.searchParams.get("facilitator") === "lying" ? "lying" : "honest";
+    try {
+      const result = await runPurchase({
+        baseUrl: PUBLIC_URL,
+        facilitator: mode,
+        payerKey: key,
+        rpcUrl: RPC,
+        chainId: CHAIN_ID,
+      });
+      return json(res, 200, result);
+    } catch (e: unknown) {
+      return json(res, 500, { error: e instanceof Error ? e.message : String(e) });
+    }
+  }
 
   if (url.pathname !== "/article") {
     return json(res, 404, { error: "not found", try: "/article" });
   }
 
-  const resource = `http://localhost:${PORT}/article`;
+  const resource = `${PUBLIC_URL}/article`;
   const req402 = requirements(resource);
   const header = req.headers["x-payment"];
 

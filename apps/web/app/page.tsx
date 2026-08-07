@@ -123,11 +123,16 @@ export default function Home() {
               x402 ends at the facilitator&rsquo;s word. Both runs are live on Sepolia with the same
               protocol flow and the same success response — one of them paid nobody.
             </p>
-            <Button asChild variant="outline" className="mt-6 gap-2">
-              <Link href="/x402">
-                See both transactions <ArrowRight className="size-4" />
-              </Link>
-            </Button>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Button asChild className="gap-2">
+                <Link href="/demo">
+                  Run it yourself <ArrowRight className="size-4" />
+                </Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link href="/x402">See both transactions</Link>
+              </Button>
+            </div>
           </div>
         </div>
       </section>
