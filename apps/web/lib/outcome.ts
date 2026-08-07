@@ -32,6 +32,8 @@ export const outcome = new OutcomeClient({
 
 export const tx = (hash: string) => `${DEPLOYMENT.explorer}/tx/${hash}`;
 export const address = (a: string) => `${DEPLOYMENT.explorer}/address/${a}`;
+/** Straight to the verified source, which is the part worth reading. */
+export const source = (a: string) => `${DEPLOYMENT.explorer}/address/${a}#code`;
 
 /** Base units to a human string, without pulling in a formatting library. */
 export function amount(base: string | bigint): string {

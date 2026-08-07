@@ -1,4 +1,4 @@
-import { DEPLOYMENT, address } from "@/lib/outcome";
+import { DEPLOYMENT, source } from "@/lib/outcome";
 
 export function SiteFooter() {
   return (
@@ -9,12 +9,12 @@ export function SiteFooter() {
           backend.
         </p>
         <a
-          href={address(DEPLOYMENT.escrow)}
+          href={source(DEPLOYMENT.escrow)}
           target="_blank"
           rel="noopener"
           className="transition-colors hover:text-foreground"
         >
-          OutcomeEscrow · {DEPLOYMENT.escrow}
+          OutcomeEscrow · {DEPLOYMENT.escrow} · verified
         </a>
       </div>
     </footer>

@@ -19,12 +19,15 @@ module.exports = {
     },
   },
   /*
-   * Sourcify needs no API key, which matters here: ETHERSCAN_API_KEY is empty
-   * and a contract nobody can read the source of is a contract nobody can
-   * check. Etherscan surfaces Sourcify matches too.
+   * Off, because hardhat-verify still calls Sourcify's v1 API, which is in a
+   * scheduled brownout until 2027 and 503s every time -- making a successful
+   * Etherscan verification exit non-zero and look broken.
+   *
+   * Sourcify verification still happens, via scripts/verify-sourcify.mjs, which
+   * posts to v2 directly and needs no API key at all.
    */
   sourcify: {
-    enabled: true,
+    enabled: false,
   },
   etherscan: {
     apiKey: process.env.ETHERSCAN_API_KEY,

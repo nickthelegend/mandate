@@ -177,10 +177,11 @@ node --experimental-strip-types packages/sdk/examples/run-agent.ts
 
 | Contract | Address | Source |
 |---|---|---|
-| `OutcomeEscrow` | [`0x0ED9d123…dC3B`](https://sepolia.etherscan.io/address/0x0ED9d1235cB9FD080D687FD978a38d972a34dC3B) | [verified](https://repo.sourcify.dev/11155111/0x0ED9d1235cB9FD080D687FD978a38d972a34dC3B) |
-| `USDCx` (EIP-3009) | [`0x0d864A62…CF13`](https://sepolia.etherscan.io/address/0x0d864A625c280F7f9B9AD024d12F94f5D6DCCF13) | [verified](https://repo.sourcify.dev/11155111/0x0d864A625c280F7f9B9AD024d12F94f5D6DCCF13) |
+| `OutcomeEscrow` | [`0x0ED9d123…dC3B`](https://sepolia.etherscan.io/address/0x0ED9d1235cB9FD080D687FD978a38d972a34dC3B) | [Etherscan](https://sepolia.etherscan.io/address/0x0ED9d1235cB9FD080D687FD978a38d972a34dC3B#code) · [Sourcify](https://repo.sourcify.dev/11155111/0x0ED9d1235cB9FD080D687FD978a38d972a34dC3B) |
+| `USDCx` (EIP-3009) | [`0x0d864A62…CF13`](https://sepolia.etherscan.io/address/0x0d864A625c280F7f9B9AD024d12F94f5D6DCCF13) | [Etherscan](https://sepolia.etherscan.io/address/0x0d864A625c280F7f9B9AD024d12F94f5D6DCCF13#code) · [Sourcify](https://repo.sourcify.dev/11155111/0x0d864A625c280F7f9B9AD024d12F94f5D6DCCF13) |
 
-Both are `exact_match` on Sourcify — runtime and creation bytecode. Re-check with
+Verified on both, and `exact_match` on Sourcify — runtime *and* creation
+bytecode. Re-check either with `npx hardhat verify` or, with no API key at all,
 `node contracts/scripts/verify-sourcify.mjs`.
 
 | What was proven | Transaction |
@@ -257,12 +258,6 @@ Two suites exist because of bugs this build actually hit:
 - **The gateway's facilitator is its own.** It settles EIP-3009 directly rather
   than calling CDP's facilitator, which is Base-mainnet-only. Same scheme, same
   wire format, different submitter.
-- **Verified on Sourcify, not Etherscan.** `ETHERSCAN_API_KEY` is empty in
-  `.env`, and `hardhat verify`'s Sourcify path still speaks the v1 API, which is
-  in a brownout until 2027. `scripts/verify-sourcify.mjs` posts to v2 directly
-  instead — both contracts are `exact_match` on runtime *and* creation bytecode,
-  and Etherscan surfaces Sourcify matches. Adding a free Etherscan key would
-  additionally give the Etherscan-native read/write tabs.
 - **MPP is untested here.** KeeperHub's agentic wallet hardcodes Tempo testnet
   as chain `4218`, which does not exist; Moderato is `42431`. A passing test
   asserts the wrong value, so CI defends it. Written up with a patch in the
