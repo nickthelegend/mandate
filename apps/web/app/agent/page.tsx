@@ -35,6 +35,7 @@ type Cycle = {
   claimTransactionHash: string;
   agentAddress: string;
   reports: Report[];
+  declinedOthers: number;
 };
 
 export default function AgentPage() {
@@ -124,6 +125,14 @@ export default function AgentPage() {
               <dd className="break-all">{cycle.agentAddress}</dd>
             </dl>
           </div>
+
+          {cycle.declinedOthers > 0 && (
+            <p className="font-mono text-xs text-muted-foreground">
+              It also looked at {cycle.declinedOthers} older intent
+              {cycle.declinedOthers === 1 ? "" : "s"} and declined {cycle.declinedOthers === 1 ? "it" : "them"} —
+              it will not take money for work whose task it cannot reconstruct.
+            </p>
+          )}
 
           {cycle.reports.length === 0 && (
             <p className="rounded-xl border border-border/60 p-5 font-mono text-sm text-muted-foreground">

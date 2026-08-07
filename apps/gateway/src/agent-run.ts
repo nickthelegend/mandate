@@ -50,6 +50,15 @@ export type AgentCycle = {
     outcome?: string;
     reason: string;
   }[];
+  /**
+   * Older intents the agent looked at and declined this pass.
+   *
+   * Reported as a count rather than dropped, because declining is a real
+   * behaviour worth knowing about -- the agent will not take money for work it
+   * cannot describe -- but a demo that listed every stale intent from previous
+   * runs would bury the one the visitor just created.
+   */
+  declinedOthers: number;
 };
 
 export async function runAgentCycle(opts: {
@@ -91,11 +100,14 @@ export async function runAgentCycle(opts: {
     lookbackBlocks: 200,
   });
 
+  const mine = reports.filter((r) => r.intentId.toLowerCase() === intentId.toLowerCase());
+
   return {
     task,
     intentId,
     claimTransactionHash: claim.hash,
     agentAddress: wallet.address,
-    reports,
+    reports: mine,
+    declinedOthers: reports.length - mine.length,
   };
 }
