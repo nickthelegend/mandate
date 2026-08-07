@@ -1,31 +1,42 @@
 # Outcome
 
-**x402 pays per request. Nobody checks the request was served, or that the money
-moved. Outcome is the settlement layer that reads the receipt.**
+**KeeperHub executes. Outcome is what checks the execution did what it claimed.**
 
-An SDK and an MCP server your agent installs. Agents Onchain 2026 · Sepolia ·
-executes through KeeperHub.
+An SDK and an MCP server your agent installs. Agents Onchain 2026 · Sepolia.
 
 ```bash
 npm i outcome-sdk      # https://npmjs.com/package/outcome-sdk
 npx outcome-mcp        # https://npmjs.com/package/outcome-mcp
 ```
 
-**[nickthelegend.github.io/outcome](https://nickthelegend.github.io/outcome/)** —
-paste any Sepolia transaction and the verdict is computed in your own browser.
+**[Run the demo in your browser](https://nickthelegend.github.io/outcome/demo/)** — buy the same
+article twice, from an honest facilitator and a lying one. Both return
+`success: true`. Only one of them pays. Every click is a real Sepolia
+transaction.
 
 ---
 
+## Three things nobody else has
+
+| | |
+|---|---|
+| **An agent with no private key and no ETH** | It signs nothing. KeeperHub owns the only signer, and the wallet holding the funds has `0.0 ETH` — gas is sponsored end to end. |
+| **A merchant accepting x402 with no gas** | Settlement runs through KeeperHub's execute API, so accepting agent payments costs no ETH and needs no top-ups. |
+| **A payment rail that can prove it was paid** | Release requires a receipt read, not a status byte. And since the admin's verifier role was revoked, KeeperHub is the **only** address that can move escrowed funds. |
+
 ## The problem
 
-Agent payment rails settle on a promise.
+**Execution is not settlement, and almost nothing checks the difference.**
 
-x402 releases funds when a facilitator returns a success response and the buyer
-is expected to trust it. ERC-8004's `proofOfPayment` field is optional and
-unenforced. KeeperHub's own `workflow_payments` table has no transaction-hash
-column at all, and its MPP path verifies an HMAC locally and executes without
-touching the chain. In every case the evidence for "you were paid" is somebody's
-word.
+KeeperHub's own `workflow_payments` table has no transaction-hash column at all,
+and its MPP path verifies an HMAC locally and executes without touching the
+chain. x402 releases funds when a facilitator returns success and the buyer is
+expected to trust it. ERC-8004's `proofOfPayment` field is optional and
+unenforced. In every case the evidence for "you were paid" is somebody's word.
+
+That is not a criticism from outside. Working on this produced merged fixes to
+KeeperHub's own idempotency semantics and API docs, and the gap this fills is
+the one that reading their execution layer closely made obvious.
 
 **A status byte is not evidence.** `status: 0x1` means the EVM did not revert.
 It says nothing about whether value moved. A call to an address with no code
@@ -181,6 +192,24 @@ What that buys, per settlement:
 | **Idempotency keys** | one per attempt, derived from the intent and the verdict, so a refund can never replay as a release |
 | **Gas sponsorship** | settlements are relayed by `0xA17cb6ad…` through a smart account; the verifier holds no ETH and its nonce never moves |
 | **Execution status** | `executeAndConfirm` polls to a terminal state rather than assuming the send worked |
+
+## The agent holds no key
+
+```bash
+node --experimental-strip-types packages/sdk/examples/run-agent.ts
+```
+
+A payer posts a job and walks away. The agent finds it, does the work, hands the
+verifier a transaction hash — never a verdict — and gets paid.
+
+It signs nothing. Work transaction
+[`0xef3a8f88`](https://sepolia.etherscan.io/tx/0xef3a8f8806cce8f4cc98a286a37063ca68386862dd70c3953b77bfb92123409a)
+was submitted by KeeperHub's relayer, and the executor holding the tokens has
+`0.0 ETH`. An unattended process that must guard a private key needs somewhere
+safe to keep it, and an unattended process does not have somewhere safe.
+
+It can also lose. If the work does not land the payer is refunded and the agent
+earns nothing — the intended branch, not an error path.
 
 ## The loop
 

@@ -1,118 +1,147 @@
-# 60-second demo
+# 3-minute demo
 
-One idea, shown twice. **A payment rail that only reads a status byte can be
-told it was paid when it was not.** Everything below is live on Sepolia.
+**One line to open with:** *KeeperHub executes. Nobody checks the execution did
+what it claimed.*
 
-Have two terminals open and the site loaded before you start recording.
+Everything below is live. Nothing is a recording.
 
 ---
 
 ## Before you hit record
 
-```bash
-cd outcome && npm install
-cp .env.example .env        # SEPOLIA_RPC_URL, DEPLOYER_PRIVATE_KEY, KEEPERHUB_API_KEY
-npm run build
-npm start --prefix apps/gateway      # leave this running in terminal 2
-```
+Open these three tabs:
 
-Open `https://nickthelegend.github.io/outcome/` in a browser tab.
+1. `https://nickthelegend.github.io/outcome/demo/`
+2. `https://nickthelegend.github.io/outcome/explorer/`
+3. A terminal in the repo, with `.env` filled in
+
+Sanity check the gateway is warm — Railway sleeps idle services and a cold start
+mid-demo is the one thing that will make this look broken:
+
+```bash
+curl https://gateway-production-944e.up.railway.app/health
+```
 
 ---
 
-## 0:00 — 0:12 · The claim
+## 0:00 — 0:25 · The gap
 
-> "x402 pays per request. When the facilitator says the payment succeeded, the
-> server believes it. Nobody checks the transaction."
+> "KeeperHub executes transactions for agents. What nothing in the stack does is
+> check that the execution actually did what it claimed."
 
-Show the landing page. Point at the live counters — they are read from Sepolia
-in the browser, not served by a backend.
+> "Their own `workflow_payments` table has no transaction-hash column. The MPP
+> path verifies an HMAC locally and never touches the chain. x402 releases funds
+> when a facilitator says success. In every case the evidence for *you were
+> paid* is somebody's word."
 
-## 0:12 — 0:30 · An honest payment
+Say the line that makes it concrete:
 
-Terminal 1:
+> "A transaction can mine, return `status: 0x1`, emit no `Transfer`, pay nobody
+> — and satisfy every check any of these actually perform."
 
-```bash
-npm run pay --prefix apps/gateway
-```
+## 0:25 — 1:10 · Show it, don't say it
 
-> "A real x402 handshake. The client gets a 402, signs an EIP-3009
-> authorisation, and never sends a transaction itself."
+Tab 1. Click **Pay honestly**.
 
-Point at the last three lines: **HTTP 200**, the Etherscan link, and
-`observed 1000000`. Say:
+> "Real x402. The payer signs an EIP-3009 authorisation and sends no
+> transaction. KeeperHub settles it — sponsored, so the merchant needs no ETH."
 
-> "The article came back — because the receipt actually shows the money
-> arriving."
+Point at **HTTP 200**, the Etherscan link, `chain actually moved: 1000000`.
 
-## 0:30 — 0:48 · The same flow, paying nobody
+Now click **Pay with a lying facilitator**.
 
-```bash
-npm run pay:lying --prefix apps/gateway
-```
+> "Identical protocol. This facilitator submits an `approve` instead — it mines,
+> it emits a log, it costs nothing, and it moves no money. Then it reports
+> `success: true`."
 
-> "Identical protocol. The facilitator submits an `approve` instead — it mines,
-> it emits a log, it moves nothing — and reports `success: true`. That is a
-> legal x402 settlement response."
-
-Point at the output:
+Let the trace land, then point at the two lines together:
 
 ```
-facilitator claimed success : true
-actually observed           : 0
-reason : no Transfer of 0x0d864A62… to 0x…dEaD in 1 log(s)
+facilitator claimed    true
+chain actually moved   0
 ```
 
-> "**HTTP 402. The article is withheld.** A stock x402 server would have handed
-> it over for free."
+> "**HTTP 402. The article is withheld.** A stock x402 server hands it over."
 
-## 0:48 — 0:60 · It's a package, not a demo
+**This is the whole pitch. Do not rush it.**
 
-```bash
-npx -y outcome-mcp
-```
+## 1:10 — 1:50 · The agent has no wallet
 
-> "It's on npm. `outcome-sdk` and `outcome-mcp` — six tools over stdio, no
-> configuration, and every read-only tool works without a credential. Any agent
-> can install this and stop taking payment on trust."
-
-End on the `/x402` page showing both transactions side by side.
-
----
-
-## If you have another 30 seconds
-
-**The escrow loop, unattended:**
+Terminal:
 
 ```bash
 node --experimental-strip-types packages/sdk/examples/run-agent.ts
 ```
 
-A payer posts a job and walks away. The agent finds it, does the work on chain,
-and hands the verifier a transaction hash — never a verdict. It gets paid only
-because the transfer was proven.
+> "A payer posts a job and walks away. The agent finds it, does the work, and
+> gets paid — and it holds no private key and no ETH."
 
-**Verify anything, in the browser:** open `/verify`, click *"Mined, moved
-nothing"*, hit **Read the receipt**. No backend answers that question.
+While it runs:
+
+> "It doesn't get to declare its own work complete either. It hands over a
+> transaction hash, and the verifier reads the receipt and decides. It can lose:
+> if the work doesn't land, the payer is refunded and the agent earns nothing."
+
+## 1:50 — 2:20 · Only KeeperHub can move the money
+
+```bash
+node --experimental-strip-types -e '
+import { JsonRpcProvider, Contract } from "ethers";
+const p = new JsonRpcProvider(process.env.SEPOLIA_RPC_URL, 11155111);
+const c = new Contract("0x0ED9d1235cB9FD080D687FD978a38d972a34dC3B",
+  ["function isVerifier(address) view returns (bool)"], p);
+console.log("KeeperHub:", await c.isVerifier("0x7a4FdD120a17e5390D87565e74a3Fbf80dF05FC1"));
+console.log("deployer :", await c.isVerifier("0x7A2E11B3ECEBaB8Ea46966eDaDD4092583809b67"));'
+```
+
+> "The contract holds the money. KeeperHub is the only key that opens it — I
+> revoked my own. Calling `release` as the admin reverts. And what tells
+> KeeperHub to open it is a receipt read, not a person."
+
+## 2:20 — 3:00 · It's infrastructure, not a demo
+
+```bash
+npx -y outcome-mcp
+```
+
+> "It's on npm. `outcome-sdk` and `outcome-mcp`. Six tools over stdio, zero
+> configuration, and every read-only tool works without a credential — so anyone
+> can verify any payment without asking permission."
+
+Close on:
+
+> "Building this also produced merged fixes to KeeperHub's own idempotency
+> semantics and API docs. The gap I'm filling is the one that reading their
+> execution layer closely made obvious."
 
 ---
 
-## Numbers, if asked
+## If asked
 
-| | |
-|---|---|
-| Tests | 81 — 21 contract, 54 SDK, 6 MCP over stdio |
-| Packages | [`outcome-sdk`](https://npmjs.com/package/outcome-sdk), [`outcome-mcp`](https://npmjs.com/package/outcome-mcp) |
-| Escrow | [`0x0ED9d123…dC3B`](https://sepolia.etherscan.io/address/0x0ED9d1235cB9FD080D687FD978a38d972a34dC3B) |
-| USDCx (EIP-3009) | [`0x0d864A62…CF13`](https://sepolia.etherscan.io/address/0x0d864A625c280F7f9B9AD024d12F94f5D6DCCF13) |
-| Console | [nickthelegend.github.io/outcome](https://nickthelegend.github.io/outcome/) |
+**"Isn't the lying facilitator contrived?"** — It submits an `approve`. That is
+the cheapest possible thing a real facilitator could do to collect fees without
+settling, and the protocol cannot tell the difference. The point is not that
+facilitators are malicious; it is that x402 has no way to find out.
 
 **"Why no AI judge?"** — Every comparable project (Clawback, internet-court,
 x402r) resolves disputes with an LLM. When the chain already knows whether value
 moved, adjudication is a lookup, not an opinion. There is no model in the money
 path.
 
-**"Isn't the lying facilitator contrived?"** — It submits an `approve`. That is
-the cheapest possible thing a real facilitator could do to collect fees without
-settling, and the protocol cannot tell the difference. The point is not that
-facilitators are malicious; it is that x402 has no way to find out.
+**"Why Sepolia?"** — x402's reference deployment is Base mainnet with real USDC.
+The organiser confirmed testnet is accepted. `NETWORK_CHAIN_IDS` already maps
+Base and Base Sepolia; the verification layer is indifferent to which chain
+carries the value.
+
+---
+
+## Numbers
+
+| | |
+|---|---|
+| Tests | 81 — 21 contract, 54 SDK, 6 MCP over stdio |
+| Packages | [`outcome-sdk`](https://npmjs.com/package/outcome-sdk), [`outcome-mcp`](https://npmjs.com/package/outcome-mcp) |
+| Escrow | [`0x0ED9d123…dC3B`](https://sepolia.etherscan.io/address/0x0ED9d1235cB9FD080D687FD978a38d972a34dC3B#code) — verified |
+| USDCx (EIP-3009) | [`0x0d864A62…CF13`](https://sepolia.etherscan.io/address/0x0d864A625c280F7f9B9AD024d12F94f5D6DCCF13#code) — verified |
+| Console | [nickthelegend.github.io/outcome](https://nickthelegend.github.io/outcome/) |
+| Gateway | `gateway-production-944e.up.railway.app` |
