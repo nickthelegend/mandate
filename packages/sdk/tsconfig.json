@@ -1,5 +1,14 @@
 {
   "extends": "./tsconfig.base.json",
-  "compilerOptions": { "noEmit": true },
-  "include": ["src", "test", "examples"]
+  "compilerOptions": {
+    "noEmit": true,
+    /*
+     * The emit configs set `module` themselves; this one covers test/ and
+     * examples/ too, which use top-level await and import.meta and are run by
+     * node directly rather than compiled.
+     */
+    "module": "ESNext",
+    "types": ["node"]
+  },
+  "include": ["src", "test", "examples", "scripts"]
 }

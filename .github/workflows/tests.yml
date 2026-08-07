@@ -1,0 +1,54 @@
+# Every test, on every push.
+#
+# Three suites with genuinely different failure modes, so they run as separate
+# steps rather than one command -- a red job should say which layer broke
+# without anyone opening the log.
+#
+# Nothing here needs a credential or a network. The contract tests run against
+# an in-process Hardhat chain, and the SDK and MCP suites are offline by
+# construction: the receipt verifier is a pure function over a receipt, which is
+# most of why it was written that way. The live Sepolia flows are exercised by
+# hand and their transaction hashes are in the README.
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      # The MCP stdio suite spawns the built binary, and the web app imports the
+      # SDK by name, so the workspace has to be built before anything is tested.
+      - name: Build packages
+        run: npm run build
+
+      - name: Contracts
+        run: npm run test:contracts
+
+      - name: SDK
+        run: npm run test -w outcome-sdk
+
+      - name: MCP over stdio
+        run: npm run test -w outcome-mcp
+
+      # The published entry points claim to be browser-safe. This is the check
+      # that keeps that true.
+      - name: Entry point boundaries
+        run: node packages/sdk/scripts/check-entrypoints.mjs
+        working-directory: packages/sdk
+
+      - name: Typecheck
+        run: npm run typecheck

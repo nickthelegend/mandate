@@ -9,7 +9,7 @@
   "scripts": {
     "build": "npm run build -w outcome-sdk && npm run build -w outcome-mcp",
     "test": "npm run test -w outcome-sdk && npm run test -w outcome-mcp",
-    "typecheck": "npm run typecheck -w outcome-sdk && npm run typecheck -w outcome-mcp",
+    "typecheck": "npm run typecheck -w outcome-sdk && npm run typecheck -w outcome-mcp && npm run typecheck -w outcome-gateway",
     "test:contracts": "cd contracts && npx hardhat test"
   },
   "devDependencies": {
