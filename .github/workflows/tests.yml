@@ -55,7 +55,7 @@ jobs:
       # The published entry points claim to be browser-safe. This is the check
       # that keeps that true.
       - name: Entry point boundaries
-        run: node packages/sdk/scripts/check-entrypoints.mjs
+        run: node scripts/check-entrypoints.mjs
         working-directory: packages/sdk
 
       - name: Typecheck
