@@ -8,9 +8,8 @@
  * success has not demonstrated anything.
  */
 import { JsonRpcProvider, Contract, Wallet, keccak256, toUtf8Bytes, parseUnits } from "ethers";
-import { KeeperHubClient } from "./keeperhub/client.ts";
-import { verifyTransfer } from "./verify.ts";
-import { settle } from "./settle.ts";
+import { verifyTransfer } from "outcome-sdk";
+import { KeeperHubClient, settle } from "outcome-sdk/node";
 
 const RPC = process.env.SEPOLIA_RPC_URL!;
 const ESCROW = "0x0ED9d1235cB9FD080D687FD978a38d972a34dC3B";

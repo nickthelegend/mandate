@@ -75,6 +75,10 @@ function check(name, entry, { forbid, require: required }) {
 console.log("checking built entrypoints");
 check(".", "dist/esm/index.js", { forbid: ["node:", "react"], require: ["ethers"] });
 check("./react", "dist/esm/react.js", { forbid: ["node:"], require: ["react"] });
+// x402 imports only types, so it emits no runtime edges at all -- hence no
+// `require` here. The rule that matters is that a buyer checking whether they
+// were charged for nothing can do it in a browser.
+check("./x402", "dist/esm/x402.js", { forbid: ["node:", "react"], require: [] });
 
 if (failures.length) {
   console.error("\nentrypoint check FAILED");

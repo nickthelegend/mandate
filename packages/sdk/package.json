@@ -1,6 +1,6 @@
 {
   "name": "outcome-sdk",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Pay agents for verified results, not attempts. Reads the receipt instead of trusting the status byte: on-chain idempotency, escrow, and execution diagnosis for agent payments.",
   "license": "MIT",
   "author": "Outcome",
@@ -49,6 +49,12 @@
       "import": "./dist/esm/react.js",
       "require": "./dist/cjs/react.js",
       "default": "./dist/esm/react.js"
+    },
+    "./x402": {
+      "types": "./dist/types/x402.d.ts",
+      "import": "./dist/esm/x402.js",
+      "require": "./dist/cjs/x402.js",
+      "default": "./dist/esm/x402.js"
     },
     "./package.json": "./package.json"
   },

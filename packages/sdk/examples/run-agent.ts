@@ -2,8 +2,7 @@
  * The agent, live. A payer posts a job and walks away; the agent does the rest.
  */
 import { JsonRpcProvider, Wallet, Contract, parseUnits } from "ethers";
-import { KeeperHubClient } from "./keeperhub/client.ts";
-import { work, jobId, postJob } from "./agent.ts";
+import { KeeperHubClient, work, jobId, postJob } from "outcome-sdk/node";
 
 const CHAIN = 11155111;
 const ESCROW = "0x0ED9d1235cB9FD080D687FD978a38d972a34dC3B";

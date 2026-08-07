@@ -1,0 +1,21 @@
+{
+  "name": "outcome-gateway",
+  "version": "0.1.0",
+  "private": true,
+  "description": "An x402 resource server that checks it was actually paid.",
+  "type": "module",
+  "scripts": {
+    "start": "node --experimental-strip-types src/server.ts",
+    "pay": "node --experimental-strip-types src/client.ts",
+    "pay:lying": "node --experimental-strip-types src/client.ts lying",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "ethers": "^6.17.0",
+    "outcome-sdk": "^0.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.1",
+    "typescript": "^5.9.3"
+  }
+}
