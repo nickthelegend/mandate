@@ -30,6 +30,14 @@ jobs:
 
       - run: npm ci
 
+      # contracts/ is deliberately outside the workspace -- Hardhat pins its own
+      # ethers and toolchain, and hoisting those into the SDK's tree caused
+      # version conflicts. The cost is that it needs its own install, and
+      # without one `npx hardhat` fetches a non-local copy and refuses to run.
+      - name: Install contract toolchain
+        run: npm ci
+        working-directory: contracts
+
       # The MCP stdio suite spawns the built binary, and the web app imports the
       # SDK by name, so the workspace has to be built before anything is tested.
       - name: Build packages
