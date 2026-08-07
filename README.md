@@ -95,7 +95,7 @@ const { proven, reason } = await outcome.verify({ // did it actually pay?
 });
 ```
 
-Three entry points, and the split is the position rather than packaging
+Four entry points, and the split is the position rather than packaging
 convenience — the party being asked to trust a payment is the one who most needs
 to check it, so checking must not require a server or a key:
 
@@ -103,6 +103,7 @@ to check it, so checking must not require a server or a key:
 |---|---|---|
 | `outcome-sdk` | anywhere | read and verify. No `node:` builtins, no React, no credential. |
 | `outcome-sdk/react` | React 18+ | `OutcomeProvider`, `useIntents`, `useIntent`, `useEscrowed`, `useVerify` |
+| `outcome-sdk/x402` | anywhere | the x402 wire format, plus the settlement check the protocol lacks |
 | `outcome-sdk/node` | Node | settlement through KeeperHub, the worker agent, the audit trail |
 
 A build step walks the emitted modules and fails if `node:` or React ever

@@ -54,6 +54,33 @@ export default function DocsPage() {
         </p>
       </Section>
 
+      <Section title="Guarding an x402 endpoint">
+        <p>
+          x402 ends at <em>&ldquo;the facilitator reported success&rdquo;</em>. One call closes it —
+          read the transaction the facilitator named and confirm the money reached{" "}
+          <code className="font-mono text-foreground/80">payTo</code> before you serve anything.
+        </p>
+        <pre className="overflow-x-auto rounded-xl border border-border/60 bg-secondary/20 p-4 font-mono text-xs leading-relaxed text-foreground/85">
+{`import { verifySettlement } from "outcome-sdk/x402";
+
+const verdict = await verifySettlement(outcome, {
+  requirements,   // the PaymentRequirements you quoted
+  settlement,     // the SettlementResponse it handed back
+});
+
+if (!verdict.proven) return respond402(verdict.reason);
+return serve(resource);`}
+        </pre>
+        <p>
+          The same entry exports the wire format with the specification&rsquo;s exact field names:{" "}
+          <code className="font-mono text-foreground/80">paymentRequired</code>,{" "}
+          <code className="font-mono text-foreground/80">encodePaymentHeader</code>,{" "}
+          <code className="font-mono text-foreground/80">decodePaymentHeader</code>, and the{" "}
+          <code className="font-mono text-foreground/80">PaymentRequirements</code> /{" "}
+          <code className="font-mono text-foreground/80">SettlementResponse</code> types.
+        </p>
+      </Section>
+
       <Section title="The six tools">
         <div className="divide-y divide-border/50 overflow-hidden rounded-xl border border-border/60">
           {TOOLS.map(([name, desc]) => (
