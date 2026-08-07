@@ -18,6 +18,14 @@ module.exports = {
       chainId: 11155111,
     },
   },
+  /*
+   * Sourcify needs no API key, which matters here: ETHERSCAN_API_KEY is empty
+   * and a contract nobody can read the source of is a contract nobody can
+   * check. Etherscan surfaces Sourcify matches too.
+   */
+  sourcify: {
+    enabled: true,
+  },
   etherscan: {
     apiKey: process.env.ETHERSCAN_API_KEY,
   },
