@@ -157,6 +157,31 @@ exists because the `exact` scheme needs EIP-3009 and `TestUSDC` is a plain
 ERC-20 — demonstrating x402 against it would have meant inventing a scheme,
 which demonstrates nothing.
 
+## What KeeperHub does here
+
+Every settlement runs through KeeperHub's execute API, and since the admin's
+verifier role was revoked ([`0xe5e25335`](https://sepolia.etherscan.io/tx/0xe5e25335aa323c837fa91807058dbd0c5b66b1eb76673fb33648c3b2c0999ae3)),
+KeeperHub's executing address is the **only** address that can move escrowed
+funds. The deployer cannot. That is checkable on chain:
+
+```
+isVerifier(0x7a4FdD120a17e5390D87565e74a3Fbf80dF05FC1)  true   <- KeeperHub
+isVerifier(0x7A2E11B3ECEBaB8Ea46966eDaDD4092583809b67)  false  <- deployer/admin
+```
+
+Calling `release` as the admin now reverts `NotVerifier`. The contract holds the
+money; KeeperHub is the only key that opens it; and what tells KeeperHub to open
+it is a receipt read, not a person.
+
+What that buys, per settlement:
+
+| KeeperHub feature | Where it lands |
+|---|---|
+| **Simulation before send** | `assertWouldSucceed` runs first, so a settlement that would revert never spends gas or burns an attempt |
+| **Idempotency keys** | one per attempt, derived from the intent and the verdict, so a refund can never replay as a release |
+| **Gas sponsorship** | settlements are relayed by `0xA17cb6ad…` through a smart account; the verifier holds no ETH and its nonce never moves |
+| **Execution status** | `executeAndConfirm` polls to a terminal state rather than assuming the send worked |
+
 ## The loop
 
 ```
