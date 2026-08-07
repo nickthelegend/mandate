@@ -47,11 +47,21 @@ export type Async<T> = {
 };
 
 /**
- * Run an async read, cancelling stale results.
+ * How long a read may hang before it is reported as a failure.
  *
- * The guard matters: without it a slow first request can land after a fast
- * second one and overwrite it, so a dashboard shows data for an escrow the user
- * already navigated away from.
+ * A throttled public RPC does not reject -- it stops answering. Without a
+ * deadline the promise never settles, `loading` never clears, and the page sits
+ * on a spinner forever with nothing in the console. That is strictly worse than
+ * an error, because an error can be retried and a spinner cannot be diagnosed.
+ */
+const READ_TIMEOUT_MS = 20_000;
+
+/**
+ * Run an async read, cancelling stale results and refusing to hang.
+ *
+ * The staleness guard matters: without it a slow first request can land after a
+ * fast second one and overwrite it, so a dashboard shows data for an escrow the
+ * user already navigated away from.
  */
 function useAsync<T>(run: () => Promise<T>, deps: unknown[]): Async<T> {
   const [data, setData] = useState<T>();
@@ -63,19 +73,32 @@ function useAsync<T>(run: () => Promise<T>, deps: unknown[]): Async<T> {
   useEffect(() => {
     const ticket = ++latest.current;
     setLoading(true);
-    run().then(
+
+    let timer: ReturnType<typeof setTimeout>;
+    const deadline = new Promise<never>((_, reject) => {
+      timer = setTimeout(
+        () => reject(new Error("the RPC did not answer in time — it may be rate limiting this page")),
+        READ_TIMEOUT_MS
+      );
+    });
+
+    Promise.race([run(), deadline]).then(
       (v) => {
+        clearTimeout(timer);
         if (ticket !== latest.current) return;
-        setData(v);
+        setData(v as T);
         setError(undefined);
         setLoading(false);
       },
       (e: unknown) => {
+        clearTimeout(timer);
         if (ticket !== latest.current) return;
         setError(e instanceof Error ? e.message : String(e));
         setLoading(false);
       }
     );
+
+    return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [...deps, nonce]);
 

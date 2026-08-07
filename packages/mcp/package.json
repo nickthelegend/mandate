@@ -1,6 +1,6 @@
 {
   "name": "outcome-mcp",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "MCP server that lets an agent verify it was actually paid: reads the receipt instead of trusting the status byte, with on-chain idempotency, escrow settlement and execution diagnosis.",
   "license": "MIT",
   "author": "Outcome",
@@ -58,7 +58,7 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
     "ethers": "^6.17.0",
-    "outcome-sdk": "^0.2.0",
+    "outcome-sdk": "^0.3.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {

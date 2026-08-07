@@ -260,57 +260,73 @@ export class OutcomeClient {
    * Assembled from events rather than a database on purpose: a dashboard for a
    * project about verification should be checkable against the chain by anyone
    * reading it, not trusted because a server said so.
+   *
+   * One `eth_getLogs` with the three topics OR'd together, rather than three
+   * calls in parallel. That is not a micro-optimisation. Three simultaneous
+   * log queries is a burst, public RPCs throttle bursts, and a throttled
+   * request does not fail -- it hangs, with no timeout, forever. The deployed
+   * dashboard sat on "reading the chain…" permanently because the third query
+   * never came back while the first two returned fine.
    */
   async listIntents(opts: { fromBlock?: number; toBlock?: number } = {}): Promise<IntentRecord[]> {
-    const c = this.contract();
+    const iface = this.contract().interface;
     const head = opts.toBlock ?? (await this.provider.getBlockNumber());
     const from = opts.fromBlock ?? Math.max(0, head - 45_000);
 
-    const [claimed, released, refunded] = await Promise.all([
-      c.queryFilter(c.filters.Claimed(), from, head),
-      c.queryFilter(c.filters.Released(), from, head),
-      c.queryFilter(c.filters.Refunded(), from, head),
-    ]);
+    const logs = await this.provider.getLogs({
+      address: this.escrow,
+      topics: [["Claimed", "Released", "Refunded"].map((n) => iface.getEvent(n)!.topicHash)],
+      fromBlock: from,
+      toBlock: head,
+    });
 
-    const endings = new Map<string, { outcome: "released" | "refunded"; hash: string; reason?: string }>();
-    for (const e of released) {
-      endings.set((e as never as { args: { intentId: string } }).args.intentId, {
-        outcome: "released",
-        hash: e.transactionHash,
-        reason: "transfer verified on chain",
-      });
-    }
-    for (const e of refunded) {
-      const a = (e as never as { args: { intentId: string; reason: string } }).args;
-      endings.set(a.intentId, { outcome: "refunded", hash: e.transactionHash, reason: a.reason });
-    }
+    type Ending = { outcome: "released" | "refunded"; hash: string; reason?: string };
+    const endings = new Map<string, Ending>();
+    const claims: IntentRecord[] = [];
 
-    return claimed
-      .map((e) => {
-        const a = (e as never as {
-          args: {
-            intentId: string;
-            payer: string;
-            payee: string;
-            beneficiary: string;
-            amount: bigint;
-            refundableAt: bigint;
-          };
-        }).args;
-        const end = endings.get(a.intentId);
-        return {
-          intentId: a.intentId,
-          state: (end?.outcome ?? "open") as IntentState,
-          payer: a.payer,
-          payee: a.payee,
-          beneficiary: a.beneficiary,
-          amount: a.amount.toString(),
+    for (const log of logs) {
+      const parsed = iface.parseLog({ topics: [...log.topics], data: log.data });
+      // A log this ABI cannot read is not ours to interpret.
+      if (!parsed) continue;
+      const a = parsed.args;
+
+      if (parsed.name === "Claimed") {
+        claims.push({
+          intentId: a.intentId as string,
+          state: "open",
+          payer: a.payer as string,
+          payee: a.payee as string,
+          beneficiary: a.beneficiary as string,
+          amount: (a.amount as bigint).toString(),
           refundableAt: Number(a.refundableAt),
-          claimTransactionHash: e.transactionHash,
-          blockNumber: e.blockNumber,
-          outcome: end?.outcome,
-          outcomeTransactionHash: end?.hash,
-          reason: end?.reason,
+          claimTransactionHash: log.transactionHash,
+          blockNumber: log.blockNumber,
+        });
+      } else if (parsed.name === "Released") {
+        endings.set(a.intentId as string, {
+          outcome: "released",
+          hash: log.transactionHash,
+          reason: "transfer verified on chain",
+        });
+      } else {
+        endings.set(a.intentId as string, {
+          outcome: "refunded",
+          hash: log.transactionHash,
+          reason: a.reason as string,
+        });
+      }
+    }
+
+    return claims
+      .map((row) => {
+        const end = endings.get(row.intentId);
+        if (!end) return row;
+        return {
+          ...row,
+          state: end.outcome as IntentState,
+          outcome: end.outcome,
+          outcomeTransactionHash: end.hash,
+          reason: end.reason,
         };
       })
       .sort((x, y) => y.blockNumber - x.blockNumber);
