@@ -41,6 +41,8 @@ export type FlowResult = {
   reason: string;
   transactionHash?: string;
   submittedVia?: string;
+  /** KeeperHub's id for the settlement, when it went that way. */
+  executionId?: string;
   article?: { title: string; body: string };
 };
 
@@ -149,6 +151,7 @@ export async function runPurchase(opts: {
       reason: "transfer verified on chain",
       transactionHash: p.transaction,
       submittedVia: p.submittedVia,
+      executionId: p.executionId,
       article: { title: String(result.title), body: String(result.body) },
     };
   }

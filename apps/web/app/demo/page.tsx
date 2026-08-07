@@ -34,6 +34,7 @@ type FlowResult = {
   reason: string;
   transactionHash?: string;
   submittedVia?: string;
+  executionId?: string;
   article?: { title: string; body: string };
 };
 
@@ -146,6 +147,15 @@ export default function DemoPage() {
             <p className="mt-4 break-words font-mono text-xs leading-relaxed text-foreground/85">
               {result.reason}
             </p>
+
+            {result.executionId && (
+              <a
+                href={`/outcome/inspect/?id=${result.executionId}`}
+                className="mt-4 inline-block font-mono text-xs underline-offset-4 hover:text-foreground hover:underline"
+              >
+                open KeeperHub&rsquo;s record for this settlement &rarr;
+              </a>
+            )}
           </div>
 
           <ol className="mt-6 space-y-px overflow-hidden rounded-xl border border-border/60">

@@ -33,6 +33,7 @@ import {
 
 import { createFacilitator, type FacilitatorMode } from "./facilitator.ts";
 import { runPurchase } from "./flow.ts";
+import { runAgentCycle } from "./agent-run.ts";
 
 const PORT = Number(process.env.PORT ?? 4402);
 /** Where this server is reachable, for the self-call the demo endpoint makes. */
@@ -123,6 +124,14 @@ const json = (res: import("node:http").ServerResponse, code: number, body: unkno
 const DEMO_COOLDOWN_MS = 15_000;
 const lastDemoAt = new Map<string, number>();
 
+function clientIp(req: import("node:http").IncomingMessage): string {
+  return (
+    (req.headers["x-forwarded-for"] as string | undefined)?.split(",")[0]?.trim() ??
+    req.socket.remoteAddress ??
+    "unknown"
+  );
+}
+
 function demoAllowed(ip: string): number {
   const now = Date.now();
   const last = lastDemoAt.get(ip) ?? 0;
@@ -158,12 +167,55 @@ const server = createServer(async (req, res) => {
    * Every step is real: a real 402, a real signature, a real Sepolia
    * settlement. Nothing is replayed from a recording.
    */
-  if (url.pathname === "/demo") {
-    const ip =
-      (req.headers["x-forwarded-for"] as string | undefined)?.split(",")[0]?.trim() ??
-      req.socket.remoteAddress ??
-      "unknown";
+  /*
+   * KeeperHub's execution record, proxied.
+   *
+   * The console is a static site and must never hold an API key, so it cannot
+   * ask KeeperHub anything directly. This hands back the record unmodified:
+   * what was simulated, what was sent, whether gas was sponsored, and what it
+   * confirmed as.
+   *
+   * Read-only and unauthenticated on purpose. A settlement record is the thing
+   * a resource server is implicitly trusting when it decides to serve, and a
+   * record only the trusting party can read is not evidence.
+   */
+  if (url.pathname.startsWith("/execution/")) {
+    const id = url.pathname.slice("/execution/".length);
+    if (!kh) return json(res, 501, { error: "no KeeperHub key configured on this gateway" });
+    if (!/^[a-z0-9]{6,64}$/i.test(id)) return json(res, 400, { error: "not an execution id" });
+    try {
+      return json(res, 200, await kh.getStatus(id));
+    } catch (e: unknown) {
+      return json(res, 404, { error: e instanceof Error ? e.message : String(e) });
+    }
+  }
+
+  /*
+   * One full agent cycle: a payer posts a job and escrows, then the agent finds
+   * it, does the work and settles. Real transactions throughout.
+   *
+   * Shares the /demo cooldown budget deliberately -- an agent cycle is four
+   * on-chain transactions and is the more expensive of the two.
+   */
+  if (url.pathname === "/agent") {
+    const ip = clientIp(req);
     const waitMs = demoAllowed(ip);
+    if (waitMs > 0) {
+      return json(res, 429, {
+        error: "one run at a time, please - each one is several real transactions",
+        retryAfterSeconds: Math.ceil(waitMs / 1000),
+      });
+    }
+    if (!kh) return json(res, 501, { error: "no KeeperHub key configured on this gateway" });
+    try {
+      return json(res, 200, await runAgentCycle({ provider, wallet, kh, chainId: CHAIN_ID }));
+    } catch (e: unknown) {
+      return json(res, 500, { error: e instanceof Error ? e.message : String(e) });
+    }
+  }
+
+  if (url.pathname === "/demo") {
+    const waitMs = demoAllowed(clientIp(req));
     if (waitMs > 0) {
       return json(res, 429, {
         error: "one demo run at a time, please - each one is a real transaction",
@@ -257,6 +309,7 @@ const server = createServer(async (req, res) => {
         proof: verdict.proof,
         verifiedAgainst: "the receipt, not the facilitator",
         submittedVia: facilitator.submittedVia,
+        executionId: facilitator.lastExecutionId,
       },
     },
     { "x-payment-response": encodeSettlementHeader(settlement) }

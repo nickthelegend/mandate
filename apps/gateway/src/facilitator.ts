@@ -43,6 +43,16 @@ export type Facilitator = {
   mode: FacilitatorMode;
   /** How the settlement reached the chain, for the response to report. */
   submittedVia: "keeperhub" | "local wallet";
+  /**
+   * KeeperHub's id for the settlement, when it went that way.
+   *
+   * Worth surfacing rather than swallowing: it is the handle to the execution
+   * record -- what was simulated, what was sent, what it confirmed as -- and
+   * that record is the thing a resource server is implicitly trusting when it
+   * decides to serve. Being able to open it is the difference between a claim
+   * and a receipt.
+   */
+  lastExecutionId?: string;
   settle(payment: PaymentPayload, asset: string): Promise<SettlementResponse>;
 };
 
@@ -71,7 +81,7 @@ export function createFacilitator(opts: {
 }): Facilitator {
   const { mode, wallet, network, kh } = opts;
 
-  return {
+  const facilitator: Facilitator = {
     mode,
     submittedVia: kh ? "keeperhub" : "local wallet",
 
@@ -109,6 +119,7 @@ export function createFacilitator(opts: {
             { idempotencyKey: `x402-${a.nonce}` }
           );
 
+          facilitator.lastExecutionId = status.executionId;
           return {
             success: true,
             transaction: status.transactionHash ?? "",
@@ -151,4 +162,6 @@ export function createFacilitator(opts: {
       }
     },
   };
+
+  return facilitator;
 }
