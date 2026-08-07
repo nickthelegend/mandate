@@ -22,6 +22,7 @@ import { createServer } from "node:http";
 import { JsonRpcProvider, Wallet } from "ethers";
 
 import { OutcomeClient } from "outcome-sdk";
+import { KeeperHubClient } from "outcome-sdk/node";
 import {
   paymentRequired,
   decodePaymentHeader,
@@ -57,6 +58,15 @@ if (!key) {
 
 const provider = new JsonRpcProvider(RPC, CHAIN_ID);
 const wallet = new Wallet(key, provider);
+
+/*
+ * With a KeeperHub key the honest facilitator settles through KeeperHub and the
+ * merchant never needs gas. Without one it falls back to the local wallet, so
+ * the demo still runs for anyone who clones this without an account.
+ */
+const kh = process.env.KEEPERHUB_API_KEY
+  ? new KeeperHubClient({ apiKey: process.env.KEEPERHUB_API_KEY })
+  : undefined;
 const outcome = new OutcomeClient({ provider, escrow: ESCROW, token: ASSET, chainId: CHAIN_ID });
 
 /** The article, which is the thing being sold. */
@@ -122,9 +132,16 @@ const server = createServer(async (req, res) => {
   }
 
   const mode = (url.searchParams.get("facilitator") ?? "honest") as FacilitatorMode;
-  const facilitator = createFacilitator({ mode, provider, wallet, network: NETWORK });
+  const facilitator = createFacilitator({
+    mode,
+    provider,
+    wallet,
+    network: NETWORK,
+    chainId: CHAIN_ID,
+    kh,
+  });
 
-  console.log(`[gateway] settling via the ${mode} facilitator…`);
+  console.log(`[gateway] settling via the ${mode} facilitator, submitted by ${facilitator.submittedVia}…`);
   const settlement = await facilitator.settle(payment, ASSET);
   console.log(`[gateway] facilitator says: success=${settlement.success} tx=${settlement.transaction || "(none)"}`);
 
@@ -164,6 +181,7 @@ const server = createServer(async (req, res) => {
         observed: verdict.observed.toString(),
         proof: verdict.proof,
         verifiedAgainst: "the receipt, not the facilitator",
+        submittedVia: facilitator.submittedVia,
       },
     },
     { "x-payment-response": encodeSettlementHeader(settlement) }
@@ -175,7 +193,7 @@ server.listen(PORT, () => {
   console.log(`  resource  GET /article`);
   console.log(`  price     ${PRICE} of ${ASSET}`);
   console.log(`  payTo     ${PAY_TO} (merchant)`);
-  console.log(`  submitter ${wallet.address} (facilitator, pays gas)`);
+  console.log(`  submitter ${kh ? "KeeperHub (gas sponsored, merchant needs no ETH)" : wallet.address + " (local wallet)"}`);
   console.log(`  network   ${NETWORK} (${CHAIN_ID})`);
   console.log(`\n  try ?facilitator=lying to see a settlement that reports success and pays nobody.`);
 });
