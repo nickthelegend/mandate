@@ -22,7 +22,7 @@ import { createServer } from "node:http";
 import { JsonRpcProvider, Wallet } from "ethers";
 
 import { OutcomeClient } from "outcome-sdk";
-import { KeeperHubClient } from "outcome-sdk/node";
+import { KeeperHubClient, auditFromEnv, jobsFromEnv, type AuditStore, type JobStore } from "outcome-sdk/node";
 import {
   paymentRequired,
   decodePaymentHeader,
@@ -72,6 +72,18 @@ const kh = process.env.KEEPERHUB_API_KEY
   ? new KeeperHubClient({ apiKey: process.env.KEEPERHUB_API_KEY })
   : undefined;
 const outcome = new OutcomeClient({ provider, escrow: ESCROW, token: ASSET, chainId: CHAIN_ID });
+
+/*
+ * Persisted stores, resolved once at boot.
+ *
+ * Both were files before, and on a container a file is wiped by every redeploy.
+ * For the job board that is a correctness bug -- the agent loses the task
+ * strings and then declines perfectly good open intents forever. For the
+ * decision record it is worse: the account of why anyone was or was not paid
+ * disappears, which is the one thing this service exists to keep.
+ */
+const auditReady: Promise<AuditStore> = auditFromEnv();
+const jobsReady: Promise<JobStore> = jobsFromEnv();
 
 /** The article, which is the thing being sold. */
 const ARTICLE = {
@@ -179,6 +191,29 @@ const server = createServer(async (req, res) => {
    * a resource server is implicitly trusting when it decides to serve, and a
    * record only the trusting party can read is not evidence.
    */
+  /*
+   * The decision record, in public.
+   *
+   * KeeperHub keeps an agent-action trail and exposes no agent-reachable read:
+   * both routes are session-cookie only and no MCP tool touches it. So an agent
+   * cannot audit the service that decides whether it gets paid.
+   *
+   * This one is readable by anyone, without a credential. A record only the
+   * deciding party can read is a private note, not accountability -- and the
+   * whole argument here is that you should not have to take a payment decision
+   * on trust.
+   */
+  if (url.pathname === "/audit") {
+    const limit = Math.min(Number(url.searchParams.get("limit") ?? 50) || 50, 200);
+    try {
+      const store = await auditReady;
+      const [entries, total] = await Promise.all([store.recent(limit), store.count()]);
+      return json(res, 200, { total, returned: entries.length, entries });
+    } catch (e: unknown) {
+      return json(res, 500, { error: e instanceof Error ? e.message : String(e) });
+    }
+  }
+
   if (url.pathname.startsWith("/execution/")) {
     const id = url.pathname.slice("/execution/".length);
     if (!kh) return json(res, 501, { error: "no KeeperHub key configured on this gateway" });
@@ -208,7 +243,8 @@ const server = createServer(async (req, res) => {
     }
     if (!kh) return json(res, 501, { error: "no KeeperHub key configured on this gateway" });
     try {
-      return json(res, 200, await runAgentCycle({ provider, wallet, kh, chainId: CHAIN_ID }));
+      const [audit, jobs] = await Promise.all([auditReady, jobsReady]);
+      return json(res, 200, await runAgentCycle({ provider, wallet, kh, chainId: CHAIN_ID, audit, jobs }));
     } catch (e: unknown) {
       return json(res, 500, { error: e instanceof Error ? e.message : String(e) });
     }
@@ -275,6 +311,29 @@ const server = createServer(async (req, res) => {
   // The step x402 does not have.
   const verdict = await verifySettlement(outcome, { requirements: req402, settlement });
   console.log(`[gateway] chain says: proven=${verdict.proven} — ${verdict.reason}`);
+
+  /*
+   * Record it. This is the decision the gateway exists to make -- whether a
+   * settlement the facilitator called successful actually paid -- so it is the
+   * one most worth being able to read back later, and the one a buyer has most
+   * reason to want independently checkable.
+   *
+   * Fire-and-forget: a resource must not be withheld because the record was
+   * slow to write, and it must not be served unrecorded in silence either, so a
+   * failed write goes to stderr rather than being swallowed.
+   */
+  void auditReady
+    .then((store) =>
+      store.append({
+        at: new Date().toISOString(),
+        tool: "x402_settlement",
+        outcome: verdict.proven ? "proven" : "not_proven",
+        detail:
+          `${mode} facilitator claimed ${settlement.success}; ` +
+          `chain moved ${verdict.observed} to ${req402.payTo}. ${verdict.reason}`,
+      })
+    )
+    .catch((e: unknown) => console.error("[gateway] audit write failed:", e));
 
   if (!verdict.proven) {
     /*

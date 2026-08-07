@@ -13,21 +13,13 @@
  */
 
 import { Contract, Wallet, type JsonRpcProvider } from "ethers";
-import { work, jobId, postJob, type KeeperHubClient } from "outcome-sdk/node";
+import { work, jobId, type AuditStore, type JobStore, type KeeperHubClient } from "outcome-sdk/node";
 
 const ESCROW = process.env.OUTCOME_ESCROW ?? "0x0ED9d1235cB9FD080D687FD978a38d972a34dC3B";
 const TOKEN = process.env.POLARIS_USDC ?? "0x49C86277a91002c4943837bf20F6ED41976Db09F";
 const BENEFICIARY = "0x000000000000000000000000000000000000dEaD";
 const AMOUNT = 1_000_000n;
 const REFUND_WINDOW = 3600;
-
-/*
- * The job board lives on disk beside the process. Small and deliberate: an
- * intent commits to its task by hash without storing the string, so the agent
- * needs the preimage from somewhere, and a job it cannot describe is one it
- * cannot prove it did.
- */
-const JOBS = process.env.OUTCOME_JOBS ?? "/tmp/outcome-jobs.jsonl";
 
 const ESCROW_ABI = [
   "function claim(bytes32,address,address,uint256,uint64)",
@@ -66,6 +58,8 @@ export async function runAgentCycle(opts: {
   wallet: Wallet;
   kh: KeeperHubClient;
   chainId: number;
+  audit: AuditStore;
+  jobs: JobStore;
 }): Promise<AgentCycle> {
   const { provider, wallet, kh, chainId } = opts;
 
@@ -85,7 +79,7 @@ export async function runAgentCycle(opts: {
   const claim = await escrow.claim(intentId, wallet.address, BENEFICIARY, AMOUNT, REFUND_WINDOW);
   await claim.wait();
 
-  postJob(JOBS, { intentId, task, deliverTo: BENEFICIARY });
+  await opts.jobs.post({ intentId, task, deliverTo: BENEFICIARY });
 
   const reports = await work({
     provider,
@@ -94,7 +88,7 @@ export async function runAgentCycle(opts: {
     escrow: ESCROW,
     token: TOKEN,
     chainId,
-    jobsPath: JOBS,
+    jobs: opts.jobs,
     // Only this run's claim is interesting, and a wide lookback would make the
     // agent re-examine every intent it has ever settled.
     lookbackBlocks: 200,

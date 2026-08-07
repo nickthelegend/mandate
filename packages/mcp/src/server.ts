@@ -15,7 +15,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 import { JsonRpcProvider } from "ethers";
-import { createTools, KeeperHubClient } from "outcome-sdk/node";
+import { createTools, KeeperHubClient, auditFromEnv, type AuditStore } from "outcome-sdk/node";
 
 import { loadConfig, type Config } from "./config.ts";
 
@@ -47,7 +47,7 @@ function unconfiguredKeeperHub(): KeeperHubClient {
   ) as KeeperHubClient;
 }
 
-export function createServer(config: Config = loadConfig()): McpServer {
+export function createServer(config: Config = loadConfig(), audit?: AuditStore): McpServer {
   const tools = createTools(
     {
       provider: new JsonRpcProvider(config.rpcUrl, config.chainId),
@@ -58,7 +58,7 @@ export function createServer(config: Config = loadConfig()): McpServer {
       token: config.token,
       chainId: config.chainId,
     },
-    { auditPath: config.auditPath }
+    audit ? { audit } : { auditPath: config.auditPath }
   );
 
   const server = new McpServer({ name: "outcome", version: VERSION });
@@ -114,12 +114,18 @@ export function createServer(config: Config = loadConfig()): McpServer {
     "outcome_audit",
     "Read this service's decision record: what was verified, what was settled, and why. Newest last. A service that decides whether you get paid owes you an account of why.",
     { limit: z.number().optional() },
-    async (a) => json(tools.outcome_audit(a))
+    async (a) => json(await tools.outcome_audit(a))
   );
 
   return server;
 }
 
 export async function serve(config?: Config): Promise<void> {
-  await createServer(config).connect(new StdioServerTransport());
+  /*
+   * Resolved here rather than inside createServer because picking a store can
+   * mean opening a database connection, and a constructor that quietly does
+   * network I/O is a constructor nobody can test.
+   */
+  const audit = await auditFromEnv();
+  await createServer(config, audit).connect(new StdioServerTransport());
 }

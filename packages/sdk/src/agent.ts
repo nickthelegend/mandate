@@ -25,6 +25,8 @@ import { appendFileSync, existsSync, readFileSync, mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 
 import { KeeperHubClient } from "./keeperhub/client.ts";
+import { fileJobs, type Job, type JobStore } from "./jobs.ts";
+import type { AuditStore } from "./audit.ts";
 import { createTools } from "./tools.ts";
 
 const ESCROW_ABI = [
@@ -33,23 +35,17 @@ const ESCROW_ABI = [
 ];
 const ERC20 = ["function decimals() view returns (uint8)"];
 
-/**
- * What a job actually asks for.
- *
- * The intent id is `keccak(task|payee)`, so an intent commits to its task
- * string without storing it. The agent keeps the preimages it knows about; a
- * job whose task it cannot reconstruct is one it cannot verify it did, so it
- * declines rather than guessing.
- */
-export type Job = { intentId: string; task: string; deliverTo: string };
+export type { Job, JobStore } from "./jobs.ts";
+export { fileJobs, memoryJobs, mongoJobs, jobsFromEnv } from "./jobs.ts";
 
 export function jobId(task: string, payee: string): string {
   return keccak256(toUtf8Bytes(`${task}|${payee.toLowerCase()}`));
 }
 
+/** @deprecated use a JobStore. Kept so existing callers keep working. */
 export function loadJobs(path: string): Map<string, Job> {
+  if (!existsSync(path)) return new Map();
   const m = new Map<string, Job>();
-  if (!existsSync(path)) return m;
   for (const line of readFileSync(path, "utf8").split("\n").filter(Boolean)) {
     try {
       const j = JSON.parse(line) as Job;
@@ -61,9 +57,10 @@ export function loadJobs(path: string): Map<string, Job> {
   return m;
 }
 
+/** @deprecated use a JobStore. */
 export function postJob(path: string, job: Job): void {
   mkdirSync(dirname(path), { recursive: true });
-  appendFileSync(path, JSON.stringify(job) + "\n");
+  appendFileSync(path, `${JSON.stringify(job)}\n`);
 }
 
 export type AgentReport = {
@@ -96,17 +93,26 @@ export async function work(opts: {
   escrow: string;
   token: string;
   chainId: number;
-  jobsPath: string;
+  /** Where the task strings live. A path uses the file store. */
+  jobsPath?: string;
+  /** A store, when the caller has one -- a database, typically. */
+  jobs?: JobStore;
+  /** Where the agent's decisions are recorded. */
+  audit?: AuditStore;
   lookbackBlocks?: number;
 }): Promise<AgentReport[]> {
-  const { provider, agentAddress, escrow, token, jobsPath } = opts;
-  const tools = createTools({
-    provider,
-    kh: opts.kh,
-    escrow,
-    token,
-    chainId: opts.chainId,
-  });
+  const { provider, agentAddress, escrow, token } = opts;
+  const jobStore = opts.jobs ?? fileJobs(opts.jobsPath ?? ".outcome/jobs.jsonl");
+  const tools = createTools(
+    {
+      provider,
+      kh: opts.kh,
+      escrow,
+      token,
+      chainId: opts.chainId,
+    },
+    opts.audit ? { audit: opts.audit } : {}
+  );
 
   const c = new Contract(escrow, ESCROW_ABI, provider);
   const head = await provider.getBlockNumber();
@@ -124,7 +130,7 @@ export async function work(opts: {
   // units, so something has to know the scale.
   const decimals: number = await new Contract(token, ERC20, provider).decimals();
 
-  const jobs = loadJobs(jobsPath);
+  const jobs = await jobStore.all();
   const reports: AgentReport[] = [];
 
   for (const ev of claims) {

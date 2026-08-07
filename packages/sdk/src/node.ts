@@ -11,14 +11,29 @@
  * replayed as a release.
  */
 
-export { createTools, type Env, type Tools, type AuditEntry } from "./tools.ts";
+export { createTools, type Env, type Tools } from "./tools.ts";
+export {
+  jobsFromEnv,
+  fileJobs,
+  memoryJobs,
+  mongoJobs,
+  type Job,
+  type JobStore,
+} from "./jobs.ts";
+export {
+  auditFromEnv,
+  fileAudit,
+  memoryAudit,
+  mongoAudit,
+  type AuditEntry,
+  type AuditStore,
+} from "./audit.ts";
 export { settle, ESCROW_ABI, type SettleParams, type SettleResult } from "./settle.ts";
 export {
   work,
   jobId,
   loadJobs,
   postJob,
-  type Job,
   type AgentReport,
 } from "./agent.ts";
 export { KeeperHubClient } from "./keeperhub/client.ts";

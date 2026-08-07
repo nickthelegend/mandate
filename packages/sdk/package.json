@@ -1,6 +1,6 @@
 {
   "name": "outcome-sdk",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Pay agents for verified results, not attempts. Reads the receipt instead of trusting the status byte: on-chain idempotency, escrow, and execution diagnosis for agent payments.",
   "license": "MIT",
   "author": "Outcome",
@@ -86,6 +86,7 @@
     }
   },
   "dependencies": {
+    "mongodb": "^7.5.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {

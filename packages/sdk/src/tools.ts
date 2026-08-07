@@ -18,11 +18,9 @@
  * owes them a readable record of why.
  */
 
-import { appendFileSync, readFileSync, existsSync, mkdirSync } from "node:fs";
-import { dirname } from "node:path";
-
 import { JsonRpcProvider, Contract, keccak256, toUtf8Bytes } from "ethers";
 import { KeeperHubClient } from "./keeperhub/client.ts";
+import { fileAudit, memoryAudit, type AuditEntry, type AuditStore } from "./audit.ts";
 import { verifyTransfer } from "./verify.ts";
 import { diagnose, worthRescuing } from "./diagnose.ts";
 import { settle } from "./settle.ts";
@@ -43,56 +41,46 @@ export type Env = {
 };
 
 /**
- * Where the decision record lives.
+ * Where the decision record lives, by default.
  *
- * On disk, not in memory. An audit log that empties when the process restarts
- * is not an audit log -- it is a debug buffer, and the first thing anyone asks
- * it is what happened before the crash. Append-only JSON lines: one write per
- * decision, no rewrite path, so a corrupted tail costs one entry rather than
- * the file.
+ * A file when nothing else is configured, so a laptop still records its
+ * decisions. `auditFromEnv` prefers a real database when MONGODB_URI is set,
+ * because a container filesystem is ephemeral and an audit log that empties on
+ * redeploy is a debug buffer, not a record.
  */
 const AUDIT_PATH = process.env.OUTCOME_AUDIT_LOG ?? ".outcome/audit.jsonl";
 
-function readAudit(path: string): AuditEntry[] {
-  if (!existsSync(path)) return [];
-  return readFileSync(path, "utf8")
-    .split("\n")
-    .filter(Boolean)
-    .flatMap((line) => {
-      try {
-        return [JSON.parse(line) as AuditEntry];
-      } catch {
-        // A half-written final line survives a crash mid-append. Skipping it
-        // loses one decision; throwing would lose every earlier one.
-        return [];
-      }
-    });
-}
+export type { AuditEntry } from "./audit.ts";
 
-/** Append-only record of every decision, newest last. */
-export type AuditEntry = {
-  at: string;
-  tool: string;
-  intentId?: string;
-  outcome: string;
-  detail: string;
-};
+export function createTools(
+  env: Env,
+  opts: { auditPath?: string | null; audit?: AuditStore } = {}
+) {
+  /*
+   * An explicit store wins. Otherwise fall back to the legacy path option,
+   * where `null` means "keep nothing on disk" -- which only the tests want.
+   */
+  const store: AuditStore =
+    opts.audit ??
+    (opts.auditPath === null
+      ? memoryAudit()
+      : fileAudit(opts.auditPath ?? AUDIT_PATH));
 
-export function createTools(env: Env, opts: { auditPath?: string | null } = {}) {
-  // `null` opts out of persistence, which only the tests do.
-  const path = opts.auditPath === undefined ? AUDIT_PATH : opts.auditPath;
-  const audit: AuditEntry[] = path ? readAudit(path) : [];
-
+  /*
+   * Writes are fire-and-forget. A settlement must not fail because the audit
+   * database was slow, and it must not silently succeed unrecorded either --
+   * so a failed write is surfaced on stderr rather than swallowed or thrown.
+   */
   const log = (e: Omit<AuditEntry, "at">) => {
     const entry: AuditEntry = { at: new Date().toISOString(), ...e };
-    audit.push(entry);
-    if (!path) return;
-    mkdirSync(dirname(path), { recursive: true });
-    appendFileSync(path, JSON.stringify(entry) + "\n");
+    void store.append(entry).catch((err: unknown) => {
+      console.error("[outcome] audit write failed:", err instanceof Error ? err.message : err);
+    });
   };
 
   return {
-    audit,
+    /** The store, so a caller can read the record it is writing. */
+    auditStore: store,
 
     /**
      * Derive the id for a piece of work. Deliberately a pure function of the
@@ -235,9 +223,10 @@ export function createTools(env: Env, opts: { auditPath?: string | null } = {}) 
      * exposes it. A service that decides whether an agent gets paid owes it an
      * account of why.
      */
-    outcome_audit(args: { limit?: number } = {}) {
+    async outcome_audit(args: { limit?: number } = {}) {
       const limit = Math.min(args.limit ?? 20, 200);
-      return { entries: audit.slice(-limit), total: audit.length };
+      const [entries, total] = await Promise.all([store.recent(limit), store.count()]);
+      return { entries, total };
     },
   };
 }
