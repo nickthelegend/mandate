@@ -168,6 +168,25 @@ exists because the `exact` scheme needs EIP-3009 and `TestUSDC` is a plain
 ERC-20 — demonstrating x402 against it would have meant inventing a scheme,
 which demonstrates nothing.
 
+## The decision record, in public
+
+Every verdict is written down — what was checked, what was decided, why — and
+served to anyone without a credential at
+[`/ledger`](https://nickthelegend.github.io/outcome/ledger/) (`GET /audit` on the
+gateway).
+
+That second part is the point. KeeperHub keeps an agent-action trail and exposes
+no agent-reachable read: both routes are session-cookie only and no MCP tool
+touches it, so the agent whose payment is being decided cannot see the
+reasoning. A record only the deciding party can read is a private note, not
+accountability.
+
+Append-only, with no update path and no delete path, because a record you can
+edit is not one. Persisted to MongoDB rather than the container's disk — a
+record that empties on redeploy is a debug buffer. If the database is
+unreachable the service degrades to a file and says so on stderr; it does not
+stop settling, because the log must not matter more than the payment.
+
 ## What KeeperHub does here
 
 Every settlement runs through KeeperHub's execute API, and since the admin's
@@ -329,7 +348,13 @@ Two suites exist because of bugs this build actually hit:
   as chain `4218`, which does not exist; Moderato is `42431`. A passing test
   asserts the wrong value, so CI defends it. Written up with a patch in the
   companion teardown.
-- **The audit log is per-instance.** Append-only on disk and restart-safe, but
+- **The hosted ledger is on the file fallback.** MongoDB Atlas refuses the
+  connection from Railway's egress IP (TLS alert 80 — the Atlas allowlist), so
+  the deployed gateway degrades to disk. Locally it writes to Mongo and the test
+  suite proves persistence across separate connections. Adding Railway's IP, or
+  `0.0.0.0/0`, under Atlas Network Access finishes it; nothing in the code
+  changes.
+- **The audit log was per-instance.** Append-only on disk and restart-safe, but
   not shared across processes. A single verifier is the deployment this assumes.
 - **Verification covers ERC-20 transfers.** Proving arbitrary off-chain work
   needs a different oracle and is deliberately out of scope.

@@ -152,12 +152,31 @@ export async function mongoAudit(opts: {
  */
 export async function auditFromEnv(env: NodeJS.ProcessEnv = process.env): Promise<AuditStore> {
   if (env.OUTCOME_AUDIT_LOG === "-") return memoryAudit();
-  if (env.MONGODB_URI) {
-    return mongoAudit({
+
+  const path = env.OUTCOME_AUDIT_LOG ?? ".outcome/audit.jsonl";
+  if (!env.MONGODB_URI) return fileAudit(path);
+
+  try {
+    return await mongoAudit({
       uri: env.MONGODB_URI,
       db: env.OUTCOME_AUDIT_DB ?? "outcome",
       collection: env.OUTCOME_AUDIT_COLLECTION ?? "audit",
     });
+  } catch (err: unknown) {
+    /*
+     * An unreachable database degrades the record; it must not take the service
+     * down with it. A settlement rail that stops settling because its audit
+     * store is unreachable has made the log more important than the payment,
+     * which is the wrong way round.
+     *
+     * Loud on stderr rather than silent, because the difference between "no
+     * database configured" and "the database refused us" matters to whoever is
+     * operating this -- the second one usually means an IP allowlist.
+     */
+    console.error(
+      "[outcome] audit database unreachable, falling back to file store:",
+      err instanceof Error ? err.message.split("\n")[0] : err
+    );
+    return fileAudit(path);
   }
-  return fileAudit(env.OUTCOME_AUDIT_LOG ?? ".outcome/audit.jsonl");
 }

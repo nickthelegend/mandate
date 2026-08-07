@@ -102,12 +102,21 @@ export async function jobsFromEnv(
   env: NodeJS.ProcessEnv = process.env,
   fallbackPath = ".outcome/jobs.jsonl"
 ): Promise<JobStore> {
-  if (env.MONGODB_URI) {
-    return mongoJobs({
+  const path = env.OUTCOME_JOBS ?? fallbackPath;
+  if (!env.MONGODB_URI) return fileJobs(path);
+
+  try {
+    return await mongoJobs({
       uri: env.MONGODB_URI,
       db: env.OUTCOME_AUDIT_DB ?? "outcome",
       collection: env.OUTCOME_JOBS_COLLECTION ?? "jobs",
     });
+  } catch (err: unknown) {
+    // Same reasoning as the audit store: degrade, do not die.
+    console.error(
+      "[outcome] job database unreachable, falling back to file store:",
+      err instanceof Error ? err.message.split("\n")[0] : err
+    );
+    return fileJobs(path);
   }
-  return fileJobs(env.OUTCOME_JOBS ?? fallbackPath);
 }

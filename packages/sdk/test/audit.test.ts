@@ -121,3 +121,23 @@ test(
     await b.close?.();
   }
 );
+
+test("an unreachable database degrades to the file store instead of throwing", async () => {
+  /*
+   * The gateway died at boot on exactly this: Atlas refused the connection and
+   * auditFromEnv threw, so a settlement rail stopped settling because its
+   * *log* was unreachable. That is the wrong way round -- the record matters,
+   * but not more than the payment it records.
+   */
+  const path = tmpPath();
+  const store = await auditFromEnv({
+    // A routable address that will not answer as MongoDB, with the driver's own
+    // timeout doing the work rather than a fake.
+    MONGODB_URI: "mongodb://127.0.0.1:1/outcome?serverSelectionTimeoutMS=1500",
+    OUTCOME_AUDIT_LOG: path,
+  } as NodeJS.ProcessEnv);
+
+  await store.append(entry(1));
+  assert.equal(await store.count(), 1, "still recording, just not to the database");
+  assert.equal(await fileAudit(path).count(), 1, "and it landed on disk");
+});
