@@ -109,6 +109,53 @@ A build step walks the emitted modules and fails if `node:` or React ever
 reaches the main entry — a bug I shipped once before, which does not surface
 until somebody else's bundler breaks.
 
+
+## x402, with the step it is missing
+
+x402's flow is: a server answers `402` with what it wants paid, the client signs
+an EIP-3009 authorisation into an `X-PAYMENT` header, and a facilitator submits
+it and reports back with `success: true` and a transaction hash.
+
+**Nothing in x402 checks that transaction.** The resource server reads
+`success`, believes it, and serves the resource — a field produced by the one
+party with an incentive to say yes, next to a hash nobody follows.
+
+`apps/gateway` is a standards-compliant x402 resource server that adds one call
+between settling and serving. It ships two facilitators. The honest one submits
+the authorisation. The **lying** one submits an `approve` — mines, emits a log,
+moves nothing, costs it nothing — and returns `success: true` with that hash. It
+is a legal x402 settlement response, and a stock server hands over the article.
+
+```bash
+npm start --prefix apps/gateway            # the resource server
+npm run pay --prefix apps/gateway          # honest facilitator
+npm run pay:lying --prefix apps/gateway    # the same flow, paying nobody
+```
+
+Both runs are live on Sepolia:
+
+| Facilitator | Reports | Chain says | Result |
+|---|---|---|---|
+| honest | `success: true` | `1000000` reached the merchant | **HTTP 200**, article served — [`0x3aac3134`](https://sepolia.etherscan.io/tx/0x3aac3134ba7c4ce4e12c04e206ad7ce468318607fdb7a8e7ad85e91a70fe72ee) |
+| lying | `success: true` | **`0`** reached the merchant | **HTTP 402**, withheld — [`0x6db7218d`](https://sepolia.etherscan.io/tx/0x6db7218d717f5be3c3b37f386593bf0bdf3760b0407ac1145c617ac172136603) |
+
+```ts
+import { verifySettlement } from "outcome-sdk/x402";
+
+const verdict = await verifySettlement(outcome, { requirements, settlement });
+if (!verdict.proven) return respond402(verdict.reason);
+return serve(resource);
+```
+
+A facilitator reporting *failure* is taken at its word — claiming failure is
+against its interest and there is nothing to check. A facilitator reporting
+success is not. That asymmetry is the whole of it.
+
+`USDCx` ([`0x0d864A62`](https://sepolia.etherscan.io/address/0x0d864A625c280F7f9B9AD024d12F94f5D6DCCF13))
+exists because the `exact` scheme needs EIP-3009 and `TestUSDC` is a plain
+ERC-20 — demonstrating x402 against it would have meant inventing a scheme,
+which demonstrates nothing.
+
 ## The loop
 
 ```
@@ -166,11 +213,11 @@ gets paid; the beneficiary is who the work had to reach. Checking the payee
 would only ever prove an agent paid itself — which is what the first live agent
 run actually did, before the contract recorded the distinction.
 
-## Tests — 61, all passing
+## Tests — 81, all passing
 
 ```bash
-npm test                # 49 across both packages (43 SDK, 6 MCP)
-npm run test:contracts  # 12
+npm test                # 60 across both packages (54 SDK, 6 MCP)
+npm run test:contracts  # 21
 ```
 
 Written against the failures the promise model permits, not the happy path:
@@ -196,10 +243,15 @@ Two suites exist because of bugs this build actually hit:
 
 ## What is not done
 
-- **Sepolia, not Base.** x402's payment gate is hardcoded to Base mainnet
-  (`eip155:8453`) with real USDC. The organiser confirmed testnet is accepted
-  and not marked down, and the verification layer is indifferent to which rail
-  carries the value — so the x402 adapter is a thin layer, not a rewrite.
+- **Sepolia, not Base.** x402's reference deployment is Base mainnet with real
+  USDC. The organiser confirmed testnet is accepted and not marked down. The
+  protocol implementation here is complete and spec-exact; only the chain and
+  the token differ, and `NETWORK_CHAIN_IDS` already maps Base and Base Sepolia.
+- **The gateway's facilitator is its own.** It settles EIP-3009 directly rather
+  than calling CDP's facilitator, which is Base-mainnet-only. Same scheme, same
+  wire format, different submitter.
+- **`OutcomeEscrow` is not verified on Etherscan.** `ETHERSCAN_API_KEY` is empty
+  in `.env`; the config is wired and one free key finishes it.
 - **MPP is untested here.** KeeperHub's agentic wallet hardcodes Tempo testnet
   as chain `4218`, which does not exist; Moderato is `42431`. A passing test
   asserts the wrong value, so CI defends it. Written up with a patch in the
@@ -219,7 +271,9 @@ packages/sdk/     outcome-sdk — the client, the verifier, the agent
   src/settle.ts     verdict -> KeeperHub execute
   src/agent.ts      a worker agent that finds jobs, does them, and gets paid
   src/react.ts      hooks over the read path
+  src/x402.ts       the protocol, plus the settlement check it lacks
 packages/mcp/     outcome-mcp — six tools over stdio, zero-config
+apps/gateway/     an x402 resource server that checks it was actually paid
 apps/web/         the console, built on the published SDK
 contracts/        OutcomeEscrow.sol, deploy + proof scripts, 12 tests
 ```
