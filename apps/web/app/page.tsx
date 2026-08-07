@@ -109,6 +109,29 @@ export default function Home() {
         </div>
       </section>
 
+      <section className="border-t border-border/60">
+        <div className="mx-auto max-w-6xl px-5 py-16">
+          <div className="rounded-2xl border border-amber-400/25 bg-amber-400/[0.04] p-8">
+            <div className="font-mono text-xs uppercase tracking-wide text-amber-300">
+              the same failure, inside x402
+            </div>
+            <h2 className="mt-4 max-w-2xl text-2xl font-semibold tracking-tight text-balance">
+              A facilitator reported <code className="font-mono">success: true</code>. The chain says
+              nothing moved. The article was withheld.
+            </h2>
+            <p className="mt-4 max-w-2xl text-pretty leading-relaxed text-muted-foreground">
+              x402 ends at the facilitator&rsquo;s word. Both runs are live on Sepolia with the same
+              protocol flow and the same success response — one of them paid nobody.
+            </p>
+            <Button asChild variant="outline" className="mt-6 gap-2">
+              <Link href="/x402">
+                See both transactions <ArrowRight className="size-4" />
+              </Link>
+            </Button>
+          </div>
+        </div>
+      </section>
+
       <section className="border-t border-border/60 bg-secondary/10">
         <div className="mx-auto max-w-3xl px-5 py-16 text-center">
           <h2 className="text-2xl font-semibold tracking-tight text-balance">
