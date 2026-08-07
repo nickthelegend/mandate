@@ -31,10 +31,10 @@ console.log("  escrowed:", link(c.hash));
 console.log("  posted the job and walked away.\n");
 
 // --- the agent wakes up and works, with nobody telling it what to do ---
-console.log("AGENT");
+console.log("AGENT  (holds no private key and no ETH)");
 const reports = await work({
   provider,
-  wallet: agent,
+  agentAddress: agent.address,
   kh: new KeeperHubClient({ apiKey: process.env.KEEPERHUB_API_KEY! }),
   escrow: ESCROW,
   token: TOKEN,
@@ -42,6 +42,7 @@ const reports = await work({
   jobsPath: JOBS,
   lookbackBlocks: 400,
 });
+
 
 if (!reports.length) console.log("  found no open work.");
 for (const r of reports) {

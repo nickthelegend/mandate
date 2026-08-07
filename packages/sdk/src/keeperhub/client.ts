@@ -387,6 +387,43 @@ export class KeeperHubClient {
   }
 
   /** Broadcast and reconcile in one call. Throws if the transaction failed. */
+  /**
+   * Send a transfer and wait for it to reach a terminal state.
+   *
+   * The transfer equivalent of `executeAndConfirm`. Worth having separately
+   * rather than folding into it: a caller that only wants to move tokens should
+   * not have to hand-build an ERC-20 ABI and encode a `transfer` call, and the
+   * transfer route already knows how to do that.
+   *
+   * Returning only on a terminal state matters more here than it looks. An
+   * accepted execution is not a sent transaction, and a caller that treated the
+   * `executionId` as proof of payment would be making exactly the mistake this
+   * whole project exists to catch.
+   */
+  async transferAndConfirm(
+    input: TransferInput,
+    opts: { idempotencyKey?: string; timeoutMs?: number } = {}
+  ): Promise<ExecutionStatusResponse> {
+    const accepted = await this.executeTransfer(input, opts);
+    if (!accepted?.executionId) {
+      throw new KeeperHubError(
+        "unknown",
+        `Transfer did not return an executionId for ${input.recipientAddress}`
+      );
+    }
+    const status = await this.waitForTerminal(accepted.executionId, {
+      timeoutMs: opts.timeoutMs,
+    });
+    if (status.status !== "completed") {
+      throw new KeeperHubError(
+        "reverted",
+        `Execution ${accepted.executionId} ended as ${status.status}: ${status.error ?? "no error detail"}`,
+        { executionId: accepted.executionId, details: status.error, retryable: false }
+      );
+    }
+    return status;
+  }
+
   async executeAndConfirm(
     input: ContractCallInput,
     opts: { idempotencyKey?: string; timeoutMs?: number } = {}

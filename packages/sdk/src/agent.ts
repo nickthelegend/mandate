@@ -20,7 +20,7 @@
  * error path, and the demo exercises it.
  */
 
-import { JsonRpcProvider, Contract, Wallet, keccak256, toUtf8Bytes } from "ethers";
+import { JsonRpcProvider, Contract, keccak256, toUtf8Bytes, formatUnits } from "ethers";
 import { appendFileSync, existsSync, readFileSync, mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 
@@ -31,7 +31,7 @@ const ESCROW_ABI = [
   "event Claimed(bytes32 indexed intentId, address indexed payer, address indexed payee, address beneficiary, uint256 amount, uint64 refundableAt)",
   "function intents(bytes32) view returns (address payer,address payee,address beneficiary,uint256 amount,uint64 refundableAt,uint8 state)",
 ];
-const ERC20 = ["function transfer(address,uint256) returns (bool)", "function balanceOf(address) view returns (uint256)"];
+const ERC20 = ["function decimals() view returns (uint8)"];
 
 /**
  * What a job actually asks for.
@@ -82,7 +82,16 @@ export type AgentReport = {
  */
 export async function work(opts: {
   provider: JsonRpcProvider;
-  wallet: Wallet;
+  /**
+   * The address this agent is paid at.
+   *
+   * An address, not a wallet. The agent signs nothing and holds no key: it
+   * reads the chain through a public provider and moves value through
+   * KeeperHub, which owns the only signer involved. An agent that had to guard
+   * a private key would need somewhere safe to keep it, and "somewhere safe"
+   * is not a thing an autonomous process running unattended has.
+   */
+  agentAddress: string;
   kh: KeeperHubClient;
   escrow: string;
   token: string;
@@ -90,7 +99,7 @@ export async function work(opts: {
   jobsPath: string;
   lookbackBlocks?: number;
 }): Promise<AgentReport[]> {
-  const { provider, wallet, escrow, token, jobsPath } = opts;
+  const { provider, agentAddress, escrow, token, jobsPath } = opts;
   const tools = createTools({
     provider,
     kh: opts.kh,
@@ -106,10 +115,14 @@ export async function work(opts: {
   // Only intents naming this agent. Filtering by topic rather than pulling
   // everything keeps the agent from paying attention to work that is not its.
   const claims = await c.queryFilter(
-    c.filters.Claimed(null, null, wallet.address),
+    c.filters.Claimed(null, null, agentAddress),
     from,
     head
   );
+
+  // Read once: the transfer API speaks human units and the escrow speaks base
+  // units, so something has to know the scale.
+  const decimals: number = await new Contract(token, ERC20, provider).decimals();
 
   const jobs = loadJobs(jobsPath);
   const reports: AgentReport[] = [];
@@ -134,32 +147,66 @@ export async function work(opts: {
       continue;
     }
 
-    const erc20 = new Contract(token, ERC20, wallet);
     const owed = BigInt(state.amount);
 
-    if ((await erc20.balanceOf(wallet.address)) < owed) {
+    /*
+     * Do the work, through KeeperHub.
+     *
+     * There is no local balance pre-check any more, and losing it is an
+     * improvement rather than a regression. KeeperHub simulates before it
+     * sends, so an underfunded wallet fails here as a clean refusal that never
+     * touches the chain -- strictly better than a balance read that can be
+     * stale by the time the transaction lands.
+     *
+     * The idempotency key is the intent id. Two copies of this agent racing the
+     * same open intent produce the same key, and the second one replays the
+     * first one's result instead of paying twice. The escrow's claim guard
+     * stops two *payers* colliding; this stops two *workers* colliding, and
+     * they are different collisions.
+     */
+    let workTx: string | undefined;
+    try {
+      const status = await opts.kh.transferAndConfirm(
+        {
+          chainId: opts.chainId,
+          recipientAddress: job.deliverTo,
+          amount: formatUnits(owed, decimals),
+          tokenAddress: token,
+        },
+        { idempotencyKey: `outcome-work-${intentId}` }
+      );
+      workTx = status.transactionHash;
+    } catch (err: unknown) {
+      const e = err as { message?: string };
       reports.push({
         intentId,
         took: false,
-        reason: "cannot fund the delivery; declining rather than failing mid-job",
+        reason: `could not deliver: ${e.message ?? String(err)}`,
       });
       continue;
     }
 
-    // Do the work.
-    const tx = await erc20.transfer(job.deliverTo, owed);
-    await tx.wait();
+    if (!workTx) {
+      // Completed with no transaction to point at. Not a payment.
+      reports.push({
+        intentId,
+        took: false,
+        reason: "KeeperHub reported completion but named no transaction",
+      });
+      continue;
+    }
 
-    // Then prove it. The agent hands over a hash, not a claim.
+    // Then prove it. The agent hands over a hash, not a claim -- and it is held
+    // to that standard even though it is the one being paid.
     const settled = await tools.outcome_settle({
       intentId,
-      workTransactionHash: tx.hash,
+      workTransactionHash: workTx,
     });
 
     reports.push({
       intentId,
       took: true,
-      workTx: tx.hash,
+      workTx,
       outcome: `${settled.action}:${settled.settled ? "succeeded" : "failed"}`,
       reason: settled.reason ?? "",
     });
