@@ -251,6 +251,19 @@ before sending, idempotent per attempt, gas sponsored.
 
 ## The console
 
+Nine routes, all reading Sepolia in your browser with no backend:
+
+| | |
+|---|---|
+| [`/demo`](https://nickthelegend.github.io/outcome/demo/) | buy the article twice, honest and lying, live |
+| [`/agent`](https://nickthelegend.github.io/outcome/agent/) | run a full agent cycle — it holds no key and no ETH |
+| [`/inspect`](https://nickthelegend.github.io/outcome/inspect/) | open KeeperHub's own execution record: simulated, sent, sponsored, confirmed |
+| [`/claim`](https://nickthelegend.github.io/outcome/claim/) | post a job with your own wallet |
+| [`/verify`](https://nickthelegend.github.io/outcome/verify/) | paste any transaction and read its receipt |
+| [`/explorer`](https://nickthelegend.github.io/outcome/explorer/) | every intent the escrow has seen |
+
+### The old console note
+
 **[nickthelegend.github.io/outcome](https://nickthelegend.github.io/outcome/)** —
 a Next.js static export built on the published SDK, not around it. `listIntents`,
 `useIntents`, `useEscrowed` and `useVerify` all had to exist for it to render,
