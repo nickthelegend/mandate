@@ -1,11 +1,9 @@
 /**
- * The machine's channel plate.
+ * The page header.
  *
- * Every interior route opens with the same band of japanned iron: the machine
- * states which channel you are on, and the tape it produced runs below on
- * stock, where it is easiest to read. That split is what makes nine routes read
- * as one product without giving a working surface a dark ground it has no use
- * for.
+ * A navy band naming the surface, with the work below on white. One band, one
+ * eyebrow, one title -- the same opening on every route, so nine surfaces read
+ * as one product.
  */
 
 export function PageHead({
@@ -18,14 +16,14 @@ export function PageHead({
   children?: React.ReactNode;
 }) {
   return (
-    <section className="iron border-b border-[var(--iron-rule)]">
-      <div className="shell py-10 sm:py-14">
-        <p className="plate-label">{rubric}</p>
-        <h1 className="mt-4 max-w-3xl text-[clamp(1.875rem,1.2rem+2.4vw,3.25rem)] font-semibold leading-[1.03] tracking-[-0.03em] text-balance">
+    <section className="on-navy">
+      <div className="shell py-12 sm:py-16">
+        <p className="eyebrow"><span className="inline-block size-1.5 rounded-full bg-[var(--lime)]" />{rubric}</p>
+        <h1 className="mt-5 max-w-3xl text-[clamp(1.75rem,1.2rem+2vw,2.75rem)] font-bold leading-[1.1] tracking-[-0.03em] text-balance">
           {title}
         </h1>
         {children && (
-          <p className="mt-5 max-w-[64ch] text-pretty leading-relaxed text-[var(--ribbon-inv)]">
+          <p className="mt-4 max-w-[62ch] text-[15px] leading-relaxed text-[var(--on-navy-2)]">
             {children}
           </p>
         )}

@@ -75,35 +75,35 @@ export default function LedgerPage() {
           Re-read
         </button>
         {total !== null && (
-          <span className="figure text-xs text-[var(--ribbon-soft)]">
+          <span className="figure text-xs text-[var(--ink-3)]">
             {total} decision{total === 1 ? "" : "s"} on record
           </span>
         )}
       </div>
 
       {loading && entries.length === 0 && (
-        <div className="run mt-10">
+        <div className="divide-y divide-[var(--line)] mt-10">
           {[0, 1, 2].map((i) => (
-            <div key={i} className="flex items-center gap-6 border-b border-[var(--perf)] py-4">
-              <span className="h-3 w-28 bg-[var(--perf)]" />
-              <span className="h-3 w-24 bg-[var(--perf)]" />
-              <span className="h-3 flex-1 bg-[var(--perf)]" />
+            <div key={i} className="flex items-center gap-6 border-b border-[var(--line)] py-4">
+              <span className="h-3 w-28 bg-[var(--line)]" />
+              <span className="h-3 w-24 bg-[var(--line)]" />
+              <span className="h-3 flex-1 bg-[var(--line)]" />
             </div>
           ))}
-          <p className="plate-label mt-4">Reading the record…</p>
+          <p className="eyebrow mt-4">Reading the record…</p>
         </div>
       )}
 
       {error && (
-        <p className="mt-8 border-t-2 border-[var(--ribbon-red)] pt-3 font-mono text-sm text-[var(--ribbon-soft)]">
+        <p className="mt-8 border-t-2 border-[var(--refused)] pt-3 font-mono text-sm text-[var(--ink-3)]">
           {error}
         </p>
       )}
 
       {!error && !loading && entries.length === 0 && (
-        <p className="mt-10 max-w-[60ch] text-sm leading-relaxed text-[var(--ribbon-soft)]">
+        <p className="mt-10 max-w-[60ch] text-sm leading-relaxed text-[var(--ink-3)]">
           Nothing struck yet. Run the{" "}
-          <a href="/outcome/demo/" className="text-[var(--ribbon)] underline underline-offset-4">
+          <a href="/outcome/demo/" className="text-[var(--ink)] underline underline-offset-4">
             live demo
           </a>{" "}
           and the first verdict lands here.
@@ -114,11 +114,11 @@ export default function LedgerPage() {
         <div className="mt-10 overflow-x-auto">
           <table className="w-full min-w-[720px] border-collapse text-sm">
             <thead>
-              <tr className="border-b-2 border-[var(--ribbon)] text-left">
-                <th className="plate-label px-3 pb-2 text-left">When</th>
-                <th className="plate-label px-3 pb-2 text-left">Decision</th>
-                <th className="plate-label px-3 pb-2 text-left">Verdict</th>
-                <th className="plate-label px-3 pb-2 text-left">Why</th>
+              <tr className="border-b-2 border-[var(--ink)] text-left">
+                <th className="eyebrow px-3 pb-2 text-left">When</th>
+                <th className="eyebrow px-3 pb-2 text-left">Decision</th>
+                <th className="eyebrow px-3 pb-2 text-left">Verdict</th>
+                <th className="eyebrow px-3 pb-2 text-left">Why</th>
               </tr>
             </thead>
             <tbody>
@@ -126,15 +126,15 @@ export default function LedgerPage() {
                 const good = GOOD.has(e.outcome);
                 const bad = BAD.has(e.outcome);
                 return (
-                  <tr key={`${e.at}-${i}`} className="border-b border-[var(--perf)] align-top">
-                    <td className="figure whitespace-nowrap px-3 py-4 text-xs text-[var(--ribbon-soft)]">
+                  <tr key={`${e.at}-${i}`} className="border-b border-[var(--line)] align-top">
+                    <td className="figure whitespace-nowrap px-3 py-4 text-xs text-[var(--ink-3)]">
                       {e.at.replace("T", " ").slice(0, 19)}
                     </td>
                     <td className="figure whitespace-nowrap px-3 py-4 text-xs">{e.tool}</td>
                     <td className="px-3 py-4">
                       <VerdictMark state={good ? "proven" : bad ? "not_proven" : "awaiting"} />
                     </td>
-                    <td className="max-w-[46ch] px-3 py-4 font-mono text-xs leading-relaxed text-[var(--ribbon-soft)]">
+                    <td className="max-w-[46ch] px-3 py-4 font-mono text-xs leading-relaxed text-[var(--ink-3)]">
                       {e.detail}
                     </td>
                   </tr>
@@ -145,16 +145,16 @@ export default function LedgerPage() {
         </div>
       )}
 
-      <div className="mt-16 border-t border-[var(--perf)] pt-8">
-        <h2 className="plate-label">Why this is public</h2>
-        <p className="mt-4 max-w-[68ch] text-pretty text-sm leading-relaxed text-[var(--ribbon-soft)]">
+      <div className="mt-16 border-t border-[var(--line)] pt-8">
+        <h2 className="eyebrow">Why this is public</h2>
+        <p className="mt-4 max-w-[68ch] text-pretty text-sm leading-relaxed text-[var(--ink-3)]">
           KeeperHub records agent actions to an append-only trail and gives agents no way to read
           it: both routes are session-cookie only and no MCP tool exposes it. So the agent whose
           payment is being decided cannot see the reasoning. This record is served without
           authentication for the same reason the verifier reads a receipt instead of a status byte —
           if you have to take it on trust, it is not evidence.
         </p>
-        <p className="mt-4 max-w-[68ch] text-pretty text-sm leading-relaxed text-[var(--ribbon-soft)]">
+        <p className="mt-4 max-w-[68ch] text-pretty text-sm leading-relaxed text-[var(--ink-3)]">
           Append-only, and persisted in a database rather than on the container&rsquo;s disk. A
           record that empties on redeploy is a debug buffer.
         </p>

@@ -138,7 +138,7 @@ export default function ClaimPage() {
       <div className="max-w-3xl">
 
       {!hasWallet && (
-        <p className="rounded-[2px] border border-[var(--perf)] bg-[var(--stock-edge)] p-4 text-sm text-[var(--ribbon-soft)]">
+        <p className="rounded-[2px] border border-[var(--line)] bg-[var(--surface)] p-4 text-sm text-[var(--ink-3)]">
           No browser wallet detected. This page needs one — everything else here works without.
         </p>
       )}
@@ -149,13 +149,13 @@ export default function ClaimPage() {
         </Button>
       ) : (
         <div className="mt-8 space-y-5">
-          <div className="rounded-[2px] border border-[var(--perf)] bg-[var(--stock-edge)] p-4 font-mono text-xs">
-            <span className="text-[var(--ribbon-soft)]">connected </span>
+          <div className="rounded-[2px] border border-[var(--line)] bg-[var(--surface)] p-4 font-mono text-xs">
+            <span className="text-[var(--ink-3)]">connected </span>
             {account}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="task" className="font-mono text-xs uppercase tracking-wide text-[var(--ribbon-soft)]">
+            <Label htmlFor="task" className="font-mono text-xs uppercase tracking-wide text-[var(--ink-3)]">
               The work being paid for
             </Label>
             <Input
@@ -164,7 +164,7 @@ export default function ClaimPage() {
               onChange={(e) => setTask(e.target.value)}
               className="font-mono text-sm"
             />
-            <p className="font-mono text-xs text-[var(--ribbon-soft)]">
+            <p className="font-mono text-xs text-[var(--ink-3)]">
               intent id {short(deriveIntentId(task, account), 10, 8)} — derived from the task and
               your address, so the same job posted twice collides on chain instead of paying twice.
             </p>
@@ -182,35 +182,35 @@ export default function ClaimPage() {
       )}
 
       {error && (
-        <p className="mt-6 rounded-[2px] border border-[var(--ribbon-red)] bg-transparent p-4 font-mono text-sm text-[var(--ribbon-red)]">
+        <p className="mt-6 rounded-[2px] border border-[var(--refused)] bg-transparent p-4 font-mono text-sm text-[var(--refused)]">
           {error}
         </p>
       )}
 
       {claimTx && (
-        <div className="mt-6 rounded-[2px] border border-[var(--perf)] bg-[var(--stock-edge)] p-5">
-          <p className="font-mono text-sm font-medium text-[var(--ribbon)]">
+        <div className="mt-6 rounded-[2px] border border-[var(--line)] bg-[var(--surface)] p-5">
+          <p className="font-mono text-sm font-medium text-[var(--ink)]">
             Escrowed. The payee has not been paid.
           </p>
-          <p className="mt-2 text-pretty text-sm leading-relaxed text-[var(--ribbon-soft)]">
+          <p className="mt-2 text-pretty text-sm leading-relaxed text-[var(--ink-3)]">
             That is the point of the contract: the money is held, not sent. It moves only when
             KeeperHub is handed a receipt proving the work landed — or back to you after the refund
             window if nobody does it.
           </p>
           <div className="mt-4 flex flex-wrap gap-4 font-mono text-xs">
-            <a href={tx(claimTx)} target="_blank" rel="noopener" className="underline underline-offset-4 hover:text-[var(--ribbon)]">
+            <a href={tx(claimTx)} target="_blank" rel="noopener" className="underline underline-offset-4 hover:text-[var(--ink)]">
               {short(claimTx, 10, 8)} on Etherscan →
             </a>
-            <a href="/outcome/explorer/" className="underline underline-offset-4 hover:text-[var(--ribbon)]">
+            <a href="/outcome/explorer/" className="underline underline-offset-4 hover:text-[var(--ink)]">
               see it in the explorer →
             </a>
           </div>
         </div>
       )}
 
-      <div className="mt-14 rounded-[2px] border border-[var(--perf)] bg-[var(--stock-edge)] p-5">
+      <div className="mt-14 rounded-[2px] border border-[var(--line)] bg-[var(--surface)] p-5">
         <h2 className="font-mono text-sm font-medium">What you cannot do here</h2>
-        <p className="mt-2 text-pretty text-sm leading-relaxed text-[var(--ribbon-soft)]">
+        <p className="mt-2 text-pretty text-sm leading-relaxed text-[var(--ink-3)]">
           Release the funds. Settlement needs a KeeperHub credential, and the escrow only accepts a
           verdict from KeeperHub&rsquo;s address — the deployer&rsquo;s own verifier role was
           revoked. A page that could release would be a page holding the key to everyone&rsquo;s

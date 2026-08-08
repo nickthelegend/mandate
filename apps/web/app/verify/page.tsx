@@ -17,10 +17,10 @@ export default function VerifyPage() {
           </h1>
           {/* The shell the form fills, ruled so the layout does not jump. */}
           <div className="mt-14 space-y-4">
-            <div className="h-10 bg-[var(--stock-edge)]" />
+            <div className="h-10 bg-[var(--surface)]" />
             <div className="grid gap-4 sm:grid-cols-[1fr_200px]">
-              <div className="h-10 bg-[var(--stock-edge)]" />
-              <div className="h-10 bg-[var(--stock-edge)]" />
+              <div className="h-10 bg-[var(--surface)]" />
+              <div className="h-10 bg-[var(--surface)]" />
             </div>
           </div>
         </div>

@@ -5,34 +5,32 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@/lib/utils'
 
 /*
- * A key on the machine, not a stock button.
+ * Polaris's button: a pill that lifts 1px on hover.
  *
- * Square, because nothing in this world was moulded, and carrying a hard offset
- * shadow that is the key's own side rather than a glow. Pressing moves the cap
- * into that shadow and closes it -- the travel is the feedback, so there is no
- * colour change to announce it.
+ * `default` is the brand blue used for ordinary actions. The lime action colour
+ * is deliberately NOT the default -- Polaris spends it once per view on the one
+ * thing it wants pressed, so it is opt-in via variant="lime".
  */
 const buttonVariants = cva(
-  "key inline-flex shrink-0 items-center justify-center whitespace-nowrap disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-3.5 outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ribbon)]",
+  "btn disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
-        default: '',
-        destructive:
-          'border-[var(--ribbon-red)] text-[var(--ribbon-red-ink)] shadow-[2px_2px_0_0_var(--ribbon-red)] active:shadow-none',
-        outline: 'key--quiet',
-        secondary: 'key--quiet',
-        ghost:
-          'border-transparent bg-transparent shadow-none active:translate-x-0 active:translate-y-0 hover:bg-[var(--stock-edge)]',
-        link: 'border-transparent bg-transparent shadow-none normal-case tracking-normal text-sm font-normal underline-offset-4 hover:underline active:translate-x-0 active:translate-y-0',
+        default: 'btn--brand',
+        lime: 'btn--lime',
+        destructive: 'bg-[var(--refused)] text-white shadow-[var(--shadow-sm)] hover:bg-[#b42318]',
+        outline: 'btn--outline',
+        secondary: 'bg-[var(--surface)] text-[var(--ink)] hover:bg-[var(--line-2)]',
+        ghost: 'text-[var(--ink-2)] hover:bg-[var(--surface)] hover:text-[var(--ink)]',
+        link: 'px-0! py-0! text-[var(--brand)] underline-offset-4 hover:underline hover:translate-y-0',
       },
       size: {
-        default: 'px-4 py-2.5',
-        sm: 'px-3 py-2 text-[0.625rem]',
-        lg: 'px-6 py-3.5 text-xs',
-        icon: 'size-9 px-0 py-0',
-        'icon-sm': 'size-8 px-0 py-0',
-        'icon-lg': 'size-10 px-0 py-0',
+        default: '',
+        sm: 'px-4! py-2! text-[13px]!',
+        lg: 'px-7! py-3.5! text-[15px]!',
+        icon: 'size-10 px-0! py-0!',
+        'icon-sm': 'size-9 px-0! py-0!',
+        'icon-lg': 'size-11 px-0! py-0!',
       },
     },
     defaultVariants: {

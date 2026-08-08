@@ -18,10 +18,10 @@ import { PageHead } from "@/components/page-head";
 
 function Stat({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
-    <div className="rounded-[2px] border border-[var(--perf)] bg-[var(--stock-edge)] p-4">
-      <div className="font-mono text-xs uppercase tracking-wide text-[var(--ribbon-soft)]">{label}</div>
+    <div className="rounded-[2px] border border-[var(--line)] bg-[var(--surface)] p-4">
+      <div className="font-mono text-xs uppercase tracking-wide text-[var(--ink-3)]">{label}</div>
       <div className="mt-1.5 font-mono text-2xl font-semibold tabular-nums">{value}</div>
-      {hint && <div className="mt-1 text-xs text-[var(--ribbon-soft)]">{hint}</div>}
+      {hint && <div className="mt-1 text-xs text-[var(--ink-3)]">{hint}</div>}
     </div>
   );
 }
@@ -55,22 +55,22 @@ export default function ExplorerPage() {
       </div>
 
       {loading && (
-        <div className="mt-10 flex items-center gap-2 font-mono text-sm text-[var(--ribbon-soft)]">
+        <div className="mt-10 flex items-center gap-2 font-mono text-sm text-[var(--ink-3)]">
           <Loader2 className="size-4 animate-spin" /> reading the chain…
         </div>
       )}
 
       {error && (
-        <p className="mt-10 rounded-[2px] border border-[var(--perf)] bg-[var(--stock-edge)] p-4 font-mono text-sm text-[var(--ribbon-soft)]">
+        <p className="mt-10 rounded-[2px] border border-[var(--line)] bg-[var(--surface)] p-4 font-mono text-sm text-[var(--ink-3)]">
           {error}
         </p>
       )}
 
       {rows && rows.length > 0 && (
-        <div className="mt-8 overflow-x-auto rounded-[2px] border border-[var(--perf)]">
+        <div className="mt-8 overflow-x-auto rounded-[2px] border border-[var(--line)]">
           <table className="w-full min-w-[820px] text-sm">
             <thead>
-              <tr className="border-b border-[var(--perf)] bg-[var(--stock-edge)] text-left font-mono text-xs uppercase tracking-wide text-[var(--ribbon-soft)]">
+              <tr className="border-b border-[var(--line)] bg-[var(--surface)] text-left font-mono text-xs uppercase tracking-wide text-[var(--ink-3)]">
                 <th className="px-4 py-3 font-medium">Intent</th>
                 <th className="px-4 py-3 font-medium">Amount</th>
                 <th className="px-4 py-3 font-medium">Outcome</th>
@@ -80,17 +80,17 @@ export default function ExplorerPage() {
             </thead>
             <tbody>
               {rows.map((r) => (
-                <tr key={r.intentId} className="border-b border-[var(--perf)] last:border-0">
-                  <td className="px-4 py-3 font-mono text-xs text-[var(--ribbon-soft)]">
+                <tr key={r.intentId} className="border-b border-[var(--line)] last:border-0">
+                  <td className="px-4 py-3 font-mono text-xs text-[var(--ink-3)]">
                     {short(r.intentId, 8, 6)}
                   </td>
                   <td className="px-4 py-3 font-mono tabular-nums">
                     {amount(r.amount)}{" "}
-                    <span className="text-xs text-[var(--ribbon-soft)]">{DEPLOYMENT.tokenSymbol}</span>
+                    <span className="text-xs text-[var(--ink-3)]">{DEPLOYMENT.tokenSymbol}</span>
                   </td>
                   <td className="px-4 py-3">
                     {r.state === "open" ? (
-                      <span className="inline-flex items-center gap-1.5 rounded-[2px] border border-[var(--perf)] px-2.5 py-0.5 font-mono text-xs text-[var(--ribbon-soft)]">
+                      <span className="inline-flex items-center gap-1.5 rounded-[2px] border border-[var(--line)] px-2.5 py-0.5 font-mono text-xs text-[var(--ink-3)]">
                         awaiting verdict
                       </span>
                     ) : (
@@ -100,7 +100,7 @@ export default function ExplorerPage() {
                   <td
                     className={cn(
                       "max-w-[380px] px-4 py-3 font-mono text-xs leading-relaxed",
-                      r.state === "refunded" ? "text-[var(--ribbon-red)]" : "text-[var(--ribbon-soft)]"
+                      r.state === "refunded" ? "text-[var(--refused)]" : "text-[var(--ink-3)]"
                     )}
                   >
                     {r.reason ?? "—"}
@@ -110,7 +110,7 @@ export default function ExplorerPage() {
                       href={tx(r.outcomeTransactionHash ?? r.claimTransactionHash)}
                       target="_blank"
                       rel="noopener"
-                      className="inline-flex items-center gap-1 font-mono text-xs text-[var(--ribbon-soft)] transition-colors hover:text-[var(--ribbon)]"
+                      className="inline-flex items-center gap-1 font-mono text-xs text-[var(--ink-3)] transition-colors hover:text-[var(--ink)]"
                     >
                       {short(r.outcomeTransactionHash ?? r.claimTransactionHash)}
                       <ExternalLink className="size-3" />
@@ -124,7 +124,7 @@ export default function ExplorerPage() {
       )}
 
       {rows && rows.length === 0 && (
-        <p className="mt-10 font-mono text-sm text-[var(--ribbon-soft)]">
+        <p className="mt-10 font-mono text-sm text-[var(--ink-3)]">
           No intents in the last 45,000 blocks.
         </p>
       )}

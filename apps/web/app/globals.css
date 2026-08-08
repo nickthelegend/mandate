@@ -2,91 +2,93 @@
 @import "tw-animate-css";
 
 /*
- * THESIS: The tape is the record; a summary of the tape is not. This surface
- * refuses the near-black-neon console, the cream-and-serif broadsheet, and the
- * struck-metal register this project shipped before it.
- * OWN-WORLD: Cold newsprint tape printed in violet aniline ribbon, with a red
- * second ribbon reserved for a line that did not print. Sprocket margins and
- * perforated tear-lines do the dividing; the machine's japanned iron is the
- * only dark, and it appears as a band, never as the page.
- * STORY: A facilitator says the money moved. Here is the tape it moved on, and
- * the TRANSFER line is not on it.
- * FIRST VIEWPORT: Two torn tape strips under one demand -- the same wire
- * traffic printed twice, one carrying a TRANSFER line and one carrying a gap
- * where it should be, both addressable on Etherscan.
- * FORM: The telegraph tape, candidate 6 of 7, seed 5f5aa919.
+ * Outcome runs on the Polaris design system.
+ *
+ * Not a new world invented for this repo: these are Polaris's own tokens --
+ * brand blue #1c6fd0, the lime action colour #a6f24a, the near-black navy
+ * surfaces, the Untitled-UI grey ramp, Poppins, generous radii and the soft
+ * low-opacity shadow. Outcome is a Polaris product and reads like one.
+ *
+ * The only thing Outcome adds is a verdict pair, because this product has one
+ * state no payments UI ships with: a settlement that succeeded and still paid
+ * nobody. That is `--proven` and `--refused` below, and nothing else here is
+ * ours to reinvent.
  */
 
 :root {
-  /*
-   * Tape stock: cold, not cream. Warmth here is the drift toward the
-   * paper-and-serif default, and it is corrected at the token, never per
-   * component. Newsprint under fluorescent light is faintly blue.
-   */
-  --stock: oklch(0.962 0.004 250);
-  --stock-edge: oklch(0.925 0.006 250);
-  --perf: oklch(0.80 0.008 250);
+  /* ── Polaris brand ─────────────────────────────────────────── */
+  --brand: #1c6fd0;
+  --brand-ink: #0a4f9e;
+  --brand-wash: #eef5fd;
+  /* The action colour. Polaris puts it on dark, in a pill, and nowhere else. */
+  --lime: #a6f24a;
+  --lime-ink: #05080f;
+
+  /* ── Polaris surfaces ──────────────────────────────────────── */
+  --navy: #0a0e16;
+  --navy-raised: #0c111b;
+  --navy-line: #1b2231;
+  --page: #ffffff;
+  --surface: #f7f8fa;
+  --panel: #fbfcff;
+
+  /* ── Polaris text ramp ─────────────────────────────────────── */
+  --ink: #101828;
+  --ink-2: #475467;
+  --ink-3: #667085;
+  --ink-4: #98a2b3;
+  --on-navy: #ffffff;
+  --on-navy-2: #cbd0d8;
+  --on-navy-3: #8a93a3;
+
+  /* ── Polaris lines and depth ───────────────────────────────── */
+  --line: #eaecf0;
+  --line-2: #eef0f3;
+  --shadow-sm: 0 1px 6px rgba(16, 24, 40, 0.035);
+  --shadow-md: 0 2px 10px rgba(16, 24, 40, 0.06);
+  --shadow-lg: 0 12px 32px -12px rgba(16, 24, 40, 0.18);
 
   /*
-   * Aniline violet: the ribbon ink a telegraph and an early ticker actually
-   * printed in. It is the signature of the whole surface, and it is why the
-   * page cannot be mistaken for grey.
+   * The verdict pair. The one thing Polaris has no token for, because no
+   * payments system before this one had to render "it succeeded and moved
+   * nothing". Proven borrows the brand blue rather than inventing a green:
+   * a proof is not a success message.
    */
-  --ribbon: oklch(0.245 0.075 305);
-  --ribbon-soft: oklch(0.455 0.055 300);
-  --ribbon-ghost: oklch(0.635 0.035 300);
+  --proven: #1c6fd0;
+  --proven-wash: #eef5fd;
+  --refused: #d92d20;
+  --refused-wash: #fef3f2;
 
-  /*
-   * The second ribbon. An impact head carried black and red on one spool, and
-   * red was for the line you were meant to stop at. It marks an absence and a
-   * refusal, never a section or a heading.
-   */
-  --ribbon-red: oklch(0.505 0.195 25);
-  --ribbon-red-ink: oklch(0.435 0.175 25);
-  --ribbon-red-lit: oklch(0.68 0.185 25);
-
-  /* Japanned iron: the machine's body. A band, never the page. */
-  --iron: oklch(0.205 0.028 300);
-  --iron-rule: oklch(0.32 0.028 300);
-  --stock-inv: oklch(0.955 0.005 250);
-  --ribbon-inv: oklch(0.735 0.028 300);
-
-  /* Impression, not elevation: ink pressed into stock leaves a slight dish. */
-  --impress: inset 0 1px 0 oklch(1 0 0 / 0.85), inset 0 -1px 0 var(--stock-edge);
-  --impress-deep: inset 0 2px 2px oklch(0.245 0.075 305 / 0.14);
-
-  /* One curve: a print head arriving at its stop. */
-  --ease-strike: cubic-bezier(0.16, 1, 0.3, 1);
+  --radius: 12px;
 }
 
-/* shadcn primitives read these; they are aliases onto the world above. */
+/* shadcn primitives read these; they are aliases onto Polaris above. */
 :root {
-  --background: var(--stock);
-  --foreground: var(--ribbon);
-  --card: var(--stock);
-  --card-foreground: var(--ribbon);
-  --popover: var(--stock);
-  --popover-foreground: var(--ribbon);
-  --primary: var(--ribbon);
-  --primary-foreground: var(--stock);
-  --secondary: var(--stock-edge);
-  --secondary-foreground: var(--ribbon);
-  --muted: var(--stock-edge);
-  --muted-foreground: var(--ribbon-soft);
-  --accent: var(--stock-edge);
-  --accent-foreground: var(--ribbon);
-  --destructive: var(--ribbon-red);
-  --destructive-foreground: var(--stock);
-  --border: var(--perf);
-  --input: var(--perf);
-  --ring: var(--ribbon);
-  --radius: 0px;
+  --background: var(--page);
+  --foreground: var(--ink);
+  --card: var(--page);
+  --card-foreground: var(--ink);
+  --popover: var(--page);
+  --popover-foreground: var(--ink);
+  --primary: var(--brand);
+  --primary-foreground: #ffffff;
+  --secondary: var(--surface);
+  --secondary-foreground: var(--ink);
+  --muted: var(--surface);
+  --muted-foreground: var(--ink-3);
+  --accent: var(--brand-wash);
+  --accent-foreground: var(--brand-ink);
+  --destructive: var(--refused);
+  --destructive-foreground: #ffffff;
+  --border: var(--line);
+  --input: var(--line);
+  --ring: var(--brand);
 }
 
 @theme inline {
-  --font-sans: var(--font-wire), ui-monospace, monospace;
-  --font-display: var(--font-wire), ui-monospace, monospace;
-  --font-mono: var(--font-tape), ui-monospace, monospace;
+  --font-sans: var(--font-poppins), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-poppins), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -106,10 +108,11 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --radius-sm: 0px;
-  --radius-md: 0px;
-  --radius-lg: 0px;
-  --radius-xl: 0px;
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 20px;
 }
 
 @layer base {
@@ -119,46 +122,38 @@
 
   html,
   body {
-    overflow-x: hidden;
+    overflow-x: clip;
   }
 
   body {
     @apply bg-background text-foreground;
-    /* A digit that reflows mid-read is a digit the reader cannot trust. */
     font-variant-numeric: tabular-nums;
-    /* Martian Mono is wide by default; the wire ran narrow. */
-    font-stretch: 87.5%;
-    letter-spacing: -0.02em;
+    -webkit-font-smoothing: antialiased;
   }
 
-  /* The focus ring is a second impression, offset like a double-strike. */
   :focus-visible {
-    outline: 2px solid var(--ribbon);
+    outline: 2px solid var(--brand);
     outline-offset: 2px;
   }
 
-  .iron :focus-visible {
-    outline-color: var(--stock-inv);
+  .on-navy :focus-visible {
+    outline-color: var(--lime);
   }
 
   ::selection {
-    background: var(--ribbon);
-    color: var(--stock);
+    background: var(--brand);
+    color: #fff;
   }
 }
 
 /* --------------------------------------------------------------------------
- * The tape.
- *
- * Everything here divides with a perforation or a sprocket margin rather than
- * a box. A printout has no cards: it has torn edges, feed holes, and the run
- * of lines between them.
+ * Polaris components, as this product needs them.
  * ----------------------------------------------------------------------- */
 
 @layer components {
   .shell {
     width: 100%;
-    max-width: 74rem;
+    max-width: 76rem;
     margin-inline: auto;
     padding-inline: 1.25rem;
   }
@@ -169,368 +164,300 @@
     }
   }
 
-  /* The machine body. Dark, and only ever a band. */
-  .iron {
-    background: var(--iron);
-    color: var(--stock-inv);
+  /* Polaris's dark section: navy ground, white type, lime for the one action. */
+  .on-navy {
+    background: var(--navy);
+    color: var(--on-navy);
+  }
+
+  .on-navy-raised {
+    background: var(--navy-raised);
   }
 
   /*
-   * A strip of tape. The sprocket margins are drawn as a repeating radial of
-   * the page ground punched through the stock, which is the feed hole itself
-   * rather than a decorative dotted border.
+   * The dotted field Polaris puts behind light sections. Subtle enough to read
+   * as paper texture rather than a pattern competing with content.
    */
-  .tape {
-    position: relative;
-    background: var(--stock);
-    box-shadow: var(--impress);
-    padding: 1.5rem 1.25rem;
-    border-top: 1px solid var(--stock-edge);
-    border-bottom: 1px solid var(--stock-edge);
+  .dotfield {
+    background:
+      radial-gradient(circle at 1px 1px, rgba(151, 163, 184, 0.3) 1px, transparent 1.35px),
+      linear-gradient(180deg, var(--panel) 0%, var(--page) 100%);
+    background-size: 14px 14px, 100% 100%;
   }
 
-  .tape::before,
-  .tape::after {
-    content: "";
-    position: absolute;
-    inset-block: 0;
-    width: 14px;
-    background-image: radial-gradient(circle at 7px 7px, var(--perf) 2.5px, transparent 2.6px);
-    background-size: 14px 18px;
-    background-repeat: repeat-y;
-    opacity: 0.9;
+  /* A Polaris card: white, hairline, generous radius, shadow that barely lifts. */
+  .card-p {
+    background: var(--page);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    box-shadow: var(--shadow-sm);
   }
 
-  .tape::before {
-    left: 0;
+  .card-p--flat {
+    background: var(--surface);
+    box-shadow: none;
   }
 
-  .tape::after {
-    right: 0;
+  .card-p--navy {
+    background: var(--navy-raised);
+    border-color: var(--navy-line);
+    box-shadow: none;
   }
 
-  .tape > * {
-    margin-inline: 18px;
-  }
-
-  /* On iron, the tape is lit from the side and its holes read as shadow. */
-  .iron .tape {
-    background: oklch(1 0 0 / 0.055);
-    border-color: var(--iron-rule);
-    box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.07);
-  }
-
-  .iron .tape::before,
-  .iron .tape::after {
-    background-image: radial-gradient(circle at 7px 7px, oklch(0 0 0 / 0.5) 2.5px, transparent 2.6px);
-  }
-
-  /* A tape that carries a refusal is fed through the red half of the ribbon. */
-  .tape--refused {
-    border-color: color-mix(in oklab, var(--ribbon-red) 45%, var(--stock-edge));
-  }
-
-  .iron .tape--refused {
-    border-color: color-mix(in oklab, var(--ribbon-red-lit) 50%, var(--iron-rule));
-  }
-
-  /*
-   * A perforated tear. Sections part along a line of punched dashes, the way a
-   * page of continuous stationery comes apart -- never along a drawn border.
-   */
-  .perforation {
-    border: 0;
-    border-top: 1px dashed var(--perf);
-    height: 0;
-  }
-
-  .iron .perforation {
-    border-top-color: var(--iron-rule);
-  }
-
-  /*
-   * The wire's own line: what the tape actually printed. Courier because the
-   * tape came off a lighter mechanism than the machine's label plates.
-   */
-  .impression {
-    font-family: var(--font-mono);
-    font-size: 0.8125rem;
-    line-height: 1.75;
-    letter-spacing: 0;
-    font-variant-numeric: tabular-nums;
-    color: var(--ribbon);
-  }
-
-  .iron .impression {
-    color: var(--stock-inv);
-  }
-
-  .impression--red {
-    color: var(--ribbon-red-ink);
-  }
-
-  .iron .impression--red {
-    color: var(--ribbon-red-lit);
-  }
-
-  /*
-   * A line the tape did not carry. Struck through in the red ribbon: the
-   * mechanism reserved space for it and printed nothing, which is the entire
-   * argument of this product rendered as one line of stationery.
-   */
-  .impression--absent {
-    color: var(--ribbon-red-ink);
-    text-decoration: line-through;
-    text-decoration-color: var(--ribbon-red);
-    text-decoration-thickness: 1px;
-    opacity: 0.85;
-  }
-
-  .iron .impression--absent {
-    color: var(--ribbon-red-lit);
-    text-decoration-color: var(--ribbon-red-lit);
-  }
-
-  /* Machine label plates: what the operator reads, not what the wire sent. */
-  .plate-label {
-    font-family: var(--font-display);
-    font-size: 0.625rem;
-    font-weight: 500;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: var(--ribbon-soft);
-  }
-
-  .iron .plate-label {
-    color: var(--ribbon-inv);
-  }
-
-  .figure {
-    font-family: var(--font-mono);
-    font-variant-numeric: tabular-nums;
-    letter-spacing: 0;
-  }
-
-  /*
-   * A run of entries. Rows part on perforations, and a run opens on the
-   * double rule an operator drew across the top of a fresh sheet.
-   */
-  .run {
-    border-top: 3px double var(--ribbon);
-  }
-
-  .iron .run {
-    border-top-color: var(--stock-inv);
-  }
-
-  .run__row {
-    display: grid;
-    gap: 0.5rem 1.5rem;
-    border-bottom: 1px dashed var(--perf);
-    padding-block: 1.25rem;
-  }
-
-  .iron .run__row {
-    border-bottom-color: var(--iron-rule);
-  }
-
-  /*
-   * A key on the machine. Square, impressed, and it goes down when struck --
-   * no radius anywhere, because nothing in this world was moulded.
-   */
-  .key {
+  /* The eyebrow Polaris runs above a section title. */
+  .eyebrow {
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    background: var(--stock-edge);
-    color: var(--ribbon);
-    border: 1px solid var(--ribbon);
-    box-shadow: 2px 2px 0 0 var(--ribbon);
-    padding: 0.6875rem 1.25rem;
-    font-family: var(--font-display);
-    font-size: 0.6875rem;
-    font-weight: 700;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--ink-3);
+  }
+
+  .on-navy .eyebrow {
+    color: var(--on-navy-3);
+  }
+
+  /* Every hash, address and amount. */
+  .figure {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+  }
+
+  /* ── Actions ──────────────────────────────────────────────── */
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 999px;
+    padding: 0.6875rem 1.375rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
     transition:
-      transform 90ms var(--ease-strike),
-      box-shadow 90ms var(--ease-strike),
-      background-color 90ms var(--ease-strike);
+      transform 180ms ease,
+      background 180ms ease,
+      box-shadow 180ms ease,
+      border-color 180ms ease;
   }
 
-  .key:hover:not(:disabled) {
-    background: var(--stock);
+  .btn:hover:not(:disabled) {
+    transform: translateY(-1px);
   }
 
-  /* Struck: the key travels into its own shadow. */
-  .key:active:not(:disabled) {
-    transform: translate(2px, 2px);
-    box-shadow: 0 0 0 0 var(--ribbon);
-  }
-
-  .key:disabled {
-    opacity: 0.4;
+  .btn:disabled {
+    opacity: 0.5;
     cursor: not-allowed;
-    box-shadow: 2px 2px 0 0 var(--ribbon-ghost);
+    transform: none;
   }
 
-  .key--quiet {
-    background: transparent;
-    box-shadow: none;
-    border-color: var(--perf);
-    color: var(--ribbon-soft);
+  /* The action colour, used once per view the way Polaris uses it. */
+  .btn--lime {
+    background: var(--lime);
+    color: var(--lime-ink);
+    box-shadow: var(--shadow-sm);
   }
 
-  .key--quiet:hover:not(:disabled) {
-    border-color: var(--ribbon);
-    color: var(--ribbon);
+  .btn--lime:hover:not(:disabled) {
+    box-shadow: 0 6px 18px -6px rgba(166, 242, 74, 0.5);
   }
 
-  /* On iron the keycap is bone against the machine's body. */
-  .key--lit {
-    background: var(--stock-inv);
-    color: var(--iron);
-    border-color: var(--stock-inv);
-    box-shadow: 2px 2px 0 0 var(--ribbon-red);
+  .btn--brand {
+    background: var(--brand);
+    color: #fff;
+    box-shadow: var(--shadow-sm);
   }
 
-  .key--lit:active:not(:disabled) {
-    box-shadow: 0 0 0 0 var(--ribbon-red);
+  .btn--brand:hover:not(:disabled) {
+    background: var(--brand-ink);
   }
 
-  .key--ghost {
-    background: transparent;
-    color: var(--stock-inv);
-    border-color: var(--iron-rule);
-    box-shadow: 2px 2px 0 0 var(--iron-rule);
+  .btn--outline {
+    background: var(--page);
+    color: var(--ink);
+    border: 1px solid var(--line);
+    box-shadow: var(--shadow-sm);
   }
 
-  .key--ghost:hover:not(:disabled) {
-    background: oklch(1 0 0 / 0.06);
+  .btn--outline:hover:not(:disabled) {
+    border-color: var(--ink-4);
   }
 
-  .key--ghost:active:not(:disabled) {
-    box-shadow: 0 0 0 0 var(--iron-rule);
+  .btn--ghost-navy {
+    background: rgba(255, 255, 255, 0.06);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.14);
   }
 
-  /*
-   * A ruled blank the operator types into. The rule beneath is an inset so it
-   * belongs to the same impression that dishes the field, and a square field
-   * needs no radius to fight.
-   */
+  .btn--ghost-navy:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  /* ── Fields ───────────────────────────────────────────────── */
+
   .field {
-    background: var(--stock-edge);
-    border: 0;
-    border-radius: 0;
-    box-shadow: inset 0 1px 0 var(--perf), inset 0 -2px 0 var(--perf);
+    width: 100%;
+    background: var(--page);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 0.625rem 0.875rem;
+    box-shadow: var(--shadow-sm);
     transition:
-      box-shadow 120ms var(--ease-strike),
-      background-color 120ms var(--ease-strike);
+      border-color 160ms ease,
+      box-shadow 160ms ease;
+  }
+
+  .field::placeholder {
+    color: var(--ink-4);
   }
 
   .field:hover:not(:disabled) {
-    box-shadow: inset 0 1px 0 var(--perf), inset 0 -2px 0 var(--ribbon-soft);
+    border-color: var(--ink-4);
   }
 
   .field:focus {
-    background: var(--stock);
-    box-shadow: inset 0 1px 0 var(--perf), inset 0 -2px 0 var(--ribbon);
+    outline: none;
+    border-color: var(--brand);
+    box-shadow: 0 0 0 4px var(--brand-wash);
   }
 
   .field[aria-invalid="true"] {
-    box-shadow: inset 0 1px 0 var(--perf), inset 0 -2px 0 var(--ribbon-red);
+    border-color: var(--refused);
   }
-}
 
-/* --------------------------------------------------------------------------
- * Verdicts.
- *
- * A verdict is a stamp the operator pressed onto the tape after reading it.
- * The shape carries the meaning, so the state survives greyscale.
- * ----------------------------------------------------------------------- */
+  .field[aria-invalid="true"]:focus {
+    box-shadow: 0 0 0 4px var(--refused-wash);
+  }
 
-@layer components {
-  .stamp {
+  /* ── Verdicts ─────────────────────────────────────────────── */
+
+  /*
+   * The one component Polaris does not already own. A verdict is a pill with a
+   * mark, and the mark carries the state so it survives greyscale: a filled
+   * disc for proven, a struck ring for refused, an open ring for unread.
+   */
+  .verdict {
     display: inline-flex;
     align-items: center;
     gap: 0.4375rem;
-    border: 1.5px solid currentColor;
-    padding: 0.1875rem 0.5rem;
-    font-family: var(--font-display);
-    font-size: 0.5625rem;
-    font-weight: 700;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
+    border-radius: 999px;
+    padding: 0.25rem 0.625rem 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
     white-space: nowrap;
-    /* Pressed by hand, so never quite square to the line. */
-    transform: rotate(-1.5deg);
   }
 
-  .stamp svg {
-    width: 11px;
-    height: 11px;
+  .verdict svg {
+    width: 13px;
+    height: 13px;
     flex: none;
   }
 
-  .stamp--proven {
-    color: var(--ribbon);
+  .verdict--proven {
+    background: var(--proven-wash);
+    color: var(--brand-ink);
   }
 
-  .stamp--proven svg {
+  .verdict--proven svg {
     fill: currentColor;
     stroke: none;
   }
 
-  .stamp--not_proven {
-    color: var(--ribbon-red-ink);
-    border-style: double;
-    border-width: 3px;
+  .verdict--not_proven {
+    background: var(--refused-wash);
+    color: #b42318;
   }
 
-  .stamp--not_proven svg {
+  .verdict--not_proven svg {
     fill: none;
     stroke: currentColor;
     stroke-width: 2.5;
   }
 
-  .stamp--awaiting {
-    color: var(--ribbon-ghost);
-    border-style: dashed;
+  .verdict--awaiting {
+    background: var(--surface);
+    color: var(--ink-3);
   }
 
-  .stamp--awaiting svg {
+  .verdict--awaiting svg {
     fill: none;
     stroke: currentColor;
     stroke-width: 2;
   }
 
-  .iron .stamp--proven {
-    color: var(--stock-inv);
+  .on-navy .verdict--proven {
+    background: rgba(28, 111, 208, 0.18);
+    color: #9dc6f5;
   }
 
-  .iron .stamp--not_proven {
-    color: var(--ribbon-red-lit);
+  .on-navy .verdict--not_proven {
+    background: rgba(217, 45, 32, 0.16);
+    color: #fda29b;
   }
 
-  .iron .stamp--awaiting {
-    color: var(--ribbon-inv);
+  .on-navy .verdict--awaiting {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--on-navy-3);
   }
 
   /*
-   * A full verdict, printed as its own short run of tape: opened by the
-   * operator's double rule, never boxed and never ruled down one margin.
+   * The settlement panel. Left-hand rule is deliberate and is the one place it
+   * appears: this is a bank statement line, where a flagged row has always
+   * carried a rule in the margin.
    */
-  .verdict-panel {
-    border-top: 3px double var(--ribbon);
-    border-bottom: 1px dashed var(--perf);
-    background: var(--stock-edge);
+  .settlement {
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: var(--page);
+    box-shadow: var(--shadow-sm);
     padding: 1.25rem 1.375rem;
   }
 
-  .verdict-panel--unassayed {
-    border-top-color: var(--ribbon-red);
-    border-bottom-color: color-mix(in oklab, var(--ribbon-red) 40%, var(--perf));
-    background: transparent;
+  .settlement--refused {
+    border-color: #fecdca;
+    background: var(--refused-wash);
+  }
+
+  .settlement--proven {
+    border-color: #b2ddff;
+    background: var(--proven-wash);
+  }
+
+  /* A row of key/value facts, the way Polaris sets a summary. */
+  .facts {
+    display: grid;
+    gap: 0.5rem 1.5rem;
+  }
+
+  @media (min-width: 640px) {
+    .facts {
+      grid-template-columns: 180px minmax(0, 1fr);
+    }
+  }
+
+  .facts dt {
+    font-size: 0.8125rem;
+    color: var(--ink-3);
+  }
+
+  .facts dd {
+    font-size: 0.8125rem;
+    color: var(--ink);
+    word-break: break-all;
+  }
+
+  .on-navy .facts dt {
+    color: var(--on-navy-3);
+  }
+
+  .on-navy .facts dd {
+    color: var(--on-navy);
   }
 }
 

@@ -1,55 +1,52 @@
 "use client";
 
 /**
- * The machine's channel plates.
+ * The header.
  *
- * A row of label-plate legends with the current one underscored. No pill, no
- * filled tab, no status dot: the machine names its channels on engraved plates,
- * and the one running is the one the operator underlined.
+ * Four links, not ten. Ten was the whole sitemap pushed into the nav, which
+ * tells a first-time visitor nothing about where to start and spends the one
+ * thing a judge is short of. These four are the demo path in order: watch it
+ * fail, check it yourself, watch an agent do it unattended, install it.
+ *
+ * Everything else the project built is real and still reachable -- it lives in
+ * the footer, which is where a second visit goes looking.
  */
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import { Logo } from "@/components/logo";
 import { cn } from "@/lib/utils";
 
 const NAV = [
-  { href: "/", label: "Overview" },
-  { href: "/demo", label: "Wire" },
+  { href: "/demo", label: "Live demo" },
+  { href: "/verify", label: "Verify" },
   { href: "/agent", label: "Agent" },
-  { href: "/ledger", label: "Ledger" },
-  { href: "/explorer", label: "Intents" },
-  { href: "/verify", label: "Read" },
-  { href: "/inspect", label: "Inspect" },
-  { href: "/x402", label: "x402" },
   { href: "/docs", label: "Docs" },
 ];
 
 export function SiteHeader() {
   const path = usePathname();
-  const active = (href: string) => (href === "/" ? path === "/" : path.startsWith(href));
+  const active = (href: string) => path.startsWith(href);
 
   return (
-    <header className="iron sticky top-0 z-50 border-b border-[var(--iron-rule)]">
-      <div className="shell flex h-14 items-center gap-8 overflow-hidden">
-        <Link href="/" className="flex items-baseline gap-2.5 whitespace-nowrap">
-          <span className="font-display text-sm font-bold uppercase tracking-[0.16em] text-[var(--stock-inv)]">
-            Outcome
-          </span>
-          <span className="plate-label hidden md:inline">Tape Reader</span>
+    <header className="sticky top-0 z-50 border-b border-[var(--line)] bg-white/90 backdrop-blur-sm">
+      <div className="shell flex h-16 items-center gap-6">
+        <Link href="/" className="shrink-0">
+          <Logo />
         </Link>
 
-        <nav className="no-scrollbar flex min-w-0 flex-1 items-center gap-5 overflow-x-auto">
+        <nav className="no-scrollbar flex min-w-0 flex-1 items-center gap-1 overflow-x-auto">
           {NAV.map((n) => (
             <Link
               key={n.href}
               href={n.href}
               aria-current={active(n.href) ? "page" : undefined}
               className={cn(
-                "plate-label whitespace-nowrap border-b-2 pb-0.5 transition-colors",
+                "whitespace-nowrap rounded-full px-3.5 py-2 text-[13.5px] font-medium transition-colors",
                 active(n.href)
-                  ? "border-[var(--stock-inv)] text-[var(--stock-inv)]"
-                  : "border-transparent hover:text-[var(--stock-inv)]"
+                  ? "bg-[var(--brand-wash)] text-[var(--brand-ink)]"
+                  : "text-[var(--ink-2)] hover:bg-[var(--surface)] hover:text-[var(--ink)]"
               )}
             >
               {n.label}
@@ -61,9 +58,9 @@ export function SiteHeader() {
           href="https://github.com/nickthelegend/outcome"
           target="_blank"
           rel="noopener"
-          className="plate-label hidden whitespace-nowrap hover:text-[var(--stock-inv)] lg:inline"
+          className="btn btn--outline hidden shrink-0 px-4! py-2! text-[13px]! sm:inline-flex"
         >
-          Source
+          GitHub
         </a>
       </div>
     </header>

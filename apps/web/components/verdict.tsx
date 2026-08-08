@@ -13,8 +13,8 @@
  * Not-proven is not an error colour. A refund is the system working. What
  * carries weight is the *absence* of the assay mark, not a red alarm.
  *
- * And the shape carries the state, never the colour alone: a solid rule, a
- * doubled one, and a dashed one stay distinguishable in greyscale.
+ * And the shape carries the state, never the colour alone: a filled disc, a
+ * struck ring and an open ring stay distinguishable in greyscale.
  */
 
 import { cn } from "@/lib/utils";
@@ -27,11 +27,10 @@ export type VerdictShape = {
 };
 
 /**
- * The operator's stamp, pressed onto the tape after reading it.
+ * The verdict pill.
  *
- * Three silhouettes, not three colours: a filled disc for a line that printed,
- * an open ring struck through for one that did not, and an open ring alone for
- * a run nobody has read yet.
+ * Three silhouettes, not three colours: a filled disc for proven, a struck ring
+ * for refused, an open ring for not yet ruled. The state survives greyscale.
  */
 export function VerdictMark({
   state,
@@ -40,18 +39,18 @@ export function VerdictMark({
   state: "proven" | "not_proven" | "awaiting";
   className?: string;
 }) {
-  const label = state === "proven" ? "on tape" : state === "not_proven" ? "not on tape" : "unread";
+  const label = state === "proven" ? "Proven" : state === "not_proven" ? "Not proven" : "Awaiting";
 
   return (
     <span
-      className={cn("stamp", `stamp--${state}`, className)}
+      className={cn("verdict", `verdict--${state}`, className)}
       role="img"
       aria-label={
         state === "proven"
-          ? "On the tape: the transfer printed and was proven on chain"
+          ? "Proven: the transfer was found in the receipt"
           : state === "not_proven"
-            ? "Not on the tape: no matching transfer printed"
-            : "Not yet read"
+            ? "Not proven: no matching transfer in the receipt"
+            : "Awaiting a verdict"
       }
     >
       <svg viewBox="0 0 20 20" aria-hidden="true">
@@ -67,25 +66,25 @@ export function VerdictPanel({ verdict }: { verdict: VerdictShape }) {
   const { proven, reason, logCount } = verdict;
 
   return (
-    <div className={cn("verdict-panel", !proven && "verdict-panel--unassayed")}>
+    <div className={cn("settlement", proven ? "settlement--proven" : "settlement--refused")}>
       <div className="flex flex-wrap items-baseline gap-x-4 gap-y-2">
         <VerdictMark state={proven ? "proven" : "not_proven"} />
         {logCount !== undefined && (
-          <span className="figure text-xs text-[var(--ribbon-soft)]">
+          <span className="figure text-xs text-[var(--ink-3)]">
             {logCount} log{logCount === 1 ? "" : "s"} in this receipt
           </span>
         )}
       </div>
 
-      <p className="mt-3 max-w-[68ch] break-words font-mono text-sm leading-relaxed text-[var(--ribbon)]">
+      <p className="mt-3 max-w-[68ch] break-words font-mono text-sm leading-relaxed text-[var(--ink)]">
         {reason}
       </p>
 
       {!proven && (
-        <p className="mt-4 max-w-[68ch] border-t border-[var(--perf)] pt-3 text-sm leading-relaxed text-[var(--ribbon-soft)]">
+        <p className="mt-4 max-w-[68ch] border-t border-[var(--line)] pt-3 text-sm leading-relaxed text-[var(--ink-3)]">
           This is what a status-only check misses. A transaction can mine, return{" "}
-          <code className="figure text-[var(--ribbon)]">status: 0x1</code>, emit no matching{" "}
-          <code className="figure text-[var(--ribbon)]">Transfer</code>, and move nothing — and every
+          <code className="figure text-[var(--ink)]">status: 0x1</code>, emit no matching{" "}
+          <code className="figure text-[var(--ink)]">Transfer</code>, and move nothing — and every
           rail that reads only the status byte records it as a payment.
         </p>
       )}

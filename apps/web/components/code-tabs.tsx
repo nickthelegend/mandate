@@ -59,10 +59,10 @@ function CopyButton({ text }: { text: string }) {
         setDone(true);
         setTimeout(() => setDone(false), 1400);
       }}
-      className="inline-flex items-center gap-1.5 rounded-md border border-[var(--perf)] px-2.5 py-1 font-mono text-xs text-[var(--ribbon-soft)] transition-colors hover:border-[var(--ribbon)] hover:text-[var(--ribbon)]"
+      className="inline-flex items-center gap-1.5 rounded-md border border-[var(--line)] px-2.5 py-1 font-mono text-xs text-[var(--ink-3)] transition-colors hover:border-[var(--ink)] hover:text-[var(--ink)]"
       aria-label="Copy to clipboard"
     >
-      {done ? <Check className="size-3 text-[var(--ribbon)]" /> : <Copy className="size-3" />}
+      {done ? <Check className="size-3 text-[var(--ink)]" /> : <Copy className="size-3" />}
       {done ? "copied" : "copy"}
     </button>
   );
@@ -78,11 +78,11 @@ export function CodeTabs({ className }: { className?: string }) {
 
       {(["sdk", "mcp"] as const).map((k) => (
         <TabsContent key={k} value={k} className="mt-4 space-y-3">
-          <div className="flex items-center justify-between gap-3 rounded-[2px] border border-[var(--perf)] bg-[var(--stock-edge)] px-4 py-2.5">
+          <div className="flex items-center justify-between gap-3 rounded-[2px] border border-[var(--line)] bg-[var(--surface)] px-4 py-2.5">
             <code className="font-mono text-sm">{SNIPPETS[k].install}</code>
             <CopyButton text={SNIPPETS[k].install} />
           </div>
-          <pre className="overflow-x-auto rounded-[2px] border border-[var(--perf)] bg-[var(--stock-edge)] p-5 font-mono text-xs leading-relaxed text-[var(--ribbon)]">
+          <pre className="overflow-x-auto rounded-[2px] border border-[var(--line)] bg-[var(--surface)] p-5 font-mono text-xs leading-relaxed text-[var(--ink)]">
             {SNIPPETS[k].code}
           </pre>
         </TabsContent>

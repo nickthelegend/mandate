@@ -88,44 +88,44 @@ export default function AgentPage() {
         {running ? "Working…" : "Post a job and let it run"}
       </Button>
 
-      <p className="mt-3 font-mono text-xs text-[var(--ribbon-soft)]">
+      <p className="mt-3 font-mono text-xs text-[var(--ink-3)]">
         A cycle is four real transactions — approve, claim, deliver, settle — so give it a moment.
       </p>
 
       {error && (
-        <p className="mt-6 rounded-[2px] border border-[var(--perf)] bg-[var(--stock-edge)] p-4 font-mono text-sm text-[var(--ribbon-soft)]">
+        <p className="mt-6 rounded-[2px] border border-[var(--line)] bg-[var(--surface)] p-4 font-mono text-sm text-[var(--ink-3)]">
           {error}
         </p>
       )}
 
       {cycle && (
         <div className="mt-8 space-y-4">
-          <div className="rounded-[2px] border border-[var(--perf)] bg-[var(--stock-edge)] p-5">
-            <div className="font-mono text-xs uppercase tracking-wide text-[var(--ribbon-soft)]">
+          <div className="rounded-[2px] border border-[var(--line)] bg-[var(--surface)] p-5">
+            <div className="font-mono text-xs uppercase tracking-wide text-[var(--ink-3)]">
               the payer posts and leaves
             </div>
             <p className="mt-2 font-mono text-sm">{cycle.task}</p>
             <dl className="mt-3 grid gap-1.5 font-mono text-xs sm:grid-cols-[130px_1fr]">
-              <dt className="text-[var(--ribbon-soft)]">intent</dt>
+              <dt className="text-[var(--ink-3)]">intent</dt>
               <dd className="break-all">{cycle.intentId}</dd>
-              <dt className="text-[var(--ribbon-soft)]">escrowed in</dt>
+              <dt className="text-[var(--ink-3)]">escrowed in</dt>
               <dd>
                 <a
                   href={tx(cycle.claimTransactionHash)}
                   target="_blank"
                   rel="noopener"
-                  className="underline underline-offset-4 hover:text-[var(--ribbon)]"
+                  className="underline underline-offset-4 hover:text-[var(--ink)]"
                 >
                   {cycle.claimTransactionHash.slice(0, 22)}…
                 </a>
               </dd>
-              <dt className="text-[var(--ribbon-soft)]">agent address</dt>
+              <dt className="text-[var(--ink-3)]">agent address</dt>
               <dd className="break-all">{cycle.agentAddress}</dd>
             </dl>
           </div>
 
           {cycle.declinedOthers > 0 && (
-            <p className="font-mono text-xs text-[var(--ribbon-soft)]">
+            <p className="font-mono text-xs text-[var(--ink-3)]">
               It also looked at {cycle.declinedOthers} older intent
               {cycle.declinedOthers === 1 ? "" : "s"} and declined {cycle.declinedOthers === 1 ? "it" : "them"} —
               it will not take money for work whose task it cannot reconstruct.
@@ -133,7 +133,7 @@ export default function AgentPage() {
           )}
 
           {cycle.reports.length === 0 && (
-            <p className="rounded-[2px] border border-[var(--perf)] p-5 font-mono text-sm text-[var(--ribbon-soft)]">
+            <p className="rounded-[2px] border border-[var(--line)] p-5 font-mono text-sm text-[var(--ink-3)]">
               The agent found no open work this cycle.
             </p>
           )}
@@ -146,22 +146,22 @@ export default function AgentPage() {
                 className={cn(
                   "rounded-[2px] border p-5",
                   released
-                    ? "border-[var(--perf)] bg-[var(--stock-edge)]"
-                    : "border-[var(--ribbon-red)] bg-transparent"
+                    ? "border-[var(--line)] bg-[var(--surface)]"
+                    : "border-[var(--refused)] bg-transparent"
                 )}
               >
                 <div className="flex flex-wrap items-center gap-3">
                   {released ? (
-                    <CheckCircle2 className="size-4 text-[var(--ribbon)]" />
+                    <CheckCircle2 className="size-4 text-[var(--ink)]" />
                   ) : (
-                    <XCircle className="size-4 text-[var(--ribbon-red)]" />
+                    <XCircle className="size-4 text-[var(--refused)]" />
                   )}
                   <span className="font-mono text-sm font-medium">
                     {r.took ? (r.outcome ?? "settled") : "declined"}
                   </span>
                 </div>
 
-                <p className="mt-3 break-words font-mono text-xs leading-relaxed text-[var(--ribbon)]">
+                <p className="mt-3 break-words font-mono text-xs leading-relaxed text-[var(--ink)]">
                   {r.reason}
                 </p>
 
@@ -170,7 +170,7 @@ export default function AgentPage() {
                     href={tx(r.workTx)}
                     target="_blank"
                     rel="noopener"
-                    className="mt-3 inline-block font-mono text-xs underline-offset-4 hover:text-[var(--ribbon)] hover:underline"
+                    className="mt-3 inline-block font-mono text-xs underline-offset-4 hover:text-[var(--ink)] hover:underline"
                   >
                     the work it did: {r.workTx.slice(0, 22)}… →
                   </a>
@@ -180,11 +180,11 @@ export default function AgentPage() {
           })}
 
           {paid && (
-            <div className="rounded-[2px] border border-[var(--perf)] bg-[var(--stock-edge)] p-5">
+            <div className="rounded-[2px] border border-[var(--line)] bg-[var(--surface)] p-5">
               <h2 className="font-mono text-sm font-medium">Who signed all that</h2>
-              <p className="mt-2 text-pretty text-sm leading-relaxed text-[var(--ribbon-soft)]">
+              <p className="mt-2 text-pretty text-sm leading-relaxed text-[var(--ink-3)]">
                 Not the agent. Open the work transaction and the sender is KeeperHub&rsquo;s relayer;
-                the wallet holding the tokens has <code className="font-mono text-[var(--ribbon)]">0.0 ETH</code>.
+                the wallet holding the tokens has <code className="font-mono text-[var(--ink)]">0.0 ETH</code>.
                 The agent&rsquo;s address appears only as the payee — it signed nothing, funded
                 nothing, and still got paid for proven work.
               </p>

@@ -39,14 +39,14 @@ export function LiveStats() {
    */
   if (error) {
     return (
-      <div className="border-t-2 border-[var(--ribbon-red)] pt-3">
-        <div className="plate-label text-[var(--ribbon-red-ink)]">could not read the chain</div>
-        <p className="figure mt-2 text-xs leading-relaxed text-[var(--ribbon-soft)]">{error}</p>
+      <div className="border-t-2 border-[var(--refused)] pt-3">
+        <div className="eyebrow text-[#b42318]">could not read the chain</div>
+        <p className="figure mt-2 text-xs leading-relaxed text-[var(--ink-3)]">{error}</p>
         <a
           href={`${DEPLOYMENT.explorer}/address/${DEPLOYMENT.escrow}#events`}
           target="_blank"
           rel="noopener"
-          className="figure mt-3 inline-block text-xs underline-offset-4 hover:text-[var(--ribbon)] hover:underline"
+          className="figure mt-3 inline-block text-xs underline-offset-4 hover:text-[var(--ink)] hover:underline"
         >
           read the events on Etherscan instead →
         </a>
@@ -56,17 +56,17 @@ export function LiveStats() {
 
   return (
     <Link href="/explorer" className="group block">
-      <div className="flex items-baseline justify-between border-b border-[var(--perf)] pb-2">
-        <span className="plate-label">The run so far</span>
-        <span className="plate-label transition-colors group-hover:text-[var(--ribbon)]">
+      <div className="flex items-baseline justify-between border-b border-[var(--line)] pb-2">
+        <span className="eyebrow">The run so far</span>
+        <span className="eyebrow transition-colors group-hover:text-[var(--ink)]">
           open the full run →
         </span>
       </div>
 
-      <dl className="flex flex-wrap items-baseline gap-x-12 gap-y-5 border-b-2 border-[var(--ribbon)] py-6">
+      <dl className="flex flex-wrap items-baseline gap-x-12 gap-y-5 border-b-2 border-[var(--ink)] py-6">
         {stats.map((s) => (
           <div key={s.label} className="flex items-baseline gap-3">
-            <dt className="plate-label">{s.label}</dt>
+            <dt className="eyebrow">{s.label}</dt>
             <dd className="figure text-2xl font-semibold tracking-[-0.03em]">{s.value}</dd>
           </div>
         ))}

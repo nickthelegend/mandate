@@ -77,7 +77,7 @@ export default function DemoPage() {
         rubric="Every run is a real Sepolia transaction"
         title={<>Buy an article twice. Once you get it, once you don&rsquo;t.</>}
       >
-        Same protocol, same client, same <code className="font-mono text-[var(--stock-inv)]">success: true</code>{" "}
+        Same protocol, same client, same <code className="font-mono text-[var(--on-navy)]">success: true</code>{" "}
         from the facilitator. The only difference is that one of the two settlements actually moved
         money — and only one of them gets the article.
       </PageHead>
@@ -92,7 +92,7 @@ export default function DemoPage() {
         <Button
           size="lg"
           variant="outline"
-          className="gap-2 border-[var(--ribbon-red)] hover:bg-transparent"
+          className="gap-2 border-[var(--refused)] hover:bg-transparent"
           disabled={running !== null}
           onClick={() => run("lying")}
         >
@@ -101,12 +101,12 @@ export default function DemoPage() {
         </Button>
       </div>
 
-      <p className="mt-3 font-mono text-xs text-[var(--ribbon-soft)]">
+      <p className="mt-3 font-mono text-xs text-[var(--ink-3)]">
         Each run signs an authorisation and settles on chain, so it takes a few seconds.
       </p>
 
       {error && (
-        <p className="mt-6 rounded-[2px] border border-[var(--perf)] bg-[var(--stock-edge)] p-4 font-mono text-sm text-[var(--ribbon-soft)]">
+        <p className="mt-6 rounded-[2px] border border-[var(--line)] bg-[var(--surface)] p-4 font-mono text-sm text-[var(--ink-3)]">
           {error}
         </p>
       )}
@@ -117,15 +117,15 @@ export default function DemoPage() {
             className={cn(
               "rounded-[2px] border p-5",
               result.served
-                ? "border-[var(--perf)] bg-[var(--stock-edge)]"
-                : "border-[var(--ribbon-red)] bg-transparent"
+                ? "border-[var(--line)] bg-[var(--surface)]"
+                : "border-[var(--refused)] bg-transparent"
             )}
           >
             <div className="flex flex-wrap items-center gap-3">
               {result.served ? (
-                <CheckCircle2 className="size-5 text-[var(--ribbon)]" />
+                <CheckCircle2 className="size-5 text-[var(--ink)]" />
               ) : (
-                <XCircle className="size-5 text-[var(--ribbon-red)]" />
+                <XCircle className="size-5 text-[var(--refused)]" />
               )}
               <span className="font-mono text-sm font-medium">
                 HTTP {result.httpStatus} — {result.served ? "resource served" : "resource withheld"}
@@ -133,19 +133,19 @@ export default function DemoPage() {
             </div>
 
             <dl className="mt-4 grid gap-1.5 font-mono text-xs sm:grid-cols-[190px_1fr]">
-              <dt className="text-[var(--ribbon-soft)]">facilitator claimed</dt>
+              <dt className="text-[var(--ink-3)]">facilitator claimed</dt>
               <dd>{String(result.facilitatorClaimedSuccess)}</dd>
-              <dt className="text-[var(--ribbon-soft)]">chain actually moved</dt>
-              <dd className={result.served ? "" : "text-[var(--ribbon-red)]"}>{result.observed}</dd>
+              <dt className="text-[var(--ink-3)]">chain actually moved</dt>
+              <dd className={result.served ? "" : "text-[var(--refused)]"}>{result.observed}</dd>
               {result.submittedVia && (
                 <>
-                  <dt className="text-[var(--ribbon-soft)]">submitted via</dt>
+                  <dt className="text-[var(--ink-3)]">submitted via</dt>
                   <dd>{result.submittedVia}</dd>
                 </>
               )}
             </dl>
 
-            <p className="mt-4 break-words font-mono text-xs leading-relaxed text-[var(--ribbon)]">
+            <p className="mt-4 break-words font-mono text-xs leading-relaxed text-[var(--ink)]">
               {result.reason}
             </p>
 
@@ -153,7 +153,7 @@ export default function DemoPage() {
               {result.executionId && (
                 <a
                   href={`/outcome/inspect/?id=${result.executionId}`}
-                  className="font-mono text-xs underline-offset-4 hover:text-[var(--ribbon)] hover:underline"
+                  className="font-mono text-xs underline-offset-4 hover:text-[var(--ink)] hover:underline"
                 >
                   open KeeperHub&rsquo;s record for this settlement &rarr;
                 </a>
@@ -167,7 +167,7 @@ export default function DemoPage() {
               {result.transactionHash && result.asset && result.payTo && result.amount && (
                 <a
                   href={`/outcome/verify/?hash=${result.transactionHash}&token=${result.asset}&to=${result.payTo}&min=${result.amount}`}
-                  className="font-mono text-xs underline-offset-4 hover:text-[var(--ribbon)] hover:underline"
+                  className="font-mono text-xs underline-offset-4 hover:text-[var(--ink)] hover:underline"
                 >
                   read this receipt yourself, on its own terms &rarr;
                 </a>
@@ -175,16 +175,16 @@ export default function DemoPage() {
             </div>
           </div>
 
-          <ol className="mt-6 space-y-px overflow-hidden rounded-[2px] border border-[var(--perf)]">
+          <ol className="mt-6 space-y-px overflow-hidden rounded-[2px] border border-[var(--line)]">
             {result.steps.map((s, i) => (
               <li key={`${s.label}-${i}`} className="bg-background p-4">
                 <div className="flex items-baseline gap-3">
-                  <span className="font-mono text-xs text-[var(--ribbon-soft)]">
+                  <span className="font-mono text-xs text-[var(--ink-3)]">
                     {String(i + 1).padStart(2, "0")}
                   </span>
                   <span className="text-sm font-medium">{s.label}</span>
                 </div>
-                <p className="mt-1 break-words pl-8 font-mono text-xs leading-relaxed text-[var(--ribbon-soft)]">
+                <p className="mt-1 break-words pl-8 font-mono text-xs leading-relaxed text-[var(--ink-3)]">
                   {s.detail}
                 </p>
                 {s.transactionHash && (
@@ -192,7 +192,7 @@ export default function DemoPage() {
                     href={tx(s.transactionHash)}
                     target="_blank"
                     rel="noopener"
-                    className="mt-1.5 inline-block pl-8 font-mono text-xs underline-offset-4 hover:text-[var(--ribbon)] hover:underline"
+                    className="mt-1.5 inline-block pl-8 font-mono text-xs underline-offset-4 hover:text-[var(--ink)] hover:underline"
                   >
                     {s.transactionHash.slice(0, 22)}… on Etherscan →
                   </a>
@@ -202,9 +202,9 @@ export default function DemoPage() {
           </ol>
 
           {result.article && (
-            <div className="mt-6 rounded-[2px] border border-[var(--perf)] bg-[var(--stock-edge)] p-5">
+            <div className="mt-6 rounded-[2px] border border-[var(--line)] bg-[var(--surface)] p-5">
               <h2 className="font-medium tracking-tight">{result.article.title}</h2>
-              <p className="mt-2 text-pretty text-sm leading-relaxed text-[var(--ribbon-soft)]">
+              <p className="mt-2 text-pretty text-sm leading-relaxed text-[var(--ink-3)]">
                 {result.article.body}
               </p>
             </div>
@@ -212,15 +212,15 @@ export default function DemoPage() {
         </div>
       )}
 
-      <div className="mt-14 rounded-[2px] border border-[var(--perf)] bg-[var(--stock-edge)] p-5">
+      <div className="mt-14 rounded-[2px] border border-[var(--line)] bg-[var(--surface)] p-5">
         <h2 className="font-mono text-sm font-medium">What the lying facilitator does</h2>
-        <p className="mt-2 text-pretty text-sm leading-relaxed text-[var(--ribbon-soft)]">
-          It submits an <code className="font-mono text-[var(--ribbon)]">approve</code> instead of the
+        <p className="mt-2 text-pretty text-sm leading-relaxed text-[var(--ink-3)]">
+          It submits an <code className="font-mono text-[var(--ink)]">approve</code> instead of the
           transfer. That mines, emits a log, costs it nothing, and moves no money — then it returns{" "}
-          <code className="font-mono text-[var(--ribbon)]">success: true</code> with that hash. It is a
+          <code className="font-mono text-[var(--ink)]">success: true</code> with that hash. It is a
           legal x402 settlement response, and a stock resource server hands over the article.
         </p>
-        <p className="mt-3 text-pretty text-sm leading-relaxed text-[var(--ribbon-soft)]">
+        <p className="mt-3 text-pretty text-sm leading-relaxed text-[var(--ink-3)]">
           The point is not that facilitators are malicious. It is that x402 has no way to find out.
         </p>
       </div>
