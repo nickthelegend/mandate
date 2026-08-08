@@ -43,6 +43,18 @@ export type FlowResult = {
   submittedVia?: string;
   /** KeeperHub's id for the settlement, when it went that way. */
   executionId?: string;
+  /*
+   * The terms the 402 actually demanded: which token, to whom, how much.
+   *
+   * Carried out so the visitor can re-run the check against the settlement's
+   * own terms rather than this site's defaults. The x402 asset is not the
+   * escrow's token -- `exact` needs EIP-3009 and the escrow token does not
+   * implement it -- so a check that assumed one would report "no transfer" on
+   * a settlement that plainly paid.
+   */
+  asset?: string;
+  payTo?: string;
+  amount?: string;
   article?: { title: string; body: string };
 };
 
@@ -152,6 +164,9 @@ export async function runPurchase(opts: {
       transactionHash: p.transaction,
       submittedVia: p.submittedVia,
       executionId: p.executionId,
+      asset: req.asset,
+      payTo: req.payTo,
+      amount: req.maxAmountRequired,
       article: { title: String(result.title), body: String(result.body) },
     };
   }
@@ -184,5 +199,8 @@ export async function runPurchase(opts: {
     observed: String(o.observed ?? "0"),
     reason: String(o.reason ?? result.error ?? "not proven"),
     transactionHash: (o.transaction as string) ?? undefined,
+    asset: req.asset,
+    payTo: req.payTo,
+    amount: req.maxAmountRequired,
   };
 }

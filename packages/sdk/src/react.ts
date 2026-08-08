@@ -148,7 +148,13 @@ export function useEscrowed(): Async<bigint> {
  * state that a component subscribes to.
  */
 export function useVerify(): {
-  verify: (args: { transactionHash: string; recipient: string; minAmount: bigint | string }) => Promise<void>;
+  verify: (args: {
+    transactionHash: string;
+    recipient: string;
+    minAmount: bigint | string;
+    /** Defaults to the client's token. */
+    token?: string;
+  }) => Promise<void>;
   result: (Verdict & { logCount: number }) | undefined;
   loading: boolean;
   error: string | undefined;
@@ -160,7 +166,12 @@ export function useVerify(): {
   const [error, setError] = useState<string>();
 
   const verify = useCallback(
-    async (args: { transactionHash: string; recipient: string; minAmount: bigint | string }) => {
+    async (args: {
+      transactionHash: string;
+      recipient: string;
+      minAmount: bigint | string;
+      token?: string;
+    }) => {
       setLoading(true);
       setError(undefined);
       setResult(undefined);

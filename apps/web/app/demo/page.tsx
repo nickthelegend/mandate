@@ -35,6 +35,10 @@ type FlowResult = {
   transactionHash?: string;
   submittedVia?: string;
   executionId?: string;
+  /** The terms the 402 demanded, so the run can be re-checked on its own terms. */
+  asset?: string;
+  payTo?: string;
+  amount?: string;
   article?: { title: string; body: string };
 };
 
@@ -148,14 +152,30 @@ export default function DemoPage() {
               {result.reason}
             </p>
 
-            {result.executionId && (
-              <a
-                href={`/outcome/inspect/?id=${result.executionId}`}
-                className="mt-4 inline-block font-mono text-xs underline-offset-4 hover:text-[var(--ink)] hover:underline"
-              >
-                open KeeperHub&rsquo;s record for this settlement &rarr;
-              </a>
-            )}
+            <div className="mt-4 flex flex-col gap-1.5">
+              {result.executionId && (
+                <a
+                  href={`/outcome/inspect/?id=${result.executionId}`}
+                  className="font-mono text-xs underline-offset-4 hover:text-[var(--ink)] hover:underline"
+                >
+                  open KeeperHub&rsquo;s record for this settlement &rarr;
+                </a>
+              )}
+              {/*
+               * Don't take the verdict above on trust either. Every term the 402
+               * demanded travels with the link, so the assay page reads this
+               * exact settlement against this exact demand -- and reaches the
+               * same answer in the visitor's own browser.
+               */}
+              {result.transactionHash && result.asset && result.payTo && result.amount && (
+                <a
+                  href={`/outcome/verify/?hash=${result.transactionHash}&token=${result.asset}&to=${result.payTo}&min=${result.amount}`}
+                  className="font-mono text-xs underline-offset-4 hover:text-[var(--ink)] hover:underline"
+                >
+                  read this receipt yourself, on its own terms &rarr;
+                </a>
+              )}
+            </div>
           </div>
 
           <ol className="mt-6 space-y-px overflow-hidden rounded-[2px] border border-[var(--rule)]">

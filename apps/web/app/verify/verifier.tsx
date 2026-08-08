@@ -29,6 +29,7 @@ const SAMPLES = [
     label: "Paid — a real transfer",
     blurb: "1.00 tUSDC actually reached the recipient.",
     transactionHash: "0x749a8459508963b5a85533767b934c20bc3c38656984d711380046cd5346665a",
+    token: DEPLOYMENT.token,
     recipient: DEAD,
     minAmount: "1000000",
   },
@@ -36,6 +37,7 @@ const SAMPLES = [
     label: "Mined, moved nothing",
     blurb: "status 0x1, one log, an Approval — and no money.",
     transactionHash: "0xf2c4055d08d9b52ca5f4f89fe2cd6c670e2204c2458e4731fd3c0ae0eda5073c",
+    token: DEPLOYMENT.token,
     recipient: DEAD,
     minAmount: "2000000",
   },
@@ -57,10 +59,18 @@ const HASH = /^0x[0-9a-fA-F]{64}$/;
 const ADDRESS = /^0x[0-9a-fA-F]{40}$/;
 const DIGITS = /^\d+$/;
 
-function validate(f: { transactionHash: string; recipient: string; minAmount: string }) {
+function validate(f: {
+  transactionHash: string;
+  token: string;
+  recipient: string;
+  minAmount: string;
+}) {
   const errors: Partial<Record<keyof typeof f, string>> = {};
   if (!HASH.test(f.transactionHash.trim())) {
     errors.transactionHash = "A transaction hash is 0x followed by 64 hex characters.";
+  }
+  if (!ADDRESS.test(f.token.trim())) {
+    errors.token = "A token address is 0x followed by 40 hex characters.";
   }
   if (!ADDRESS.test(f.recipient.trim())) {
     errors.recipient = "An address is 0x followed by 40 hex characters.";
@@ -74,23 +84,45 @@ function validate(f: { transactionHash: string; recipient: string; minAmount: st
 export function Verifier() {
   const params = useSearchParams();
   const { verify, result, loading, error, reset } = useVerify();
-  const [form, setForm] = useState({ transactionHash: "", recipient: DEAD, minAmount: "1000000" });
+  // Widened deliberately: DEPLOYMENT is `as const`, so an inferred state type
+  // would pin the token to that one literal address and reject any other.
+  const [form, setForm] = useState<{
+    transactionHash: string;
+    token: string;
+    recipient: string;
+    minAmount: string;
+  }>({
+    transactionHash: "",
+    token: DEPLOYMENT.token,
+    recipient: DEAD,
+    minAmount: "1000000",
+  });
   const [errors, setErrors] = useState<Partial<Record<keyof typeof form, string>>>({});
   const [fromLink, setFromLink] = useState(false);
 
   /*
-   * Arriving from the execution record, which links here with the hash it just
-   * showed you. Without this the deep link lands on an empty form and the whole
-   * "check this one yourself" invitation is a dead end.
+   * Arriving from a settlement elsewhere on the site, which links here with the
+   * terms it was actually settled under. Without this the deep link lands on an
+   * empty form and the "check this one yourself" invitation is a dead end.
    *
-   * The hash is all that carries over. Who was supposed to be paid is the
-   * question the visitor has to answer -- prefilling a guess would put a verdict
-   * on screen that nobody asked for.
+   * Every term travels, the token included. The x402 demo settles in an
+   * EIP-3009 token that is not the escrow's, so a link that carried only the
+   * hash would be checked against the wrong asset and report "no transfer" on a
+   * settlement that plainly paid -- the site contradicting itself at exactly the
+   * moment it invites you to check.
    */
   useEffect(() => {
     const hash = params.get("hash");
     if (!hash) return;
-    setForm((f) => ({ ...f, transactionHash: hash }));
+    const token = params.get("token");
+    const to = params.get("to");
+    const min = params.get("min");
+    setForm((f) => ({
+      transactionHash: hash,
+      token: token ?? f.token,
+      recipient: to ?? f.recipient,
+      minAmount: min ?? f.minAmount,
+    }));
     setFromLink(true);
   }, [params]);
 
@@ -104,7 +136,12 @@ export function Verifier() {
     reset();
     setErrors({});
     setFromLink(false);
-    setForm({ transactionHash: s.transactionHash, recipient: s.recipient, minAmount: s.minAmount });
+    setForm({
+      transactionHash: s.transactionHash,
+      token: s.token,
+      recipient: s.recipient,
+      minAmount: s.minAmount,
+    });
   };
 
   const submit = (e: React.FormEvent) => {
@@ -114,6 +151,7 @@ export function Verifier() {
     if (Object.keys(found).length > 0) return;
     void verify({
       transactionHash: form.transactionHash.trim(),
+      token: form.token.trim(),
       recipient: form.recipient.trim(),
       minAmount: form.minAmount.trim(),
     });
@@ -125,9 +163,10 @@ export function Verifier() {
         Check a payment yourself.
       </h1>
       <p className="mt-3 text-pretty leading-relaxed text-[var(--quiet)]">
-        Paste any {DEPLOYMENT.chainName} transaction. Your browser fetches the receipt from a public
-        RPC and reads it for a real ERC-20 <code className="font-mono text-[var(--ink)]">Transfer</code>{" "}
-        to the recipient. Nothing is sent to a server — this page has none.
+        Paste any {DEPLOYMENT.chainName} transaction and state the terms it was supposed to meet.
+        Your browser fetches the receipt from a public RPC and reads it for a real ERC-20{" "}
+        <code className="font-mono text-[var(--ink)]">Transfer</code> of that token to that
+        recipient. Nothing is sent to a server — this page has none.
       </p>
 
       <div className="mt-6 flex flex-wrap gap-2">
@@ -164,7 +203,32 @@ export function Verifier() {
           )}
           {fromLink && !errors.transactionHash && (
             <p className="text-xs text-[var(--quiet)]">
-              Filled from the execution record. Now say who was supposed to be paid.
+              Filled from the settlement it was made under. Change any term and read it again.
+            </p>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="token" className="font-mono text-xs uppercase tracking-wide text-[var(--quiet)]">
+            Paid in which token
+          </Label>
+          <Input
+            id="token"
+            required
+            spellCheck={false}
+            aria-invalid={errors.token ? true : undefined}
+            aria-describedby={errors.token ? "token-error" : undefined}
+            value={form.token}
+            onChange={set("token")}
+            className="font-mono text-sm"
+          />
+          {errors.token ? (
+            <p id="token-error" className="text-xs text-[var(--assay)]">{errors.token}</p>
+          ) : (
+            <p className="text-xs text-[var(--quiet)]">
+              {form.token.trim().toLowerCase() === DEPLOYMENT.token.toLowerCase()
+                ? `The escrow’s ${DEPLOYMENT.tokenSymbol}. The x402 demo settles in a different one — only an EIP-3009 token can.`
+                : "Not the escrow’s token. Only a Transfer of this asset will count."}
             </p>
           )}
         </div>
@@ -249,6 +313,7 @@ const verdict = await outcome.verify({
   transactionHash,
   recipient,
   minAmount: 1_000_000n,
+  token, // optional — defaults to the client's
 });
 // -> { proven, reason, observed, proof }`}
         </pre>
