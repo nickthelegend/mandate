@@ -89,6 +89,7 @@ export async function runAgentCycle(opts: {
     token: TOKEN,
     chainId,
     jobs: opts.jobs,
+    audit: opts.audit,
     // Only this run's claim is interesting, and a wide lookback would make the
     // agent re-examine every intent it has ever settled.
     lookbackBlocks: 200,
