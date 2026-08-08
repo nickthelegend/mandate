@@ -83,21 +83,6 @@ export default function VerifyPage() {
     setForm({ transactionHash: s.transactionHash, recipient: s.recipient, minAmount: s.minAmount });
   };
 
-  /*
-   * The inputs carry native patterns so a submit before hydration is refused
-   * rather than reloading the page. Native validation then stops onSubmit from
-   * firing, which would leave the browser's generic "match the requested
-   * format" bubble as the only feedback.
-   *
-   * This has to be bound to each control, not the form: `invalid` does not
-   * bubble, so a form-level handler never sees it. That mistake shipped once
-   * and looked fine in code -- the field went red and said nothing.
-   */
-  const onInvalid = (e: React.FormEvent<HTMLInputElement>) => {
-    e.preventDefault();
-    setErrors(validate(form));
-  };
-
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     const found = validate(form);
@@ -143,13 +128,11 @@ export default function VerifyPage() {
             id="hash"
             required
             spellCheck={false}
-            pattern="0x[0-9a-fA-F]{64}"
             aria-invalid={errors.transactionHash ? true : undefined}
             aria-describedby={errors.transactionHash ? "hash-error" : undefined}
             placeholder="0x…"
             value={form.transactionHash}
             onChange={set("transactionHash")}
-            onInvalid={onInvalid}
             className="font-mono text-sm"
           />
           {errors.transactionHash && (
@@ -166,12 +149,10 @@ export default function VerifyPage() {
               id="to"
               required
               spellCheck={false}
-              pattern="0x[0-9a-fA-F]{40}"
               aria-invalid={errors.recipient ? true : undefined}
               aria-describedby={errors.recipient ? "to-error" : undefined}
               value={form.recipient}
               onChange={set("recipient")}
-              onInvalid={onInvalid}
               className="font-mono text-sm"
             />
             {errors.recipient && (
@@ -186,12 +167,10 @@ export default function VerifyPage() {
               id="amt"
               required
               inputMode="numeric"
-              pattern="\\d+"
               aria-invalid={errors.minAmount ? true : undefined}
               aria-describedby={errors.minAmount ? "amt-error" : undefined}
               value={form.minAmount}
               onChange={set("minAmount")}
-              onInvalid={onInvalid}
               className="font-mono text-sm"
             />
             {errors.minAmount && (
