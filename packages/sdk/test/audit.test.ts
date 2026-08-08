@@ -101,8 +101,17 @@ test(
 
     const a = await open();
     t.after(async () => {
-      const cleanup = await open();
-      await (cleanup as unknown as { close(): Promise<void> }).close();
+      /*
+       * Drop it, do not just disconnect. An earlier version only closed the
+       * connection and left a collection behind on every run, which turns a
+       * shared cluster into a junkyard -- and this suite runs against the same
+       * database the deployed service writes to.
+       */
+      const { MongoClient } = await import("mongodb");
+      const client = new MongoClient(MONGO!, { serverSelectionTimeoutMS: 15_000 });
+      await client.connect();
+      await client.db("outcome").collection(collection).drop().catch(() => {});
+      await client.close();
       await a.close?.();
     });
 
