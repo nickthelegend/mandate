@@ -21,9 +21,9 @@ const ENV = [
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="border-t border-border/60 pt-10">
+    <section className="border-t border-[var(--rule)] pt-10">
       <h2 className="text-xl font-semibold tracking-tight">{title}</h2>
-      <div className="mt-4 space-y-4 leading-relaxed text-muted-foreground">{children}</div>
+      <div className="mt-4 space-y-4 leading-relaxed text-[var(--quiet)]">{children}</div>
     </section>
   );
 }
@@ -33,7 +33,7 @@ export default function DocsPage() {
     <div className="mx-auto max-w-3xl space-y-10 px-5 py-14">
       <div>
         <h1 className="text-3xl font-semibold tracking-tight">Quickstart</h1>
-        <p className="mt-3 text-pretty leading-relaxed text-muted-foreground">
+        <p className="mt-3 text-pretty leading-relaxed text-[var(--quiet)]">
           Two packages. The SDK is what you call; the MCP server is the same loop exposed as tools an
           agent can pick up on its own.
         </p>
@@ -48,8 +48,8 @@ export default function DocsPage() {
           it, and a verification tool that first demands an API key has already lost the argument.
         </p>
         <p>
-          Only <code className="font-mono text-foreground/80">outcome_settle</code> moves money, and
-          only it needs <code className="font-mono text-foreground/80">KEEPERHUB_API_KEY</code>.
+          Only <code className="font-mono text-[var(--ink)]">outcome_settle</code> moves money, and
+          only it needs <code className="font-mono text-[var(--ink)]">KEEPERHUB_API_KEY</code>.
           Without one it returns a clear refusal rather than failing at startup.
         </p>
       </Section>
@@ -58,9 +58,9 @@ export default function DocsPage() {
         <p>
           x402 ends at <em>&ldquo;the facilitator reported success&rdquo;</em>. One call closes it —
           read the transaction the facilitator named and confirm the money reached{" "}
-          <code className="font-mono text-foreground/80">payTo</code> before you serve anything.
+          <code className="font-mono text-[var(--ink)]">payTo</code> before you serve anything.
         </p>
-        <pre className="overflow-x-auto rounded-xl border border-border/60 bg-secondary/20 p-4 font-mono text-xs leading-relaxed text-foreground/85">
+        <pre className="overflow-x-auto rounded-[2px] border border-[var(--rule)] bg-[var(--bench)] p-4 font-mono text-xs leading-relaxed text-[var(--ink)]">
 {`import { verifySettlement } from "outcome-sdk/x402";
 
 const verdict = await verifySettlement(outcome, {
@@ -73,19 +73,19 @@ return serve(resource);`}
         </pre>
         <p>
           The same entry exports the wire format with the specification&rsquo;s exact field names:{" "}
-          <code className="font-mono text-foreground/80">paymentRequired</code>,{" "}
-          <code className="font-mono text-foreground/80">encodePaymentHeader</code>,{" "}
-          <code className="font-mono text-foreground/80">decodePaymentHeader</code>, and the{" "}
-          <code className="font-mono text-foreground/80">PaymentRequirements</code> /{" "}
-          <code className="font-mono text-foreground/80">SettlementResponse</code> types.
+          <code className="font-mono text-[var(--ink)]">paymentRequired</code>,{" "}
+          <code className="font-mono text-[var(--ink)]">encodePaymentHeader</code>,{" "}
+          <code className="font-mono text-[var(--ink)]">decodePaymentHeader</code>, and the{" "}
+          <code className="font-mono text-[var(--ink)]">PaymentRequirements</code> /{" "}
+          <code className="font-mono text-[var(--ink)]">SettlementResponse</code> types.
         </p>
       </Section>
 
       <Section title="The six tools">
-        <div className="divide-y divide-border/50 overflow-hidden rounded-xl border border-border/60">
+        <div className="divide-y divide-border/50 overflow-hidden rounded-[2px] border border-[var(--rule)]">
           {TOOLS.map(([name, desc]) => (
             <div key={name} className="p-4">
-              <code className="font-mono text-sm text-foreground">{name}</code>
+              <code className="font-mono text-sm text-[var(--ink)]">{name}</code>
               <p className="mt-1.5 text-sm leading-relaxed">{desc}</p>
             </div>
           ))}
@@ -93,10 +93,10 @@ return serve(resource);`}
       </Section>
 
       <Section title="Configuration">
-        <div className="overflow-x-auto rounded-xl border border-border/60">
+        <div className="overflow-x-auto rounded-[2px] border border-[var(--rule)]">
           <table className="w-full min-w-[560px] text-sm">
             <thead>
-              <tr className="border-b border-border/60 bg-secondary/30 text-left font-mono text-xs uppercase tracking-wide">
+              <tr className="border-b border-[var(--rule)] bg-[var(--bench)] text-left font-mono text-xs uppercase tracking-wide">
                 <th className="px-4 py-2.5 font-medium">Variable</th>
                 <th className="px-4 py-2.5 font-medium">Meaning</th>
                 <th className="px-4 py-2.5 font-medium">Default</th>
@@ -104,8 +104,8 @@ return serve(resource);`}
             </thead>
             <tbody>
               {ENV.map(([k, meaning, def]) => (
-                <tr key={k} className="border-b border-border/40 last:border-0">
-                  <td className="px-4 py-2.5 font-mono text-xs text-foreground">{k}</td>
+                <tr key={k} className="border-b border-[var(--rule)] last:border-0">
+                  <td className="px-4 py-2.5 font-mono text-xs text-[var(--ink)]">{k}</td>
                   <td className="px-4 py-2.5 text-sm">{meaning}</td>
                   <td className="px-4 py-2.5 font-mono text-xs">{def}</td>
                 </tr>
@@ -117,14 +117,14 @@ return serve(resource);`}
 
       <Section title="Two boundaries worth reviewing">
         <p>
-          <strong className="text-foreground">Settlement takes a hash, never a verdict.</strong> An
+          <strong className="text-[var(--ink)]">Settlement takes a hash, never a verdict.</strong> An
           agent that could assert &ldquo;the work is done&rdquo; and have money move on its word is
           exactly what this replaces. A test asserts the tool&rsquo;s schema still accepts nothing but
           an intent id and a transaction hash, because that boundary is the product and a refactor
           could quietly erode it.
         </p>
         <p>
-          <strong className="text-foreground">Verification is against the beneficiary.</strong> The
+          <strong className="text-[var(--ink)]">Verification is against the beneficiary.</strong> The
           payee is who gets paid; the beneficiary is who the work had to reach. Checking the payee
           would only ever prove an agent paid itself — which is what the first live agent run
           actually did, before the contract recorded the distinction.
@@ -132,16 +132,16 @@ return serve(resource);`}
       </Section>
 
       <Section title="The deployment">
-        <div className="overflow-hidden rounded-xl border border-border/60 font-mono text-xs">
+        <div className="overflow-hidden rounded-[2px] border border-[var(--rule)] font-mono text-xs">
           {[
             ["chain", `${DEPLOYMENT.chainName} (${DEPLOYMENT.chainId})`, null],
             ["escrow", DEPLOYMENT.escrow, address(DEPLOYMENT.escrow)],
             ["token", `${DEPLOYMENT.token} (${DEPLOYMENT.tokenSymbol})`, address(DEPLOYMENT.token)],
           ].map(([label, value, href]) => (
-            <div key={label as string} className="flex gap-4 border-b border-border/40 p-3 last:border-0">
-              <span className="w-16 shrink-0 text-muted-foreground">{label}</span>
+            <div key={label as string} className="flex gap-4 border-b border-[var(--rule)] p-3 last:border-0">
+              <span className="w-16 shrink-0 text-[var(--quiet)]">{label}</span>
               {href ? (
-                <a href={href as string} target="_blank" rel="noopener" className="break-all hover:text-foreground">
+                <a href={href as string} target="_blank" rel="noopener" className="break-all hover:text-[var(--ink)]">
                   {value}
                 </a>
               ) : (

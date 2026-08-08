@@ -41,7 +41,7 @@ type Execution = {
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <>
-      <dt className="text-muted-foreground">{label}</dt>
+      <dt className="text-[var(--quiet)]">{label}</dt>
       <dd className="break-all">{children}</dd>
     </>
   );
@@ -93,7 +93,7 @@ export function Inspector() {
       <h1 className="text-3xl font-semibold tracking-tight text-balance">
         Open the execution record.
       </h1>
-      <p className="mt-3 text-pretty leading-relaxed text-muted-foreground">
+      <p className="mt-3 text-pretty leading-relaxed text-[var(--quiet)]">
         Every settlement here runs through KeeperHub, which keeps its own account of what it did.
         Paste an execution id to read it — simulated, sent, sponsored, confirmed. No key required:
         a record only the trusting party can read is not evidence.
@@ -119,13 +119,13 @@ export function Inspector() {
         </Button>
       </form>
 
-      <p className="mt-3 font-mono text-xs text-muted-foreground">
-        Run the <a href="/outcome/demo/" className="underline underline-offset-4 hover:text-foreground">live demo</a>{" "}
+      <p className="mt-3 font-mono text-xs text-[var(--quiet)]">
+        Run the <a href="/outcome/demo/" className="underline underline-offset-4 hover:text-[var(--ink)]">live demo</a>{" "}
         and it will link you straight here with its own id.
       </p>
 
       {error && (
-        <p className="mt-6 rounded-lg border border-border/70 bg-secondary/40 p-4 font-mono text-sm text-muted-foreground">
+        <p className="mt-6 rounded-[2px] border border-[var(--rule)] bg-[var(--bench)] p-4 font-mono text-sm text-[var(--quiet)]">
           {error}
         </p>
       )}
@@ -134,17 +134,17 @@ export function Inspector() {
         <div className="mt-8 space-y-4">
           <div
             className={cn(
-              "rounded-xl border p-5",
+              "rounded-[2px] border p-5",
               data.status === "completed"
-                ? "border-emerald-400/25 bg-emerald-400/[0.04]"
-                : "border-amber-400/25 bg-amber-400/[0.04]"
+                ? "border-[var(--rule)] bg-[var(--bench)]"
+                : "border-[var(--assay)] bg-transparent"
             )}
           >
             <div className="flex flex-wrap items-center gap-3">
-              {data.status === "completed" && <CheckCircle2 className="size-4 text-emerald-400" />}
+              {data.status === "completed" && <CheckCircle2 className="size-4 text-[var(--ink)]" />}
               <span className="font-mono text-sm font-medium">{data.status}</span>
               {data.sponsored && (
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2.5 py-0.5 font-mono text-xs text-emerald-300">
+                <span className="inline-flex items-center gap-1.5 rounded-[2px] border border-[var(--rule)] bg-[var(--bench)] px-2.5 py-0.5 font-mono text-xs text-[var(--ink)]">
                   <Fuel className="size-3" /> gas sponsored
                 </span>
               )}
@@ -162,7 +162,7 @@ export function Inspector() {
                     href={tx(data.transactionHash)}
                     target="_blank"
                     rel="noopener"
-                    className="underline underline-offset-4 hover:text-foreground"
+                    className="underline underline-offset-4 hover:text-[var(--ink)]"
                   >
                     {data.transactionHash}
                   </a>
@@ -171,12 +171,12 @@ export function Inspector() {
             </dl>
           </div>
 
-          <div className="rounded-xl border border-border/60 bg-secondary/20 p-5">
+          <div className="rounded-[2px] border border-[var(--rule)] bg-[var(--bench)] p-5">
             <h2 className="font-mono text-sm font-medium">What this record does not tell you</h2>
-            <p className="mt-2 text-pretty text-sm leading-relaxed text-muted-foreground">
-              That <code className="font-mono text-foreground/80">status: completed</code> means
+            <p className="mt-2 text-pretty text-sm leading-relaxed text-[var(--quiet)]">
+              That <code className="font-mono text-[var(--ink)]">status: completed</code> means
               KeeperHub sent the transaction and it mined. It does not mean value moved — a
-              transaction can mine, emit no <code className="font-mono text-foreground/80">Transfer</code>,
+              transaction can mine, emit no <code className="font-mono text-[var(--ink)]">Transfer</code>,
               and pay nobody. That is the gap this project fills, and why the settlement is checked
               against the receipt before anything is released.
             </p>

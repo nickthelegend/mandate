@@ -68,8 +68,8 @@ export default function DemoPage() {
 
   return (
     <div className="mx-auto max-w-3xl px-5 py-14">
-      <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-secondary/30 px-3 py-1 font-mono text-xs text-muted-foreground">
-        <span className="inline-block size-1.5 rounded-full bg-emerald-400" />
+      <div className="rubric">
+        <span className="inline-block size-1.5 rounded-[2px] bg-[var(--bench)]" />
         every run is a real Sepolia transaction
       </div>
 
@@ -77,8 +77,8 @@ export default function DemoPage() {
         Buy an article twice. Once you get it, once you don&rsquo;t.
       </h1>
 
-      <p className="mt-5 text-pretty leading-relaxed text-muted-foreground">
-        Same protocol, same client, same <code className="font-mono text-foreground/80">success: true</code>{" "}
+      <p className="mt-5 text-pretty leading-relaxed text-[var(--quiet)]">
+        Same protocol, same client, same <code className="font-mono text-[var(--ink)]">success: true</code>{" "}
         from the facilitator. The only difference is that one of the two settlements actually moved
         money — and only one of them gets the article.
       </p>
@@ -91,7 +91,7 @@ export default function DemoPage() {
         <Button
           size="lg"
           variant="outline"
-          className="gap-2 border-amber-400/40 hover:bg-amber-400/10"
+          className="gap-2 border-[var(--assay)] hover:bg-transparent"
           disabled={running !== null}
           onClick={() => run("lying")}
         >
@@ -100,12 +100,12 @@ export default function DemoPage() {
         </Button>
       </div>
 
-      <p className="mt-3 font-mono text-xs text-muted-foreground">
+      <p className="mt-3 font-mono text-xs text-[var(--quiet)]">
         Each run signs an authorisation and settles on chain, so it takes a few seconds.
       </p>
 
       {error && (
-        <p className="mt-6 rounded-lg border border-border/70 bg-secondary/40 p-4 font-mono text-sm text-muted-foreground">
+        <p className="mt-6 rounded-[2px] border border-[var(--rule)] bg-[var(--bench)] p-4 font-mono text-sm text-[var(--quiet)]">
           {error}
         </p>
       )}
@@ -114,17 +114,17 @@ export default function DemoPage() {
         <div className="mt-8">
           <div
             className={cn(
-              "rounded-xl border p-5",
+              "rounded-[2px] border p-5",
               result.served
-                ? "border-emerald-400/25 bg-emerald-400/[0.04]"
-                : "border-amber-400/25 bg-amber-400/[0.04]"
+                ? "border-[var(--rule)] bg-[var(--bench)]"
+                : "border-[var(--assay)] bg-transparent"
             )}
           >
             <div className="flex flex-wrap items-center gap-3">
               {result.served ? (
-                <CheckCircle2 className="size-5 text-emerald-400" />
+                <CheckCircle2 className="size-5 text-[var(--ink)]" />
               ) : (
-                <XCircle className="size-5 text-amber-400" />
+                <XCircle className="size-5 text-[var(--assay)]" />
               )}
               <span className="font-mono text-sm font-medium">
                 HTTP {result.httpStatus} — {result.served ? "resource served" : "resource withheld"}
@@ -132,42 +132,42 @@ export default function DemoPage() {
             </div>
 
             <dl className="mt-4 grid gap-1.5 font-mono text-xs sm:grid-cols-[190px_1fr]">
-              <dt className="text-muted-foreground">facilitator claimed</dt>
+              <dt className="text-[var(--quiet)]">facilitator claimed</dt>
               <dd>{String(result.facilitatorClaimedSuccess)}</dd>
-              <dt className="text-muted-foreground">chain actually moved</dt>
-              <dd className={result.served ? "" : "text-amber-200/90"}>{result.observed}</dd>
+              <dt className="text-[var(--quiet)]">chain actually moved</dt>
+              <dd className={result.served ? "" : "text-[var(--assay)]"}>{result.observed}</dd>
               {result.submittedVia && (
                 <>
-                  <dt className="text-muted-foreground">submitted via</dt>
+                  <dt className="text-[var(--quiet)]">submitted via</dt>
                   <dd>{result.submittedVia}</dd>
                 </>
               )}
             </dl>
 
-            <p className="mt-4 break-words font-mono text-xs leading-relaxed text-foreground/85">
+            <p className="mt-4 break-words font-mono text-xs leading-relaxed text-[var(--ink)]">
               {result.reason}
             </p>
 
             {result.executionId && (
               <a
                 href={`/outcome/inspect/?id=${result.executionId}`}
-                className="mt-4 inline-block font-mono text-xs underline-offset-4 hover:text-foreground hover:underline"
+                className="mt-4 inline-block font-mono text-xs underline-offset-4 hover:text-[var(--ink)] hover:underline"
               >
                 open KeeperHub&rsquo;s record for this settlement &rarr;
               </a>
             )}
           </div>
 
-          <ol className="mt-6 space-y-px overflow-hidden rounded-xl border border-border/60">
+          <ol className="mt-6 space-y-px overflow-hidden rounded-[2px] border border-[var(--rule)]">
             {result.steps.map((s, i) => (
               <li key={`${s.label}-${i}`} className="bg-background p-4">
                 <div className="flex items-baseline gap-3">
-                  <span className="font-mono text-xs text-muted-foreground">
+                  <span className="font-mono text-xs text-[var(--quiet)]">
                     {String(i + 1).padStart(2, "0")}
                   </span>
                   <span className="text-sm font-medium">{s.label}</span>
                 </div>
-                <p className="mt-1 break-words pl-8 font-mono text-xs leading-relaxed text-muted-foreground">
+                <p className="mt-1 break-words pl-8 font-mono text-xs leading-relaxed text-[var(--quiet)]">
                   {s.detail}
                 </p>
                 {s.transactionHash && (
@@ -175,7 +175,7 @@ export default function DemoPage() {
                     href={tx(s.transactionHash)}
                     target="_blank"
                     rel="noopener"
-                    className="mt-1.5 inline-block pl-8 font-mono text-xs underline-offset-4 hover:text-foreground hover:underline"
+                    className="mt-1.5 inline-block pl-8 font-mono text-xs underline-offset-4 hover:text-[var(--ink)] hover:underline"
                   >
                     {s.transactionHash.slice(0, 22)}… on Etherscan →
                   </a>
@@ -185,9 +185,9 @@ export default function DemoPage() {
           </ol>
 
           {result.article && (
-            <div className="mt-6 rounded-xl border border-border/60 bg-secondary/20 p-5">
+            <div className="mt-6 rounded-[2px] border border-[var(--rule)] bg-[var(--bench)] p-5">
               <h2 className="font-medium tracking-tight">{result.article.title}</h2>
-              <p className="mt-2 text-pretty text-sm leading-relaxed text-muted-foreground">
+              <p className="mt-2 text-pretty text-sm leading-relaxed text-[var(--quiet)]">
                 {result.article.body}
               </p>
             </div>
@@ -195,15 +195,15 @@ export default function DemoPage() {
         </div>
       )}
 
-      <div className="mt-14 rounded-xl border border-border/60 bg-secondary/20 p-5">
+      <div className="mt-14 rounded-[2px] border border-[var(--rule)] bg-[var(--bench)] p-5">
         <h2 className="font-mono text-sm font-medium">What the lying facilitator does</h2>
-        <p className="mt-2 text-pretty text-sm leading-relaxed text-muted-foreground">
-          It submits an <code className="font-mono text-foreground/80">approve</code> instead of the
+        <p className="mt-2 text-pretty text-sm leading-relaxed text-[var(--quiet)]">
+          It submits an <code className="font-mono text-[var(--ink)]">approve</code> instead of the
           transfer. That mines, emits a log, costs it nothing, and moves no money — then it returns{" "}
-          <code className="font-mono text-foreground/80">success: true</code> with that hash. It is a
+          <code className="font-mono text-[var(--ink)]">success: true</code> with that hash. It is a
           legal x402 settlement response, and a stock resource server hands over the article.
         </p>
-        <p className="mt-3 text-pretty text-sm leading-relaxed text-muted-foreground">
+        <p className="mt-3 text-pretty text-sm leading-relaxed text-[var(--quiet)]">
           The point is not that facilitators are malicious. It is that x402 has no way to find out.
         </p>
       </div>

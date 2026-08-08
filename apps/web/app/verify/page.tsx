@@ -62,9 +62,9 @@ export default function VerifyPage() {
       <h1 className="text-3xl font-semibold tracking-tight text-balance">
         Check a payment yourself.
       </h1>
-      <p className="mt-3 text-pretty leading-relaxed text-muted-foreground">
+      <p className="mt-3 text-pretty leading-relaxed text-[var(--quiet)]">
         Paste any {DEPLOYMENT.chainName} transaction. Your browser fetches the receipt from a public
-        RPC and reads it for a real ERC-20 <code className="font-mono text-foreground/80">Transfer</code>{" "}
+        RPC and reads it for a real ERC-20 <code className="font-mono text-[var(--ink)]">Transfer</code>{" "}
         to the recipient. Nothing is sent to a server — this page has none.
       </p>
 
@@ -73,17 +73,17 @@ export default function VerifyPage() {
           <button
             key={s.transactionHash}
             onClick={() => load(s)}
-            className="group rounded-lg border border-border/70 px-3 py-2 text-left transition-colors hover:border-foreground/30 hover:bg-secondary/50"
+            className="group rounded-[2px] border border-[var(--rule)] px-3 py-2 text-left transition-colors hover:border-[var(--ink)] hover:bg-[var(--bench)]"
           >
             <span className="block text-sm font-medium">{s.label}</span>
-            <span className="block font-mono text-xs text-muted-foreground">{s.blurb}</span>
+            <span className="block font-mono text-xs text-[var(--quiet)]">{s.blurb}</span>
           </button>
         ))}
       </div>
 
       <form onSubmit={submit} className="mt-8 space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="hash" className="font-mono text-xs uppercase tracking-wide text-muted-foreground">
+          <Label htmlFor="hash" className="font-mono text-xs uppercase tracking-wide text-[var(--quiet)]">
             Transaction hash
           </Label>
           <Input
@@ -99,7 +99,7 @@ export default function VerifyPage() {
 
         <div className="grid gap-4 sm:grid-cols-[1fr_200px]">
           <div className="space-y-2">
-            <Label htmlFor="to" className="font-mono text-xs uppercase tracking-wide text-muted-foreground">
+            <Label htmlFor="to" className="font-mono text-xs uppercase tracking-wide text-[var(--quiet)]">
               Who had to be paid
             </Label>
             <Input
@@ -112,7 +112,7 @@ export default function VerifyPage() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="amt" className="font-mono text-xs uppercase tracking-wide text-muted-foreground">
+            <Label htmlFor="amt" className="font-mono text-xs uppercase tracking-wide text-[var(--quiet)]">
               At least (base units)
             </Label>
             <Input
@@ -133,7 +133,7 @@ export default function VerifyPage() {
       </form>
 
       {error && (
-        <p className="mt-6 rounded-lg border border-border/70 bg-secondary/40 p-4 font-mono text-sm text-muted-foreground">
+        <p className="mt-6 rounded-[2px] border border-[var(--rule)] bg-[var(--bench)] p-4 font-mono text-sm text-[var(--quiet)]">
           {error}
         </p>
       )}
@@ -145,16 +145,16 @@ export default function VerifyPage() {
             href={tx(form.transactionHash)}
             target="_blank"
             rel="noopener"
-            className="inline-block font-mono text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+            className="inline-block font-mono text-xs text-[var(--quiet)] underline-offset-4 hover:text-[var(--ink)] hover:underline"
           >
             open this transaction on Etherscan and check for yourself →
           </a>
         </div>
       )}
 
-      <div className="mt-14 rounded-xl border border-border/60 bg-secondary/20 p-5">
+      <div className="mt-14 rounded-[2px] border border-[var(--rule)] bg-[var(--bench)] p-5">
         <h2 className="font-mono text-sm font-medium">The same call, in your own code</h2>
-        <pre className="mt-3 overflow-x-auto rounded-lg bg-background/60 p-4 font-mono text-xs leading-relaxed text-foreground/80">
+        <pre className="mt-3 overflow-x-auto rounded-[2px] bg-[var(--sheet)] p-4 font-mono text-xs leading-relaxed text-[var(--ink)]">
 {`import { OutcomeClient } from "outcome-sdk";
 
 const outcome = new OutcomeClient({

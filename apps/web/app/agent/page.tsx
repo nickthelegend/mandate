@@ -70,7 +70,7 @@ export default function AgentPage() {
 
   return (
     <div className="mx-auto max-w-3xl px-5 py-14">
-      <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-secondary/30 px-3 py-1 font-mono text-xs text-muted-foreground">
+      <div className="rubric">
         <Bot className="size-3" /> no private key · no ETH
       </div>
 
@@ -78,7 +78,7 @@ export default function AgentPage() {
         An agent that gets paid without holding a key.
       </h1>
 
-      <p className="mt-5 text-pretty leading-relaxed text-muted-foreground">
+      <p className="mt-5 text-pretty leading-relaxed text-[var(--quiet)]">
         A payer posts a job, escrows the money, and walks away. Nothing after that is driven by a
         human. The agent finds the work, does it through KeeperHub, and hands the verifier a
         transaction hash — never a verdict. It gets paid only because the transfer was proven, and
@@ -90,44 +90,44 @@ export default function AgentPage() {
         {running ? "Working…" : "Post a job and let it run"}
       </Button>
 
-      <p className="mt-3 font-mono text-xs text-muted-foreground">
+      <p className="mt-3 font-mono text-xs text-[var(--quiet)]">
         A cycle is four real transactions — approve, claim, deliver, settle — so give it a moment.
       </p>
 
       {error && (
-        <p className="mt-6 rounded-lg border border-border/70 bg-secondary/40 p-4 font-mono text-sm text-muted-foreground">
+        <p className="mt-6 rounded-[2px] border border-[var(--rule)] bg-[var(--bench)] p-4 font-mono text-sm text-[var(--quiet)]">
           {error}
         </p>
       )}
 
       {cycle && (
         <div className="mt-8 space-y-4">
-          <div className="rounded-xl border border-border/60 bg-secondary/20 p-5">
-            <div className="font-mono text-xs uppercase tracking-wide text-muted-foreground">
+          <div className="rounded-[2px] border border-[var(--rule)] bg-[var(--bench)] p-5">
+            <div className="font-mono text-xs uppercase tracking-wide text-[var(--quiet)]">
               the payer posts and leaves
             </div>
             <p className="mt-2 font-mono text-sm">{cycle.task}</p>
             <dl className="mt-3 grid gap-1.5 font-mono text-xs sm:grid-cols-[130px_1fr]">
-              <dt className="text-muted-foreground">intent</dt>
+              <dt className="text-[var(--quiet)]">intent</dt>
               <dd className="break-all">{cycle.intentId}</dd>
-              <dt className="text-muted-foreground">escrowed in</dt>
+              <dt className="text-[var(--quiet)]">escrowed in</dt>
               <dd>
                 <a
                   href={tx(cycle.claimTransactionHash)}
                   target="_blank"
                   rel="noopener"
-                  className="underline underline-offset-4 hover:text-foreground"
+                  className="underline underline-offset-4 hover:text-[var(--ink)]"
                 >
                   {cycle.claimTransactionHash.slice(0, 22)}…
                 </a>
               </dd>
-              <dt className="text-muted-foreground">agent address</dt>
+              <dt className="text-[var(--quiet)]">agent address</dt>
               <dd className="break-all">{cycle.agentAddress}</dd>
             </dl>
           </div>
 
           {cycle.declinedOthers > 0 && (
-            <p className="font-mono text-xs text-muted-foreground">
+            <p className="font-mono text-xs text-[var(--quiet)]">
               It also looked at {cycle.declinedOthers} older intent
               {cycle.declinedOthers === 1 ? "" : "s"} and declined {cycle.declinedOthers === 1 ? "it" : "them"} —
               it will not take money for work whose task it cannot reconstruct.
@@ -135,7 +135,7 @@ export default function AgentPage() {
           )}
 
           {cycle.reports.length === 0 && (
-            <p className="rounded-xl border border-border/60 p-5 font-mono text-sm text-muted-foreground">
+            <p className="rounded-[2px] border border-[var(--rule)] p-5 font-mono text-sm text-[var(--quiet)]">
               The agent found no open work this cycle.
             </p>
           )}
@@ -146,24 +146,24 @@ export default function AgentPage() {
               <div
                 key={r.intentId}
                 className={cn(
-                  "rounded-xl border p-5",
+                  "rounded-[2px] border p-5",
                   released
-                    ? "border-emerald-400/25 bg-emerald-400/[0.04]"
-                    : "border-amber-400/25 bg-amber-400/[0.04]"
+                    ? "border-[var(--rule)] bg-[var(--bench)]"
+                    : "border-[var(--assay)] bg-transparent"
                 )}
               >
                 <div className="flex flex-wrap items-center gap-3">
                   {released ? (
-                    <CheckCircle2 className="size-4 text-emerald-400" />
+                    <CheckCircle2 className="size-4 text-[var(--ink)]" />
                   ) : (
-                    <XCircle className="size-4 text-amber-400" />
+                    <XCircle className="size-4 text-[var(--assay)]" />
                   )}
                   <span className="font-mono text-sm font-medium">
                     {r.took ? (r.outcome ?? "settled") : "declined"}
                   </span>
                 </div>
 
-                <p className="mt-3 break-words font-mono text-xs leading-relaxed text-foreground/85">
+                <p className="mt-3 break-words font-mono text-xs leading-relaxed text-[var(--ink)]">
                   {r.reason}
                 </p>
 
@@ -172,7 +172,7 @@ export default function AgentPage() {
                     href={tx(r.workTx)}
                     target="_blank"
                     rel="noopener"
-                    className="mt-3 inline-block font-mono text-xs underline-offset-4 hover:text-foreground hover:underline"
+                    className="mt-3 inline-block font-mono text-xs underline-offset-4 hover:text-[var(--ink)] hover:underline"
                   >
                     the work it did: {r.workTx.slice(0, 22)}… →
                   </a>
@@ -182,11 +182,11 @@ export default function AgentPage() {
           })}
 
           {paid && (
-            <div className="rounded-xl border border-border/60 bg-secondary/20 p-5">
+            <div className="rounded-[2px] border border-[var(--rule)] bg-[var(--bench)] p-5">
               <h2 className="font-mono text-sm font-medium">Who signed all that</h2>
-              <p className="mt-2 text-pretty text-sm leading-relaxed text-muted-foreground">
+              <p className="mt-2 text-pretty text-sm leading-relaxed text-[var(--quiet)]">
                 Not the agent. Open the work transaction and the sender is KeeperHub&rsquo;s relayer;
-                the wallet holding the tokens has <code className="font-mono text-foreground/80">0.0 ETH</code>.
+                the wallet holding the tokens has <code className="font-mono text-[var(--ink)]">0.0 ETH</code>.
                 The agent&rsquo;s address appears only as the payee — it signed nothing, funded
                 nothing, and still got paid for proven work.
               </p>

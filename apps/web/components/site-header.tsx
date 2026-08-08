@@ -1,19 +1,27 @@
 "use client";
 
+/**
+ * The register's running head.
+ *
+ * A rule of struck labels with the current entry underlined in ink. No pill, no
+ * filled tab, no status dot: an assay office marks the current page the way a
+ * bound register marks the open one, by where the ribbon sits.
+ */
+
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+
 import { cn } from "@/lib/utils";
 
 const NAV = [
   { href: "/", label: "Overview" },
-  { href: "/demo", label: "Live demo" },
+  { href: "/demo", label: "Strike" },
   { href: "/agent", label: "Agent" },
-  { href: "/inspect", label: "Inspect" },
   { href: "/ledger", label: "Ledger" },
-  { href: "/claim", label: "Claim" },
+  { href: "/explorer", label: "Register" },
+  { href: "/verify", label: "Assay" },
+  { href: "/inspect", label: "Inspect" },
   { href: "/x402", label: "x402" },
-  { href: "/verify", label: "Verify" },
-  { href: "/explorer", label: "Explorer" },
   { href: "/docs", label: "Docs" },
 ];
 
@@ -22,23 +30,26 @@ export function SiteHeader() {
   const active = (href: string) => (href === "/" ? path === "/" : path.startsWith(href));
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur-xl">
-      <div className="mx-auto flex h-14 max-w-6xl items-center gap-6 px-5">
-        <Link href="/" className="flex items-center gap-2.5 font-mono text-sm font-semibold tracking-tight">
-          <span className="inline-block size-2 rounded-full bg-emerald-400 shadow-[0_0_12px] shadow-emerald-400/70" />
-          outcome
+    <header className="sticky top-0 z-50 border-b border-[var(--rule)] bg-[var(--sheet)]">
+      <div className="mx-auto flex h-14 max-w-6xl items-center gap-8 px-6">
+        <Link href="/" className="flex items-baseline gap-2.5 whitespace-nowrap">
+          <span className="font-display text-sm font-bold uppercase tracking-[0.14em] text-[var(--ink)]">
+            Outcome
+          </span>
+          <span className="rubric hidden md:inline">Assay Office</span>
         </Link>
 
-        <nav className="flex items-center gap-1 text-sm">
+        <nav className="no-scrollbar flex flex-1 items-center gap-5 overflow-x-auto">
           {NAV.map((n) => (
             <Link
               key={n.href}
               href={n.href}
+              aria-current={active(n.href) ? "page" : undefined}
               className={cn(
-                "rounded-md px-2.5 py-1.5 transition-colors",
+                "rubric whitespace-nowrap border-b-2 pb-0.5 transition-colors",
                 active(n.href)
-                  ? "bg-secondary text-foreground"
-                  : "text-muted-foreground hover:text-foreground"
+                  ? "border-[var(--ink)] text-[var(--ink)]"
+                  : "border-transparent hover:text-[var(--ink)]"
               )}
             >
               {n.label}
@@ -46,17 +57,14 @@ export function SiteHeader() {
           ))}
         </nav>
 
-        <div className="ml-auto flex items-center gap-3 font-mono text-xs text-muted-foreground">
-          <span className="hidden sm:inline">Sepolia</span>
-          <a
-            href="https://github.com/nickthelegend/outcome"
-            target="_blank"
-            rel="noopener"
-            className="rounded-md border border-border/70 px-2.5 py-1 transition-colors hover:border-foreground/40 hover:text-foreground"
-          >
-            GitHub
-          </a>
-        </div>
+        <a
+          href="https://github.com/nickthelegend/outcome"
+          target="_blank"
+          rel="noopener"
+          className="rubric hidden whitespace-nowrap hover:text-[var(--ink)] lg:inline"
+        >
+          Source
+        </a>
       </div>
     </header>
   );

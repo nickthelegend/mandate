@@ -13,7 +13,7 @@ export default function InspectPage() {
       fallback={
         <div className="mx-auto max-w-3xl px-5 py-14">
           <h1 className="text-3xl font-semibold tracking-tight">Open the execution record.</h1>
-          <p className="mt-3 font-mono text-sm text-muted-foreground">loading…</p>
+          <p className="mt-3 font-mono text-sm text-[var(--quiet)]">loading…</p>
         </div>
       }
     >

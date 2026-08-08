@@ -3,79 +3,63 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/*
+ * THESIS: A hallmark is a claim countersigned by someone who checked. This
+ * surface refuses the near-black-plus-neon console the category ships.
+ * OWN-WORLD: Sterling sheet, iron-gall ink, one assay red, marks struck into
+ * the ground as insets. Archivo Expanded punches, Geist Mono registers.
+ * STORY: A facilitator says sterling; the assay shield beside it is empty.
+ * FIRST VIEWPORT: A hallmark strip at display scale, its assay mark unstruck.
+ * FORM: Assay office, candidate 7 of 7, seed 93a2da7d.
+ */
+
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  /* Sterling sheet, cool. Never cream -- warmth here is the drift to correct. */
+  --sheet: oklch(0.94 0.004 250);
+  --bench: oklch(0.90 0.006 250);
+  --rule: oklch(0.80 0.008 250);
+  --quiet: oklch(0.52 0.012 250);
+
+  /* Iron-gall: browns as it lightens, exactly as the register hand ages. */
+  --ink: oklch(0.22 0.02 250);
+  /* Oxidised silver, the dark that collects in a punch recess. */
+  --struck: oklch(0.42 0.05 250);
+  /* Assay red: seal, crucible, rejection stamp. A verdict, never an accent. */
+  --assay: oklch(0.52 0.19 25);
+
+  /* Displacement, not float. Recess plus the burr of raised metal below it. */
+  --strike: inset 0 1px 0 var(--rule), inset 0 -1px 0 oklch(1 0 0 / 0.75);
+  --strike-deep: inset 0 2px 0 var(--rule), inset 0 -1px 0 oklch(1 0 0 / 0.6);
 }
 
-.dark {
-  --background: oklch(0.13 0.02 260);
-  /* near-black */
-  --foreground: oklch(0.98 0.01 260);
-  /* near-white */
-  --card: oklch(0.16 0.02 260);
-  --card-foreground: oklch(0.98 0.01 260);
-  --popover: oklch(0.16 0.02 260);
-  --popover-foreground: oklch(0.98 0.01 260);
-  --primary: oklch(0.88 0.2 128);
-  /* neon-lime */
-  --primary-foreground: oklch(0.18 0.02 260);
-  /* dark text on lime */
-  --secondary: oklch(0.22 0.02 260);
-  /* deeper surface */
-  --secondary-foreground: oklch(0.98 0.01 260);
-  --muted: oklch(0.22 0.02 260);
-  --muted-foreground: oklch(0.72 0.01 260);
-  --accent: oklch(0.72 0.08 210);
-  /* cool accent if needed */
-  --accent-foreground: oklch(0.13 0.02 260);
-  --border: oklch(0.28 0.02 260);
-  --input: oklch(0.28 0.02 260);
-  --ring: oklch(0.55 0.08 210);
-  --sidebar: oklch(0.18 0.02 260);
-  --sidebar-foreground: oklch(0.98 0.01 260);
-  --sidebar-primary: var(--primary);
-  --sidebar-primary-foreground: var(--primary-foreground);
-  --sidebar-accent: oklch(0.22 0.02 260);
-  --sidebar-accent-foreground: oklch(0.98 0.01 260);
-  --sidebar-border: oklch(0.28 0.02 260);
-  --sidebar-ring: var(--ring);
+
+:root {
+  --background: var(--sheet);
+  --foreground: var(--ink);
+  --card: var(--sheet);
+  --card-foreground: var(--ink);
+  --popover: var(--sheet);
+  --popover-foreground: var(--ink);
+  --primary: var(--ink);
+  --primary-foreground: var(--sheet);
+  --secondary: var(--bench);
+  --secondary-foreground: var(--ink);
+  --muted: var(--bench);
+  --muted-foreground: var(--quiet);
+  --accent: var(--bench);
+  --accent-foreground: var(--ink);
+  --destructive: var(--assay);
+  --destructive-foreground: var(--sheet);
+  --border: var(--rule);
+  --input: var(--rule);
+  --ring: var(--ink);
+  --radius: 2px;
 }
+
 
 @theme inline {
-  --font-display: "Space Grotesk", sans-serif;
-  --font-mono: "JetBrains Mono", monospace;
+  --font-display: var(--font-archivo), system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -143,21 +127,6 @@
   display: none;
 }
 
-.glass-card {
-  background: rgba(255, 255, 255, 0.03);
-  backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.step-line {
-  position: absolute;
-  left: 1.5rem;
-  top: 2rem;
-  bottom: -2rem;
-  width: 2px;
-  background: linear-gradient(to bottom, var(--primary) 0%, rgba(167, 242, 74, 0.1) 100%);
-  z-index: 0;
-}
 
 @media (min-width: 768px) {
   .step-line {
@@ -165,16 +134,6 @@
   }
 }
 
-.glass-sidebar {
-  background: rgba(26, 34, 17, 0.4);
-  backdrop-filter: blur(12px);
-  border-right: 1px solid rgba(167, 242, 74, 0.1);
-}
-
-.terminal-block {
-  background: #0d1117;
-  border: 1px solid rgba(167, 242, 74, 0.2);
-}
 
 .custom-scrollbar::-webkit-scrollbar {
   width: 4px;
@@ -190,65 +149,6 @@
 }
 
 
-.core-container {
-  perspective: 2000px;
-}
-
-.orb-wrapper {
-  position: relative;
-  transform-style: preserve-3d;
-  animation: rotateOrb 30s linear infinite;
-}
-
-.ring {
-  position: absolute;
-  border: 2px solid #A6F24A;
-  border-radius: 50%;
-  opacity: 0.6;
-  box-shadow: 0 0 15px rgba(166, 242, 74, 0.4);
-}
-
-.ring-1 {
-  width: 400px;
-  height: 400px;
-  transform: rotateX(75deg) rotateY(0deg);
-}
-
-.ring-2 {
-  width: 350px;
-  height: 350px;
-  transform: rotateX(45deg) rotateY(45deg);
-  opacity: 0.4;
-}
-
-.ring-3 {
-  width: 300px;
-  height: 300px;
-  transform: rotateX(-45deg) rotateY(60deg);
-  opacity: 0.3;
-}
-
-.ring-4 {
-  width: 450px;
-  height: 450px;
-  transform: rotateX(90deg) rotateY(15deg);
-  border-style: dashed;
-  opacity: 0.2;
-}
-
-.core-data-center {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 120px;
-  height: 120px;
-  background: radial-gradient(circle, #A6F24A 0%, rgba(166, 242, 74, 0) 70%);
-  border-radius: 50%;
-  filter: blur(20px);
-  animation: pulse 4s ease-in-out infinite;
-}
-
 @keyframes rotateOrb {
   from {
     transform: rotateY(0deg) rotateZ(0deg);
@@ -259,26 +159,6 @@
   }
 }
 
-@keyframes pulse {
-
-  0%,
-  100% {
-    transform: translate(-50%, -50%) scale(1);
-    opacity: 0.5;
-  }
-
-  50% {
-    transform: translate(-50%, -50%) scale(1.4);
-    opacity: 0.9;
-  }
-}
-
-.circular-text {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  animation: rotateCounter 60s linear infinite;
-}
 
 @keyframes rotateCounter {
   from {
@@ -290,24 +170,6 @@
   }
 }
 
-.text-ring {
-  font-family: 'monospace';
-  font-weight: 900;
-  text-transform: uppercase;
-  fill: rgba(255, 255, 255, 0.05);
-  font-size: 42px;
-  letter-spacing: 12px;
-}
-
-
-.energy-ring {
-  border: 4px solid transparent;
-  border-top-color: #A6F24A;
-  border-bottom-color: #A6F24A;
-  border-radius: 50%;
-  position: absolute;
-  animation: ringPulse 4s ease-in-out infinite alternate;
-}
 
 @keyframes ringPulse {
   0% {
@@ -321,19 +183,6 @@
   }
 }
 
-.core-glow {
-  background: radial-gradient(circle, #A6F24A 0%, transparent 70%);
-  filter: blur(40px);
-}
-.marquee-container {
-  overflow: hidden;
-  white-space: nowrap;
-}
-
-.marquee-content {
-  display: inline-block;
-  animation: obolus-marquee 30s linear infinite;
-}
 
 @keyframes obolus-marquee {
   0% { transform: translateX(0); }
@@ -341,30 +190,6 @@
 }
 
 /* Mesh Wallet Overrides - Force Black on Lime */
-.mesh-wallet-wrapper .mesh-button,
-.landing-wallet-wrapper .mesh-button {
-  background-color: var(--primary) !important;
-  color: #000000 !important;
-  border-radius: 9999px !important;
-  font-family: inherit !important;
-  font-weight: 900 !important;
-  text-transform: uppercase !important;
-  font-size: 10px !important;
-  border: none !important;
-  box-shadow: 0 0 20px rgba(166, 242, 74, 0.3) !important;
-}
-
-.mesh-wallet-wrapper .mesh-button *,
-.landing-wallet-wrapper .mesh-button * {
-  color: #000000 !important;
-}
-
-.mesh-wallet-wrapper .mesh-dropdown {
-  background-color: #0a0f18 !important;
-  border: 1px solid rgba(166, 242, 74, 0.2) !important;
-  backdrop-filter: blur(16px) !important;
-  border-radius: 12px !important;
-}
 
 /* Active Nav Header Fix */
 header nav a.bg-primary {
@@ -497,31 +322,14 @@ header nav a.bg-primary {
  * ------------------------------------------------------------------------ */
 
 /*
- * Ambient ground.
+ * The ground is a plain rolled sheet.
  *
- * A hairline grid plus one soft lime bloom, both fixed, both far below the
- * content. This is doing perceptual work rather than decoration: a plane needs
- * a surface behind it to read as raised, and pure #0b0b0b gives it none. Kept
- * under 4% opacity so it never competes with a figure.
+ * An earlier pass gave it a tiled hairline grid as "mill finish", and the
+ * detector was right to flag it: a two-axis line field is a generated-UI
+ * signature, not a material. Sterling sheet has no pattern on it. The rules
+ * that organise this surface come from the register -- real structure, drawn
+ * where content actually divides -- so the ground needs nothing.
  */
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  background-image:
-    radial-gradient(
-      60rem 40rem at 78% -8%,
-      color-mix(in oklab, var(--color-primary) 9%, transparent),
-      transparent 70%
-    ),
-    linear-gradient(color-mix(in oklab, var(--color-foreground) 3%, transparent) 1px, transparent 1px),
-    linear-gradient(90deg, color-mix(in oklab, var(--color-foreground) 3%, transparent) 1px, transparent 1px);
-  background-size: 100% 100%, 64px 64px, 64px 64px;
-  /* Fade the grid out downward so it frames the fold and then gets out of the way. */
-  mask-image: linear-gradient(to bottom, black, black 40rem, transparent 70rem);
-}
 
 /* Content has to sit above the ground. */
 body > * {
@@ -660,5 +468,209 @@ body > * {
 
   .plate > * + * {
     border-top: 1px solid color-mix(in oklab, var(--color-foreground) 8%, transparent);
+  }
+}
+
+/* ---- The assay office ---------------------------------------------------
+ * Marks are struck into the sheet, never floated above it. Depth here is
+ * displacement: a recess with the burr of raised metal along its lower edge.
+ * ------------------------------------------------------------------------ */
+@layer components {
+  .hallmark {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .hallmark__strip {
+    display: flex;
+    align-items: stretch;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .mark {
+    position: relative;
+    display: inline-grid;
+    place-items: center;
+    min-width: 76px;
+    padding: 10px 12px 8px;
+    border-radius: 2px;
+    background: var(--bench);
+    box-shadow: var(--strike);
+    text-align: center;
+  }
+
+  /* The cartouche silhouette carries the meaning, so state survives greyscale. */
+  .mark__shape {
+    width: 26px;
+    height: 28px;
+    fill: none;
+    stroke: var(--struck);
+    stroke-width: 2.5;
+  }
+
+  .mark--maker .mark__shape { fill: var(--struck); stroke: none; }
+  .mark--assayed .mark__shape { fill: var(--ink); stroke: none; }
+
+  /* The empty shield. An incised outline and nothing inside it: the maker said
+   * sterling and nobody countersigned. Dashed, because the punch never landed. */
+  .mark--unassayed {
+    background: transparent;
+    box-shadow: inset 0 0 0 1px var(--assay);
+  }
+  .mark--unassayed .mark__shape {
+    stroke: var(--assay);
+    stroke-dasharray: 4 3;
+  }
+  .mark--unassayed .mark__label { color: var(--assay); }
+
+  .mark__label,
+  .mark__rubric {
+    margin-top: 6px;
+    font-family: var(--font-display);
+    font-size: 0.5625rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--quiet);
+    white-space: nowrap;
+  }
+
+  .mark--maker .mark__label,
+  .mark--assayed .mark__label { color: var(--ink); }
+
+  .mark--standard,
+  .mark--date { min-width: 0; }
+
+  .mark__figure {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: 0.9375rem;
+    color: var(--ink);
+  }
+
+  .mark--date .mark__label {
+    font-family: var(--font-mono);
+    letter-spacing: 0;
+    text-transform: none;
+  }
+
+  .hallmark__reason {
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    line-height: 1.6;
+    color: var(--quiet);
+    max-width: 68ch;
+  }
+
+  /* Display scale: the strip is the first viewport, not a badge in a card. */
+  .hallmark--display .mark { min-width: 116px; padding: 20px 20px 16px; }
+  .hallmark--display .mark__shape { width: 44px; height: 48px; }
+  .hallmark--display .mark__label { font-size: 0.6875rem; }
+  .hallmark--display .mark__figure { font-size: 1.5rem; }
+
+  /* One blow. Exponential settle from an already-visible default, so the strip
+   * is legible even if the animation never runs. */
+  .hallmark__strip .mark { transition: transform 150ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 150ms; }
+  .hallmark--striking .mark { transform: translateY(-2px); box-shadow: var(--strike-deep); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hallmark__strip .mark { transition: none; }
+    .hallmark--striking .mark { transform: none; box-shadow: var(--strike); }
+  }
+
+  /* A register page: ruled entries on sheet, hard left, no nested containers. */
+  .register { border-top: 2px solid var(--ink); }
+
+  .register__row {
+    display: grid;
+    gap: 4px 20px;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .rubric {
+    font-family: var(--font-display);
+    font-size: 0.6875rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--quiet);
+  }
+
+  .figure {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    color: var(--ink);
+  }
+
+  /* A struck plate: the world's button. Takes the blow on press. */
+  .plate-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    border: 0;
+    border-bottom: 2px solid var(--ink);
+    border-radius: 2px;
+    background: var(--bench);
+    box-shadow: var(--strike);
+    color: var(--ink);
+    font-family: var(--font-display);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+
+  .plate-btn:active { box-shadow: var(--strike-deep); transform: translateY(1px); }
+  .plate-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .plate-btn--quiet { border-bottom-color: var(--rule); }
+}
+
+@layer components {
+  /* The assay mark at row scale. Shape carries the state; colour reinforces. */
+  .verdict-mark {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-display);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .verdict-mark svg { width: 14px; height: 16px; flex: none; }
+
+  .verdict-mark--proven { color: var(--ink); }
+  .verdict-mark--proven svg { fill: var(--ink); stroke: none; }
+
+  /* Incised and empty: the punch never landed. */
+  .verdict-mark--not_proven { color: var(--assay); }
+  .verdict-mark--not_proven svg {
+    fill: none;
+    stroke: var(--assay);
+    stroke-width: 2;
+    stroke-dasharray: 3 2.5;
+  }
+
+  /* Nobody has ruled yet. Not zero, and not a refusal. */
+  .verdict-mark--awaiting { color: var(--quiet); }
+  .verdict-mark--awaiting svg { fill: none; stroke: var(--rule); stroke-width: 2; }
+
+  .verdict-panel {
+    padding: 20px;
+    border: 1px solid var(--rule);
+    border-radius: 2px;
+    background: var(--sheet);
+  }
+
+  /* A refusal is ruled in assay red on its leading edge, the way a register
+   * strikes a rejected entry. One rule, not a tinted card. */
+  .verdict-panel--unassayed {
+    border-left: 2px solid var(--assay);
   }
 }

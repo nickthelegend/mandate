@@ -35,16 +35,16 @@ export function LiveStats() {
    */
   if (error) {
     return (
-      <div className="rounded-xl border border-amber-400/25 bg-amber-400/[0.04] p-5">
-        <div className="font-mono text-xs uppercase tracking-wide text-amber-300">
+      <div className="rounded-[2px] border border-[var(--assay)] bg-transparent p-5">
+        <div className="font-mono text-xs uppercase tracking-wide text-[var(--assay)]">
           could not read the chain
         </div>
-        <p className="mt-2 font-mono text-xs leading-relaxed text-muted-foreground">{error}</p>
+        <p className="mt-2 font-mono text-xs leading-relaxed text-[var(--quiet)]">{error}</p>
         <a
           href={`${DEPLOYMENT.explorer}/address/${DEPLOYMENT.escrow}#events`}
           target="_blank"
           rel="noopener"
-          className="mt-3 inline-block font-mono text-xs underline-offset-4 hover:text-foreground hover:underline"
+          className="mt-3 inline-block font-mono text-xs underline-offset-4 hover:text-[var(--ink)] hover:underline"
         >
           read the events on Etherscan instead →
         </a>
@@ -55,11 +55,11 @@ export function LiveStats() {
   return (
     <Link
       href="/explorer"
-      className="group grid gap-px overflow-hidden rounded-xl border border-border/60 bg-border/60 sm:grid-cols-4"
+      className="group grid gap-px overflow-hidden rounded-[2px] border border-[var(--rule)] bg-border/60 sm:grid-cols-4"
     >
       {stats.map((s) => (
-        <div key={s.label} className="bg-background p-5 transition-colors group-hover:bg-secondary/20">
-          <div className="font-mono text-xs uppercase tracking-wide text-muted-foreground">
+        <div key={s.label} className="bg-background p-5 transition-colors group-hover:bg-[var(--bench)]">
+          <div className="font-mono text-xs uppercase tracking-wide text-[var(--quiet)]">
             {s.label}
           </div>
           <div className="mt-2 font-mono text-3xl font-semibold tabular-nums">{s.value}</div>
