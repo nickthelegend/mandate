@@ -40,21 +40,59 @@ const SAMPLES = [
   },
 ] as const;
 
+/*
+ * Validated here, before the SDK is touched.
+ *
+ * Without this the raw failures reach the user: a malformed hash surfaces as
+ * ethers' "could not coalesce error", and a non-numeric amount as "Cannot
+ * convert abc to a BigInt". Both are internals, and neither tells anyone what
+ * to do about it.
+ */
+const HASH = /^0x[0-9a-fA-F]{64}$/;
+const ADDRESS = /^0x[0-9a-fA-F]{40}$/;
+const DIGITS = /^\d+$/;
+
+function validate(f: { transactionHash: string; recipient: string; minAmount: string }) {
+  const errors: Partial<Record<keyof typeof f, string>> = {};
+  if (!HASH.test(f.transactionHash.trim())) {
+    errors.transactionHash = "A transaction hash is 0x followed by 64 hex characters.";
+  }
+  if (!ADDRESS.test(f.recipient.trim())) {
+    errors.recipient = "An address is 0x followed by 40 hex characters.";
+  }
+  if (!DIGITS.test(f.minAmount.trim())) {
+    errors.minAmount = "Base units are whole digits only — 1000000, not 1.0.";
+  }
+  return errors;
+}
+
 export default function VerifyPage() {
   const { verify, result, loading, error, reset } = useVerify();
   const [form, setForm] = useState({ transactionHash: "", recipient: DEAD, minAmount: "1000000" });
+  const [errors, setErrors] = useState<Partial<Record<keyof typeof form, string>>>({});
 
-  const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
+  const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm((f) => ({ ...f, [k]: e.target.value }));
+    // Clear a field's error as soon as the user starts correcting it.
+    setErrors((prev) => (prev[k] ? { ...prev, [k]: undefined } : prev));
+  };
 
   const load = (s: (typeof SAMPLES)[number]) => {
     reset();
+    setErrors({});
     setForm({ transactionHash: s.transactionHash, recipient: s.recipient, minAmount: s.minAmount });
   };
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    void verify(form);
+    const found = validate(form);
+    setErrors(found);
+    if (Object.keys(found).length > 0) return;
+    void verify({
+      transactionHash: form.transactionHash.trim(),
+      recipient: form.recipient.trim(),
+      minAmount: form.minAmount.trim(),
+    });
   };
 
   return (
@@ -90,11 +128,17 @@ export default function VerifyPage() {
             id="hash"
             required
             spellCheck={false}
+            pattern="0x[0-9a-fA-F]{64}"
+            aria-invalid={errors.transactionHash ? true : undefined}
+            aria-describedby={errors.transactionHash ? "hash-error" : undefined}
             placeholder="0x…"
             value={form.transactionHash}
             onChange={set("transactionHash")}
             className="font-mono text-sm"
           />
+          {errors.transactionHash && (
+            <p id="hash-error" className="text-xs text-[var(--assay)]">{errors.transactionHash}</p>
+          )}
         </div>
 
         <div className="grid gap-4 sm:grid-cols-[1fr_200px]">
@@ -106,10 +150,16 @@ export default function VerifyPage() {
               id="to"
               required
               spellCheck={false}
+              pattern="0x[0-9a-fA-F]{40}"
+              aria-invalid={errors.recipient ? true : undefined}
+              aria-describedby={errors.recipient ? "to-error" : undefined}
               value={form.recipient}
               onChange={set("recipient")}
               className="font-mono text-sm"
             />
+            {errors.recipient && (
+              <p id="to-error" className="text-xs text-[var(--assay)]">{errors.recipient}</p>
+            )}
           </div>
           <div className="space-y-2">
             <Label htmlFor="amt" className="font-mono text-xs uppercase tracking-wide text-[var(--quiet)]">
@@ -119,10 +169,16 @@ export default function VerifyPage() {
               id="amt"
               required
               inputMode="numeric"
+              pattern="\\d+"
+              aria-invalid={errors.minAmount ? true : undefined}
+              aria-describedby={errors.minAmount ? "amt-error" : undefined}
               value={form.minAmount}
               onChange={set("minAmount")}
               className="font-mono text-sm"
             />
+            {errors.minAmount && (
+              <p id="amt-error" className="text-xs text-[var(--assay)]">{errors.minAmount}</p>
+            )}
           </div>
         </div>
 
