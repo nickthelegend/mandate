@@ -2,92 +2,91 @@
 @import "tw-animate-css";
 
 /*
- * THESIS: A hallmark is a claim countersigned by someone who checked. This
- * surface refuses the near-black-plus-neon console the category ships -- and
- * refuses the flat mid-grey rendition of its own world that shipped before it.
- * OWN-WORLD: Polished sterling sheet against touchstone black. Marks are cut
- * into the ground, never floated on it; the touchstone plate is a real dark
- * field, not a tinted card. Assay red appears on verdicts and nowhere else.
- * Archivo Expanded punches, Geist Mono registers.
- * STORY: A facilitator says sterling. The assay is run in front of you. One
- * specimen takes the mark; the other is refused, and you can open both.
- * FIRST VIEWPORT: The assay itself in progress -- a full-bleed touchstone
- * plate carrying two specimen streaks that diverge, struck and unstruck, with
- * the refused transaction addressable directly beneath.
- * FORM: The assay in progress, candidate 6 of 7, seed 453f9a2a; live-row state
- * grammar fused from the split-flap concourse challenger.
+ * THESIS: The tape is the record; a summary of the tape is not. This surface
+ * refuses the near-black-neon console, the cream-and-serif broadsheet, and the
+ * struck-metal register this project shipped before it.
+ * OWN-WORLD: Cold newsprint tape printed in violet aniline ribbon, with a red
+ * second ribbon reserved for a line that did not print. Sprocket margins and
+ * perforated tear-lines do the dividing; the machine's japanned iron is the
+ * only dark, and it appears as a band, never as the page.
+ * STORY: A facilitator says the money moved. Here is the tape it moved on, and
+ * the TRANSFER line is not on it.
+ * FIRST VIEWPORT: Two torn tape strips under one demand -- the same wire
+ * traffic printed twice, one carrying a TRANSFER line and one carrying a gap
+ * where it should be, both addressable on Etherscan.
+ * FORM: The telegraph tape, candidate 6 of 7, seed 5f5aa919.
  */
 
 :root {
   /*
-   * The material range of a real assay office, which the previous rendition
-   * collapsed: sheet, bench and rule all sat inside 14% lightness, so every
-   * surface read as the same grey and nothing had weight. Sterling is bright
-   * and specular; touchstone is basalt black. The distance between them is the
-   * design.
+   * Tape stock: cold, not cream. Warmth here is the drift toward the
+   * paper-and-serif default, and it is corrected at the token, never per
+   * component. Newsprint under fluorescent light is faintly blue.
    */
-  --sheet: oklch(0.965 0.003 240);
-  --bench: oklch(0.905 0.007 240);
-  --rule: oklch(0.775 0.012 240);
-  --quiet: oklch(0.468 0.016 240);
-
-  /* Iron-gall: browns as it lightens, exactly as the register hand ages. */
-  --ink: oklch(0.17 0.022 250);
-  /* Touchstone: the basalt slab a streak is drawn on. A ground, not a card. */
-  --touchstone: oklch(0.232 0.018 250);
-  --touchstone-rule: oklch(0.34 0.02 250);
-  /* Sterling read against touchstone. */
-  --sheet-inv: oklch(0.955 0.004 240);
-  --quiet-inv: oklch(0.715 0.015 240);
-  /* Oxidised silver, the dark that collects in a punch recess. */
-  --struck: oklch(0.38 0.032 250);
+  --stock: oklch(0.962 0.004 250);
+  --stock-edge: oklch(0.925 0.006 250);
+  --perf: oklch(0.80 0.008 250);
 
   /*
-   * Assay red: seal, crucible, rejection stamp. A verdict, never an accent.
-   * Three values because one cannot clear 4.5:1 against both grounds -- the
-   * deeper one carries small type on sterling, the lit one on touchstone.
+   * Aniline violet: the ribbon ink a telegraph and an early ticker actually
+   * printed in. It is the signature of the whole surface, and it is why the
+   * page cannot be mistaken for grey.
    */
-  --assay: oklch(0.505 0.205 27);
-  --assay-ink: oklch(0.44 0.185 27);
-  --assay-lit: oklch(0.66 0.19 27);
+  --ribbon: oklch(0.245 0.075 305);
+  --ribbon-soft: oklch(0.455 0.055 300);
+  --ribbon-ghost: oklch(0.635 0.035 300);
 
-  /* Displacement, not float. Recess plus the burr of raised metal below it. */
-  --strike: inset 0 1px 0 var(--rule), inset 0 -1px 0 oklch(1 0 0 / 0.75);
-  --strike-deep: inset 0 2px 0 var(--rule), inset 0 -1px 0 oklch(1 0 0 / 0.6);
-  --strike-dark: inset 0 1px 0 oklch(0 0 0 / 0.55), inset 0 -1px 0 oklch(1 0 0 / 0.09);
+  /*
+   * The second ribbon. An impact head carried black and red on one spool, and
+   * red was for the line you were meant to stop at. It marks an absence and a
+   * refusal, never a section or a heading.
+   */
+  --ribbon-red: oklch(0.505 0.195 25);
+  --ribbon-red-ink: oklch(0.435 0.175 25);
+  --ribbon-red-lit: oklch(0.68 0.185 25);
 
-  /* One curve everywhere: a punch decelerating into metal. */
+  /* Japanned iron: the machine's body. A band, never the page. */
+  --iron: oklch(0.205 0.028 300);
+  --iron-rule: oklch(0.32 0.028 300);
+  --stock-inv: oklch(0.955 0.005 250);
+  --ribbon-inv: oklch(0.735 0.028 300);
+
+  /* Impression, not elevation: ink pressed into stock leaves a slight dish. */
+  --impress: inset 0 1px 0 oklch(1 0 0 / 0.85), inset 0 -1px 0 var(--stock-edge);
+  --impress-deep: inset 0 2px 2px oklch(0.245 0.075 305 / 0.14);
+
+  /* One curve: a print head arriving at its stop. */
   --ease-strike: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* shadcn primitives read these; they are aliases onto the world above. */
 :root {
-  --background: var(--sheet);
-  --foreground: var(--ink);
-  --card: var(--sheet);
-  --card-foreground: var(--ink);
-  --popover: var(--sheet);
-  --popover-foreground: var(--ink);
-  --primary: var(--ink);
-  --primary-foreground: var(--sheet);
-  --secondary: var(--bench);
-  --secondary-foreground: var(--ink);
-  --muted: var(--bench);
-  --muted-foreground: var(--quiet);
-  --accent: var(--bench);
-  --accent-foreground: var(--ink);
-  --destructive: var(--assay);
-  --destructive-foreground: var(--sheet);
-  --border: var(--rule);
-  --input: var(--rule);
-  --ring: var(--ink);
-  --radius: 2px;
+  --background: var(--stock);
+  --foreground: var(--ribbon);
+  --card: var(--stock);
+  --card-foreground: var(--ribbon);
+  --popover: var(--stock);
+  --popover-foreground: var(--ribbon);
+  --primary: var(--ribbon);
+  --primary-foreground: var(--stock);
+  --secondary: var(--stock-edge);
+  --secondary-foreground: var(--ribbon);
+  --muted: var(--stock-edge);
+  --muted-foreground: var(--ribbon-soft);
+  --accent: var(--stock-edge);
+  --accent-foreground: var(--ribbon);
+  --destructive: var(--ribbon-red);
+  --destructive-foreground: var(--stock);
+  --border: var(--perf);
+  --input: var(--perf);
+  --ring: var(--ribbon);
+  --radius: 0px;
 }
 
 @theme inline {
-  --font-sans: var(--font-archivo), system-ui, sans-serif;
-  --font-display: var(--font-archivo), system-ui, sans-serif;
-  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --font-sans: var(--font-wire), ui-monospace, monospace;
+  --font-display: var(--font-wire), ui-monospace, monospace;
+  --font-mono: var(--font-tape), ui-monospace, monospace;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -107,10 +106,10 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --radius-sm: 2px;
-  --radius-md: 2px;
-  --radius-lg: 2px;
-  --radius-xl: 2px;
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-lg: 0px;
+  --radius-xl: 0px;
 }
 
 @layer base {
@@ -125,46 +124,41 @@
 
   body {
     @apply bg-background text-foreground;
-    /* A figure that reflows while loading is a figure the reader cannot trust. */
+    /* A digit that reflows mid-read is a digit the reader cannot trust. */
     font-variant-numeric: tabular-nums;
+    /* Martian Mono is wide by default; the wire ran narrow. */
+    font-stretch: 87.5%;
+    letter-spacing: -0.02em;
   }
 
-  /* The focus ring is a struck outline, not a glow. */
+  /* The focus ring is a second impression, offset like a double-strike. */
   :focus-visible {
-    outline: 2px solid var(--ink);
+    outline: 2px solid var(--ribbon);
     outline-offset: 2px;
   }
 
-  .plate :focus-visible {
-    outline-color: var(--sheet-inv);
+  .iron :focus-visible {
+    outline-color: var(--stock-inv);
   }
 
   ::selection {
-    background: var(--ink);
-    color: var(--sheet);
-  }
-
-  .plate ::selection {
-    background: var(--sheet-inv);
-    color: var(--ink);
+    background: var(--ribbon);
+    color: var(--stock);
   }
 }
 
 /* --------------------------------------------------------------------------
- * The register's vocabulary.
+ * The tape.
  *
- * Grouping has a range here: a touchstone plate when a region is genuinely a
- * different material, a rule when it is merely the next entry, and nothing at
- * all when proximity already says it. The previous rendition expressed every
- * relationship as the same 1px rounded rectangle, which is why a summary
- * figure, a form and a table all carried identical weight.
+ * Everything here divides with a perforation or a sprocket margin rather than
+ * a box. A printout has no cards: it has torn edges, feed holes, and the run
+ * of lines between them.
  * ----------------------------------------------------------------------- */
 
 @layer components {
-  /* The column every route shares. */
   .shell {
     width: 100%;
-    max-width: 72rem;
+    max-width: 74rem;
     margin-inline: auto;
     padding-inline: 1.25rem;
   }
@@ -175,498 +169,367 @@
     }
   }
 
-  /*
-   * A touchstone plate: the basalt slab, full-bleed. This is the world's dark
-   * material, so it owns whole regions rather than tinting a card. Text inside
-   * it flips to sterling automatically.
-   */
-  /*
-   * Anchors inherit their colour under Tailwind's preflight, so the plate does
-   * not restate it for links. A `.plate a` rule here would outrank every
-   * single-class control inside it -- which is exactly how the primary action
-   * once rendered as sterling text on a sterling plate, invisible.
-   */
-  .plate {
-    background: var(--touchstone);
-    color: var(--sheet-inv);
+  /* The machine body. Dark, and only ever a band. */
+  .iron {
+    background: var(--iron);
+    color: var(--stock-inv);
   }
 
   /*
-   * A specimen: metal laid on the stone and streaked for testing. The band is
-   * a real brushed-metal graduation, which is this world's own material rather
-   * than decorative chrome -- a flat fill would read as a card, which is
-   * precisely the container this world refuses.
+   * A strip of tape. The sprocket margins are drawn as a repeating radial of
+   * the page ground punched through the stock, which is the feed hole itself
+   * rather than a decorative dotted border.
    */
-  .specimen {
-    border: 1px solid var(--touchstone-rule);
-    background: linear-gradient(
-      177deg,
-      oklch(1 0 0 / 0.085) 0%,
-      oklch(1 0 0 / 0.03) 38%,
-      oklch(0 0 0 / 0.12) 100%
-    );
-    box-shadow: var(--strike-dark);
-    padding: 1.5rem 1.5rem 1.25rem;
+  .tape {
+    position: relative;
+    background: var(--stock);
+    box-shadow: var(--impress);
+    padding: 1.5rem 1.25rem;
+    border-top: 1px solid var(--stock-edge);
+    border-bottom: 1px solid var(--stock-edge);
   }
 
-  .specimen--refused {
-    border-color: color-mix(in oklab, var(--assay-lit) 55%, var(--touchstone-rule));
+  .tape::before,
+  .tape::after {
+    content: "";
+    position: absolute;
+    inset-block: 0;
+    width: 14px;
+    background-image: radial-gradient(circle at 7px 7px, var(--perf) 2.5px, transparent 2.6px);
+    background-size: 14px 18px;
+    background-repeat: repeat-y;
+    opacity: 0.9;
   }
 
-  /* The streak itself: metal drawn down the stone, left to right. */
-  .streak {
-    height: 3px;
-    background: linear-gradient(
-      to right,
-      transparent,
-      var(--quiet-inv) 12%,
-      var(--sheet-inv) 48%,
-      var(--quiet-inv) 82%,
-      transparent
-    );
+  .tape::before {
+    left: 0;
+  }
+
+  .tape::after {
+    right: 0;
+  }
+
+  .tape > * {
+    margin-inline: 18px;
+  }
+
+  /* On iron, the tape is lit from the side and its holes read as shadow. */
+  .iron .tape {
+    background: oklch(1 0 0 / 0.055);
+    border-color: var(--iron-rule);
+    box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.07);
+  }
+
+  .iron .tape::before,
+  .iron .tape::after {
+    background-image: radial-gradient(circle at 7px 7px, oklch(0 0 0 / 0.5) 2.5px, transparent 2.6px);
+  }
+
+  /* A tape that carries a refusal is fed through the red half of the ribbon. */
+  .tape--refused {
+    border-color: color-mix(in oklab, var(--ribbon-red) 45%, var(--stock-edge));
+  }
+
+  .iron .tape--refused {
+    border-color: color-mix(in oklab, var(--ribbon-red-lit) 50%, var(--iron-rule));
+  }
+
+  /*
+   * A perforated tear. Sections part along a line of punched dashes, the way a
+   * page of continuous stationery comes apart -- never along a drawn border.
+   */
+  .perforation {
+    border: 0;
+    border-top: 1px dashed var(--perf);
+    height: 0;
+  }
+
+  .iron .perforation {
+    border-top-color: var(--iron-rule);
+  }
+
+  /*
+   * The wire's own line: what the tape actually printed. Courier because the
+   * tape came off a lighter mechanism than the machine's label plates.
+   */
+  .impression {
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    line-height: 1.75;
+    letter-spacing: 0;
+    font-variant-numeric: tabular-nums;
+    color: var(--ribbon);
+  }
+
+  .iron .impression {
+    color: var(--stock-inv);
+  }
+
+  .impression--red {
+    color: var(--ribbon-red-ink);
+  }
+
+  .iron .impression--red {
+    color: var(--ribbon-red-lit);
+  }
+
+  /*
+   * A line the tape did not carry. Struck through in the red ribbon: the
+   * mechanism reserved space for it and printed nothing, which is the entire
+   * argument of this product rendered as one line of stationery.
+   */
+  .impression--absent {
+    color: var(--ribbon-red-ink);
+    text-decoration: line-through;
+    text-decoration-color: var(--ribbon-red);
+    text-decoration-thickness: 1px;
     opacity: 0.85;
   }
 
-  .streak--refused {
-    background: linear-gradient(
-      to right,
-      transparent,
-      color-mix(in oklab, var(--assay-lit) 70%, transparent) 14%,
-      var(--assay-lit) 50%,
-      color-mix(in oklab, var(--assay-lit) 55%, transparent) 84%,
-      transparent
-    );
+  .iron .impression--absent {
+    color: var(--ribbon-red-lit);
+    text-decoration-color: var(--ribbon-red-lit);
   }
 
-  /* Column heads and field labels. Never an eyebrow over every section. */
-  .rubric {
+  /* Machine label plates: what the operator reads, not what the wire sent. */
+  .plate-label {
     font-family: var(--font-display);
-    font-size: 0.6875rem;
+    font-size: 0.625rem;
     font-weight: 500;
-    letter-spacing: 0.09em;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
-    color: var(--quiet);
+    color: var(--ribbon-soft);
   }
 
-  .plate .rubric {
-    color: var(--quiet-inv);
+  .iron .plate-label {
+    color: var(--ribbon-inv);
   }
 
-  /* Every hash, address, amount and timestamp. */
   .figure {
     font-family: var(--font-mono);
     font-variant-numeric: tabular-nums;
-    font-feature-settings: "tnum" 1;
-    letter-spacing: -0.01em;
+    letter-spacing: 0;
   }
 
   /*
-   * A run of ruled entries. Rules do the work borders would, so entries never
-   * become a stack of boxes.
+   * A run of entries. Rows part on perforations, and a run opens on the
+   * double rule an operator drew across the top of a fresh sheet.
    */
-  .register {
-    border-top: 2px solid var(--ink);
+  .run {
+    border-top: 3px double var(--ribbon);
   }
 
-  .plate .register {
-    border-top-color: var(--sheet-inv);
+  .iron .run {
+    border-top-color: var(--stock-inv);
   }
 
-  .register__row {
+  .run__row {
     display: grid;
     gap: 0.5rem 1.5rem;
-    border-bottom: 1px solid var(--rule);
+    border-bottom: 1px dashed var(--perf);
     padding-block: 1.25rem;
   }
 
-  .plate .register__row {
-    border-bottom-color: var(--touchstone-rule);
+  .iron .run__row {
+    border-bottom-color: var(--iron-rule);
   }
 
   /*
-   * A struck plate. Pressed metal: the ink rule under it is the burr thrown up
-   * by the punch, and the active state deepens the recess rather than moving
-   * the element away from the page.
+   * A key on the machine. Square, impressed, and it goes down when struck --
+   * no radius anywhere, because nothing in this world was moulded.
    */
-  .plate-btn {
+  .key {
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    background: var(--bench);
-    color: var(--ink);
-    border: 1px solid var(--rule);
-    border-bottom: 2px solid var(--ink);
-    border-radius: 2px;
-    box-shadow: var(--strike);
-    padding: 0.625rem 1.125rem;
+    background: var(--stock-edge);
+    color: var(--ribbon);
+    border: 1px solid var(--ribbon);
+    box-shadow: 2px 2px 0 0 var(--ribbon);
+    padding: 0.6875rem 1.25rem;
     font-family: var(--font-display);
-    font-size: 0.75rem;
-    font-weight: 600;
-    letter-spacing: 0.07em;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
     text-transform: uppercase;
     transition:
-      background-color 140ms var(--ease-strike),
-      box-shadow 140ms var(--ease-strike),
-      transform 140ms var(--ease-strike);
+      transform 90ms var(--ease-strike),
+      box-shadow 90ms var(--ease-strike),
+      background-color 90ms var(--ease-strike);
   }
 
-  .plate-btn:hover:not(:disabled) {
-    background: var(--sheet);
+  .key:hover:not(:disabled) {
+    background: var(--stock);
   }
 
-  .plate-btn:active:not(:disabled) {
-    box-shadow: var(--strike-deep);
-    transform: translateY(1px);
+  /* Struck: the key travels into its own shadow. */
+  .key:active:not(:disabled) {
+    transform: translate(2px, 2px);
+    box-shadow: 0 0 0 0 var(--ribbon);
   }
 
-  .plate-btn:disabled {
-    opacity: 0.45;
+  .key:disabled {
+    opacity: 0.4;
     cursor: not-allowed;
+    box-shadow: 2px 2px 0 0 var(--ribbon-ghost);
+  }
+
+  .key--quiet {
+    background: transparent;
+    box-shadow: none;
+    border-color: var(--perf);
+    color: var(--ribbon-soft);
+  }
+
+  .key--quiet:hover:not(:disabled) {
+    border-color: var(--ribbon);
+    color: var(--ribbon);
+  }
+
+  /* On iron the keycap is bone against the machine's body. */
+  .key--lit {
+    background: var(--stock-inv);
+    color: var(--iron);
+    border-color: var(--stock-inv);
+    box-shadow: 2px 2px 0 0 var(--ribbon-red);
+  }
+
+  .key--lit:active:not(:disabled) {
+    box-shadow: 0 0 0 0 var(--ribbon-red);
+  }
+
+  .key--ghost {
+    background: transparent;
+    color: var(--stock-inv);
+    border-color: var(--iron-rule);
+    box-shadow: 2px 2px 0 0 var(--iron-rule);
+  }
+
+  .key--ghost:hover:not(:disabled) {
+    background: oklch(1 0 0 / 0.06);
+  }
+
+  .key--ghost:active:not(:disabled) {
+    box-shadow: 0 0 0 0 var(--iron-rule);
   }
 
   /*
-   * A ruled blank. The rule the hand writes on is drawn as an inset shadow
-   * rather than a bottom border: it belongs to the same strike that recesses
-   * the field, and a 2px border on a radiused box fights its own corners.
+   * A ruled blank the operator types into. The rule beneath is an inset so it
+   * belongs to the same impression that dishes the field, and a square field
+   * needs no radius to fight.
    */
   .field {
-    background: var(--bench);
+    background: var(--stock-edge);
     border: 0;
-    border-radius: 2px;
-    box-shadow: inset 0 1px 0 var(--rule), inset 0 -2px 0 var(--rule);
+    border-radius: 0;
+    box-shadow: inset 0 1px 0 var(--perf), inset 0 -2px 0 var(--perf);
     transition:
-      box-shadow 140ms var(--ease-strike),
-      background-color 140ms var(--ease-strike);
+      box-shadow 120ms var(--ease-strike),
+      background-color 120ms var(--ease-strike);
   }
 
   .field:hover:not(:disabled) {
-    box-shadow: inset 0 1px 0 var(--rule), inset 0 -2px 0 var(--quiet);
+    box-shadow: inset 0 1px 0 var(--perf), inset 0 -2px 0 var(--ribbon-soft);
   }
 
   .field:focus {
-    background: var(--sheet);
-    box-shadow: inset 0 1px 0 var(--rule), inset 0 -2px 0 var(--ink);
+    background: var(--stock);
+    box-shadow: inset 0 1px 0 var(--perf), inset 0 -2px 0 var(--ribbon);
   }
 
   .field[aria-invalid="true"] {
-    box-shadow: inset 0 1px 0 var(--rule), inset 0 -2px 0 var(--assay);
-  }
-
-  /* Secondary: the same plate, unstruck at the foot. */
-  .plate-btn--quiet {
-    background: transparent;
-    border-bottom-color: var(--rule);
-    box-shadow: none;
-  }
-
-  /* On touchstone, the plate is polished metal against the stone. */
-  .plate-btn--lit {
-    background: var(--sheet-inv);
-    color: var(--ink);
-    border-color: var(--sheet-inv);
-    border-bottom-color: var(--ink);
-  }
-
-  .plate-btn--lit:hover:not(:disabled) {
-    background: #fff;
-  }
-
-  .plate-btn--ghost {
-    background: transparent;
-    color: var(--sheet-inv);
-    border-color: var(--touchstone-rule);
-    border-bottom-color: var(--quiet-inv);
-    box-shadow: none;
-  }
-
-  .plate-btn--ghost:hover:not(:disabled) {
-    background: oklch(1 0 0 / 0.07);
-  }
-}
-
-/* --------------------------------------------------------------------------
- * Marks.
- *
- * A cartouche's silhouette carries its meaning, so a verdict survives
- * greyscale and colour never carries it alone. Marks are cut into the ground:
- * the shape is filled when struck and left as an incised outline when not.
- * ----------------------------------------------------------------------- */
-
-@layer components {
-  .hallmark {
-    display: grid;
-    gap: 1rem;
-  }
-
-  .hallmark__strip {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: stretch;
-    gap: 0.5rem;
-  }
-
-  .mark {
-    display: grid;
-    justify-items: center;
-    gap: 0.5rem;
-    min-width: 84px;
-    padding: 0.875rem 0.875rem 0.75rem;
-    background: var(--bench);
-    border: 1px solid var(--rule);
-    border-radius: 2px;
-    box-shadow: var(--strike);
-  }
-
-  .plate .mark {
-    background: oklch(1 0 0 / 0.05);
-    border-color: var(--touchstone-rule);
-    box-shadow: var(--strike-dark);
-  }
-
-  .mark__shape {
-    width: 30px;
-    height: 33px;
-    flex: none;
-  }
-
-  .mark__label {
-    font-family: var(--font-display);
-    font-size: 0.625rem;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    text-align: center;
-    font-stretch: expanded;
-  }
-
-  .mark__rubric {
-    font-family: var(--font-display);
-    font-size: 0.625rem;
-    font-weight: 500;
-    letter-spacing: 0.09em;
-    text-transform: uppercase;
-    color: var(--quiet);
-  }
-
-  .plate .mark__rubric {
-    color: var(--quiet-inv);
-  }
-
-  .mark__figure {
-    font-family: var(--font-mono);
-    font-variant-numeric: tabular-nums;
-    font-size: 1.125rem;
-    letter-spacing: -0.02em;
-  }
-
-  /* Struck: the punch went in and the recess is filled. */
-  .mark--maker .mark__shape,
-  .mark--assayed .mark__shape,
-  .mark--date .mark__shape {
-    fill: var(--struck);
-    stroke: none;
-  }
-
-  .plate .mark--maker .mark__shape,
-  .plate .mark--assayed .mark__shape,
-  .plate .mark--date .mark__shape {
-    fill: var(--sheet-inv);
-  }
-
-  /*
-   * Unstruck: the loudest element on the page. An incised outline with nothing
-   * inside it -- the assay office declined to put its punch on this piece.
-   */
-  .mark--unassayed .mark__shape {
-    fill: none;
-    stroke: var(--assay);
-    stroke-width: 2.5;
-    stroke-dasharray: 5 4;
-  }
-
-  .plate .mark--unassayed .mark__shape {
-    stroke: var(--assay-lit);
-  }
-
-  .mark--unassayed {
-    border-color: color-mix(in oklab, var(--assay) 45%, var(--rule));
-  }
-
-  .mark--unassayed .mark__label {
-    color: var(--assay-ink);
-  }
-
-  .plate .mark--unassayed {
-    border-color: color-mix(in oklab, var(--assay-lit) 55%, var(--touchstone-rule));
-  }
-
-  .plate .mark--unassayed .mark__label {
-    color: var(--assay-lit);
-  }
-
-  .mark--standard,
-  .mark--date {
-    align-content: center;
-  }
-
-  .hallmark__reason {
-    font-family: var(--font-mono);
-    font-size: 0.8125rem;
-    line-height: 1.65;
-    color: var(--quiet);
-    max-width: 68ch;
-  }
-
-  .plate .hallmark__reason {
-    color: var(--quiet-inv);
-  }
-
-  /* Display scale: the strip is the first viewport's subject, not a badge. */
-  .hallmark--display .mark {
-    min-width: 124px;
-    padding: 1.25rem 1.25rem 1rem;
-  }
-
-  .hallmark--display .mark__shape {
-    width: 46px;
-    height: 50px;
-  }
-
-  .hallmark--display .mark__label {
-    font-size: 0.6875rem;
-  }
-
-  .hallmark--display .mark__figure {
-    font-size: 1.625rem;
-  }
-
-  /*
-   * One blow, on resolve. Not an entrance: a strip already on screen does not
-   * re-strike on scroll, and reduced motion renders the settled state.
-   */
-  .hallmark__strip .mark {
-    transition:
-      transform 150ms var(--ease-strike),
-      box-shadow 150ms var(--ease-strike);
-  }
-
-  .hallmark--striking .mark {
-    transform: translateY(-2px);
-    box-shadow: var(--strike-deep);
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .hallmark__strip .mark {
-      transition: none;
-    }
-
-    .hallmark--striking .mark {
-      transform: none;
-      box-shadow: var(--strike);
-    }
+    box-shadow: inset 0 1px 0 var(--perf), inset 0 -2px 0 var(--ribbon-red);
   }
 }
 
 /* --------------------------------------------------------------------------
  * Verdicts.
  *
- * The inline mark used inside a register row, and the panel a full verdict
- * renders into.
+ * A verdict is a stamp the operator pressed onto the tape after reading it.
+ * The shape carries the meaning, so the state survives greyscale.
  * ----------------------------------------------------------------------- */
 
 @layer components {
-  .verdict-mark {
+  .stamp {
     display: inline-flex;
     align-items: center;
     gap: 0.4375rem;
+    border: 1.5px solid currentColor;
+    padding: 0.1875rem 0.5rem;
     font-family: var(--font-display);
-    font-size: 0.625rem;
+    font-size: 0.5625rem;
     font-weight: 700;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
     white-space: nowrap;
+    /* Pressed by hand, so never quite square to the line. */
+    transform: rotate(-1.5deg);
   }
 
-  .verdict-mark svg {
-    width: 13px;
-    height: 15px;
+  .stamp svg {
+    width: 11px;
+    height: 11px;
     flex: none;
   }
 
-  .verdict-mark--proven {
-    color: var(--ink);
+  .stamp--proven {
+    color: var(--ribbon);
   }
 
-  .verdict-mark--proven svg {
-    fill: var(--ink);
+  .stamp--proven svg {
+    fill: currentColor;
     stroke: none;
   }
 
-  .verdict-mark--not_proven {
-    color: var(--assay-ink);
+  .stamp--not_proven {
+    color: var(--ribbon-red-ink);
+    border-style: double;
+    border-width: 3px;
   }
 
-  .verdict-mark--not_proven svg {
+  .stamp--not_proven svg {
     fill: none;
-    stroke: var(--assay);
+    stroke: currentColor;
     stroke-width: 2.5;
-    stroke-dasharray: 5 4;
   }
 
-  .verdict-mark--awaiting {
-    color: var(--quiet);
+  .stamp--awaiting {
+    color: var(--ribbon-ghost);
+    border-style: dashed;
   }
 
-  .verdict-mark--awaiting svg {
+  .stamp--awaiting svg {
     fill: none;
-    stroke: var(--rule);
+    stroke: currentColor;
     stroke-width: 2;
   }
 
-  .plate .verdict-mark--proven {
-    color: var(--sheet-inv);
+  .iron .stamp--proven {
+    color: var(--stock-inv);
   }
 
-  .plate .verdict-mark--proven svg {
-    fill: var(--sheet-inv);
+  .iron .stamp--not_proven {
+    color: var(--ribbon-red-lit);
   }
 
-  .plate .verdict-mark--not_proven {
-    color: var(--assay-lit);
-  }
-
-  .plate .verdict-mark--not_proven svg {
-    stroke: var(--assay-lit);
-  }
-
-  .plate .verdict-mark--awaiting {
-    color: var(--quiet-inv);
-  }
-
-  .plate .verdict-mark--awaiting svg {
-    stroke: var(--touchstone-rule);
+  .iron .stamp--awaiting {
+    color: var(--ribbon-inv);
   }
 
   /*
-   * A verdict reads as an entry ruled into the register: a 2px head rule above
-   * it, the way a column is opened, and hairlines elsewhere.
-   *
-   * Deliberately not a coloured bar down the leading edge. That device is the
-   * single most recognisable tell of a generated interface, and a register does
-   * not mark a refused entry by painting its margin -- it rules the head of the
-   * entry in the other ink.
+   * A full verdict, printed as its own short run of tape: opened by the
+   * operator's double rule, never boxed and never ruled down one margin.
    */
   .verdict-panel {
-    border: 1px solid var(--rule);
-    border-top: 2px solid var(--ink);
-    border-radius: 2px;
-    background: var(--bench);
+    border-top: 3px double var(--ribbon);
+    border-bottom: 1px dashed var(--perf);
+    background: var(--stock-edge);
     padding: 1.25rem 1.375rem;
   }
 
   .verdict-panel--unassayed {
-    border-color: color-mix(in oklab, var(--assay) 35%, var(--rule));
-    border-top-color: var(--assay);
+    border-top-color: var(--ribbon-red);
+    border-bottom-color: color-mix(in oklab, var(--ribbon-red) 40%, var(--perf));
     background: transparent;
   }
 }

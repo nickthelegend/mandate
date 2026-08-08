@@ -160,10 +160,10 @@ export function Verifier() {
 
   return (
     <>
-      <PageHead rubric="The assay" title="Check a payment yourself.">
+      <PageHead rubric="Read the tape" title="Check a payment yourself.">
         Paste any {DEPLOYMENT.chainName} transaction and state the terms it was supposed to meet.
         Your browser fetches the receipt from a public RPC and reads it for a real ERC-20{" "}
-        <code className="font-mono text-[var(--sheet-inv)]">Transfer</code> of that token to that
+        <code className="font-mono text-[var(--stock-inv)]">Transfer</code> of that token to that
         recipient. Nothing is sent to a server — this page has none.
       </PageHead>
 
@@ -175,17 +175,17 @@ export function Verifier() {
           <button
             key={s.transactionHash}
             onClick={() => load(s)}
-            className="group rounded-[2px] border border-[var(--rule)] px-3 py-2 text-left transition-colors hover:border-[var(--ink)] hover:bg-[var(--bench)]"
+            className="group rounded-[2px] border border-[var(--perf)] px-3 py-2 text-left transition-colors hover:border-[var(--ribbon)] hover:bg-[var(--stock-edge)]"
           >
             <span className="block text-sm font-medium">{s.label}</span>
-            <span className="block font-mono text-xs text-[var(--quiet)]">{s.blurb}</span>
+            <span className="block font-mono text-xs text-[var(--ribbon-soft)]">{s.blurb}</span>
           </button>
         ))}
       </div>
 
       <form onSubmit={submit} className="mt-8 space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="hash" className="font-mono text-xs uppercase tracking-wide text-[var(--quiet)]">
+          <Label htmlFor="hash" className="font-mono text-xs uppercase tracking-wide text-[var(--ribbon-soft)]">
             Transaction hash
           </Label>
           <Input
@@ -200,17 +200,17 @@ export function Verifier() {
             className="font-mono text-sm"
           />
           {errors.transactionHash && (
-            <p id="hash-error" className="text-xs text-[var(--assay)]">{errors.transactionHash}</p>
+            <p id="hash-error" className="text-xs text-[var(--ribbon-red)]">{errors.transactionHash}</p>
           )}
           {fromLink && !errors.transactionHash && (
-            <p className="text-xs text-[var(--quiet)]">
+            <p className="text-xs text-[var(--ribbon-soft)]">
               Filled from the settlement it was made under. Change any term and read it again.
             </p>
           )}
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="token" className="font-mono text-xs uppercase tracking-wide text-[var(--quiet)]">
+          <Label htmlFor="token" className="font-mono text-xs uppercase tracking-wide text-[var(--ribbon-soft)]">
             Paid in which token
           </Label>
           <Input
@@ -224,9 +224,9 @@ export function Verifier() {
             className="font-mono text-sm"
           />
           {errors.token ? (
-            <p id="token-error" className="text-xs text-[var(--assay)]">{errors.token}</p>
+            <p id="token-error" className="text-xs text-[var(--ribbon-red)]">{errors.token}</p>
           ) : (
-            <p className="text-xs text-[var(--quiet)]">
+            <p className="text-xs text-[var(--ribbon-soft)]">
               {form.token.trim().toLowerCase() === DEPLOYMENT.token.toLowerCase()
                 ? `The escrow’s ${DEPLOYMENT.tokenSymbol}. The x402 demo settles in a different one — only an EIP-3009 token can.`
                 : "Not the escrow’s token. Only a Transfer of this asset will count."}
@@ -236,7 +236,7 @@ export function Verifier() {
 
         <div className="grid gap-4 sm:grid-cols-[1fr_200px]">
           <div className="space-y-2">
-            <Label htmlFor="to" className="font-mono text-xs uppercase tracking-wide text-[var(--quiet)]">
+            <Label htmlFor="to" className="font-mono text-xs uppercase tracking-wide text-[var(--ribbon-soft)]">
               Who had to be paid
             </Label>
             <Input
@@ -250,11 +250,11 @@ export function Verifier() {
               className="font-mono text-sm"
             />
             {errors.recipient && (
-              <p id="to-error" className="text-xs text-[var(--assay)]">{errors.recipient}</p>
+              <p id="to-error" className="text-xs text-[var(--ribbon-red)]">{errors.recipient}</p>
             )}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="amt" className="font-mono text-xs uppercase tracking-wide text-[var(--quiet)]">
+            <Label htmlFor="amt" className="font-mono text-xs uppercase tracking-wide text-[var(--ribbon-soft)]">
               At least (base units)
             </Label>
             <Input
@@ -268,7 +268,7 @@ export function Verifier() {
               className="font-mono text-sm"
             />
             {errors.minAmount && (
-              <p id="amt-error" className="text-xs text-[var(--assay)]">{errors.minAmount}</p>
+              <p id="amt-error" className="text-xs text-[var(--ribbon-red)]">{errors.minAmount}</p>
             )}
           </div>
         </div>
@@ -280,7 +280,7 @@ export function Verifier() {
       </form>
 
       {error && (
-        <p className="mt-6 rounded-[2px] border border-[var(--rule)] bg-[var(--bench)] p-4 font-mono text-sm text-[var(--quiet)]">
+        <p className="mt-6 rounded-[2px] border border-[var(--perf)] bg-[var(--stock-edge)] p-4 font-mono text-sm text-[var(--ribbon-soft)]">
           {error}
         </p>
       )}
@@ -292,16 +292,16 @@ export function Verifier() {
             href={tx(form.transactionHash)}
             target="_blank"
             rel="noopener"
-            className="inline-block font-mono text-xs text-[var(--quiet)] underline-offset-4 hover:text-[var(--ink)] hover:underline"
+            className="inline-block font-mono text-xs text-[var(--ribbon-soft)] underline-offset-4 hover:text-[var(--ribbon)] hover:underline"
           >
             open this transaction on Etherscan and check for yourself →
           </a>
         </div>
       )}
 
-      <div className="mt-14 rounded-[2px] border border-[var(--rule)] bg-[var(--bench)] p-5">
+      <div className="mt-14 rounded-[2px] border border-[var(--perf)] bg-[var(--stock-edge)] p-5">
         <h2 className="font-mono text-sm font-medium">The same call, in your own code</h2>
-        <pre className="mt-3 overflow-x-auto rounded-[2px] bg-[var(--sheet)] p-4 font-mono text-xs leading-relaxed text-[var(--ink)]">
+        <pre className="mt-3 overflow-x-auto rounded-[2px] bg-[var(--stock)] p-4 font-mono text-xs leading-relaxed text-[var(--ribbon)]">
 {`import { OutcomeClient } from "outcome-sdk";
 
 const outcome = new OutcomeClient({

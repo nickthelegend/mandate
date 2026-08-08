@@ -1,16 +1,32 @@
 import type { Metadata } from "next";
-import { Archivo } from "next/font/google";
-import { GeistMono } from "geist/font/mono";
+import { Martian_Mono, Courier_Prime } from "next/font/google";
 
 /*
- * Archivo: a high-pressure grotesque with flat sides and tight apertures -- the
- * letterform of a punch struck into metal rather than drawn on paper. Its
- * expanded widths are what make a cartouche read as struck rather than typeset.
+ * A printout has one face, because one print head made it.
+ *
+ * Martian Mono is the wire's own voice: a variable monospace with a width axis,
+ * so the same face carries a headline at 4rem and a hash at 12px without ever
+ * becoming a different typeface. Monospace here is not a costume for
+ * "technical" -- every character on this site was, in the world it borrows,
+ * struck by a mechanism that only knows one advance width.
  */
-const archivo = Archivo({
+const martian = Martian_Mono({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-archivo",
+  weight: ["300", "400", "500", "700"],
+  variable: "--font-wire",
+  display: "swap",
+});
+
+/*
+ * Courier Prime for the tape impressions themselves. A telegraph tape was typed
+ * by a lighter, older mechanism than the one that set the machine's own labels,
+ * and the difference is what makes a tape read as something the page received
+ * rather than something the page wrote.
+ */
+const courier = Courier_Prime({
+  subsets: ["latin"],
+  weight: ["400", "700"],
+  variable: "--font-tape",
   display: "swap",
 });
 
@@ -27,7 +43,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${archivo.variable} ${GeistMono.variable}`}>
+    <html lang="en" className={`${martian.variable} ${courier.variable}`}>
       <body className="min-h-screen bg-background font-sans antialiased">
         <Providers>
           <div className="relative flex min-h-screen flex-col">

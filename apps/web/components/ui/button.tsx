@@ -5,36 +5,34 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@/lib/utils'
 
 /*
- * A struck plate, not a stock button.
+ * A key on the machine, not a stock button.
  *
- * The world's controls are pressed metal: an ink rule along the foot is the
- * burr the punch throws up, and pressing deepens the recess rather than
- * lifting the element off the page. Radius stays at the world's 2px and the
- * label is set in Rubric, so a control reads as struck even with no content.
+ * Square, because nothing in this world was moulded, and carrying a hard offset
+ * shadow that is the key's own side rather than a glow. Pressing moves the cap
+ * into that shadow and closes it -- the travel is the feedback, so there is no
+ * colour change to announce it.
  */
 const buttonVariants = cva(
-  "inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-[2px] font-display text-xs font-semibold uppercase tracking-[0.07em] transition-all duration-[140ms] ease-[cubic-bezier(0.16,1,0.3,1)] disabled:pointer-events-none disabled:opacity-45 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)] aria-invalid:border-destructive",
+  "key inline-flex shrink-0 items-center justify-center whitespace-nowrap disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-3.5 outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ribbon)]",
   {
     variants: {
       variant: {
-        default:
-          'bg-[var(--ink)] text-[var(--sheet)] border border-[var(--ink)] hover:bg-[var(--touchstone)] active:translate-y-px',
+        default: '',
         destructive:
-          'bg-[var(--assay)] text-white border border-[var(--assay)] hover:bg-[var(--assay-ink)] active:translate-y-px',
-        outline:
-          'border border-[var(--rule)] border-b-2 border-b-[var(--ink)] bg-[var(--bench)] text-[var(--ink)] shadow-[var(--strike)] hover:bg-[var(--sheet)] active:shadow-[var(--strike-deep)] active:translate-y-px',
-        secondary:
-          'border border-[var(--rule)] bg-[var(--bench)] text-[var(--ink)] hover:bg-[var(--sheet)]',
-        ghost: 'text-[var(--ink)] hover:bg-[var(--bench)]',
-        link: 'text-[var(--ink)] underline-offset-4 hover:underline normal-case tracking-normal text-sm font-medium',
+          'border-[var(--ribbon-red)] text-[var(--ribbon-red-ink)] shadow-[2px_2px_0_0_var(--ribbon-red)] active:shadow-none',
+        outline: 'key--quiet',
+        secondary: 'key--quiet',
+        ghost:
+          'border-transparent bg-transparent shadow-none active:translate-x-0 active:translate-y-0 hover:bg-[var(--stock-edge)]',
+        link: 'border-transparent bg-transparent shadow-none normal-case tracking-normal text-sm font-normal underline-offset-4 hover:underline active:translate-x-0 active:translate-y-0',
       },
       size: {
-        default: 'h-9 px-4 py-2 has-[>svg]:px-3',
-        sm: 'h-8 gap-1.5 px-3 has-[>svg]:px-2.5',
-        lg: 'h-11 px-6 has-[>svg]:px-5',
-        icon: 'size-9',
-        'icon-sm': 'size-8',
-        'icon-lg': 'size-10',
+        default: 'px-4 py-2.5',
+        sm: 'px-3 py-2 text-[0.625rem]',
+        lg: 'px-6 py-3.5 text-xs',
+        icon: 'size-9 px-0 py-0',
+        'icon-sm': 'size-8 px-0 py-0',
+        'icon-lg': 'size-10 px-0 py-0',
       },
     },
     defaultVariants: {

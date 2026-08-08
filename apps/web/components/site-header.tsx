@@ -1,11 +1,11 @@
 "use client";
 
 /**
- * The register's running head.
+ * The machine's channel plates.
  *
- * A rule of struck labels with the current entry underlined in ink. No pill, no
- * filled tab, no status dot: an assay office marks the current page the way a
- * bound register marks the open one, by where the ribbon sits.
+ * A row of label-plate legends with the current one underscored. No pill, no
+ * filled tab, no status dot: the machine names its channels on engraved plates,
+ * and the one running is the one the operator underlined.
  */
 
 import Link from "next/link";
@@ -15,11 +15,11 @@ import { cn } from "@/lib/utils";
 
 const NAV = [
   { href: "/", label: "Overview" },
-  { href: "/demo", label: "Strike" },
+  { href: "/demo", label: "Wire" },
   { href: "/agent", label: "Agent" },
   { href: "/ledger", label: "Ledger" },
-  { href: "/explorer", label: "Register" },
-  { href: "/verify", label: "Assay" },
+  { href: "/explorer", label: "Intents" },
+  { href: "/verify", label: "Read" },
   { href: "/inspect", label: "Inspect" },
   { href: "/x402", label: "x402" },
   { href: "/docs", label: "Docs" },
@@ -30,13 +30,13 @@ export function SiteHeader() {
   const active = (href: string) => (href === "/" ? path === "/" : path.startsWith(href));
 
   return (
-    <header className="plate sticky top-0 z-50 border-b border-[var(--touchstone-rule)]">
+    <header className="iron sticky top-0 z-50 border-b border-[var(--iron-rule)]">
       <div className="shell flex h-14 items-center gap-8 overflow-hidden">
         <Link href="/" className="flex items-baseline gap-2.5 whitespace-nowrap">
-          <span className="font-display text-sm font-bold uppercase tracking-[0.16em] text-[var(--sheet-inv)]">
+          <span className="font-display text-sm font-bold uppercase tracking-[0.16em] text-[var(--stock-inv)]">
             Outcome
           </span>
-          <span className="rubric hidden md:inline">Assay Office</span>
+          <span className="plate-label hidden md:inline">Tape Reader</span>
         </Link>
 
         <nav className="no-scrollbar flex min-w-0 flex-1 items-center gap-5 overflow-x-auto">
@@ -46,10 +46,10 @@ export function SiteHeader() {
               href={n.href}
               aria-current={active(n.href) ? "page" : undefined}
               className={cn(
-                "rubric whitespace-nowrap border-b-2 pb-0.5 transition-colors",
+                "plate-label whitespace-nowrap border-b-2 pb-0.5 transition-colors",
                 active(n.href)
-                  ? "border-[var(--sheet-inv)] text-[var(--sheet-inv)]"
-                  : "border-transparent hover:text-[var(--sheet-inv)]"
+                  ? "border-[var(--stock-inv)] text-[var(--stock-inv)]"
+                  : "border-transparent hover:text-[var(--stock-inv)]"
               )}
             >
               {n.label}
@@ -61,7 +61,7 @@ export function SiteHeader() {
           href="https://github.com/nickthelegend/outcome"
           target="_blank"
           rel="noopener"
-          className="rubric hidden whitespace-nowrap hover:text-[var(--sheet-inv)] lg:inline"
+          className="plate-label hidden whitespace-nowrap hover:text-[var(--stock-inv)] lg:inline"
         >
           Source
         </a>

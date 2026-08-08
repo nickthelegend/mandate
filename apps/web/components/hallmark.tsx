@@ -1,63 +1,31 @@
 "use client";
 
 /**
- * The hallmark strip.
+ * The tape.
  *
- * A silversmith strikes "STERLING" on a piece. That is a claim, made by the
- * party who benefits from it. The assay office scrapes the metal, tests it, and
- * only then strikes its own punch beside the maker's. You read a hallmark right
- * to left: who made it, who checked it, what standard it met, when.
+ * A ticker did not summarise the wire, it printed it. If a broker told you the
+ * trade cleared, the tape either carried the line or it did not, and the tape
+ * was the thing you settled arguments with.
  *
- * The maker's mark is always struck, because a claim is always made. The assay
- * shield is struck only when the receipt proved it -- and when it did not, the
- * shield stays an empty incised outline. That absence is the whole product:
- * the facilitator said sterling and nobody countersigned.
+ * That is this product, exactly. The facilitator's `success: true` is what
+ * somebody says came over the wire. The receipt's logs are the tape. A
+ * settlement that mined and moved nothing prints as a run with the TRANSFER
+ * line missing -- and the missing line is the whole argument, so it is rendered
+ * as a reserved, struck-through space rather than quietly omitted.
  *
- * Marks are drawn, not set in type. A cartouche's silhouette carries its
- * meaning, so the strip survives greyscale and a screen reader alike.
+ * Lines are drawn as text because that is what a print head produced. The state
+ * survives greyscale: a printed line is set solid, an absent one is ruled
+ * through.
  */
 
 import { useEffect, useRef, useState } from "react";
 
 import { cn } from "@/lib/utils";
 
-/** Lozenge: the maker's own mark. Always struck. */
-function MakerCartouche({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="mark mark--maker" role="img" aria-label="Maker's mark: claimed">
-      <svg viewBox="0 0 40 44" aria-hidden="true" className="mark__shape">
-        <path d="M20 1 L39 22 L20 43 L1 22 Z" />
-      </svg>
-      <span className="mark__label">{children}</span>
-    </span>
-  );
-}
-
-/**
- * Shield: the assay office's own punch.
- *
- * Struck when proven. When not, the same shield is drawn as an incised outline
- * with nothing inside it -- deliberately the loudest element on the page.
- */
-function AssayCartouche({ struck }: { struck: boolean }) {
-  return (
-    <span
-      className={cn("mark", struck ? "mark--assayed" : "mark--unassayed")}
-      role="img"
-      aria-label={struck ? "Assay mark struck: payment proven on chain" : "No assay mark: payment not proven"}
-    >
-      <svg viewBox="0 0 40 44" aria-hidden="true" className="mark__shape">
-        <path d="M2 2 H38 V26 C38 36 30 41 20 43 C10 41 2 36 2 26 Z" />
-      </svg>
-      <span className="mark__label">{struck ? "ASSAYED" : "NO MARK"}</span>
-    </span>
-  );
-}
-
 export type HallmarkProps = {
-  /** What the facilitator claimed. Always rendered: a claim was always made. */
+  /** What the facilitator claimed. Always printed: a claim was always made. */
   claim: string;
-  /** Whether the receipt proved it. Drives the assay mark. */
+  /** Whether the receipt carried a matching transfer. Drives the TRANSFER line. */
   proven: boolean;
   /** The observed amount, in base units, exactly as the chain reported it. */
   observed?: string;
@@ -69,6 +37,32 @@ export type HallmarkProps = {
   className?: string;
 };
 
+/** One printed line of tape: a fixed-width label, then what the wire carried. */
+function Line({
+  label,
+  children,
+  tone = "ink",
+}: {
+  label: string;
+  children: React.ReactNode;
+  tone?: "ink" | "red" | "absent";
+}) {
+  return (
+    <div className="flex gap-3 sm:gap-5">
+      <span className="impression shrink-0 opacity-55">{label}</span>
+      <span
+        className={cn(
+          "impression min-w-0 break-all",
+          tone === "red" && "impression--red",
+          tone === "absent" && "impression--absent"
+        )}
+      >
+        {children}
+      </span>
+    </div>
+  );
+}
+
 export function Hallmark({
   claim,
   proven,
@@ -79,9 +73,9 @@ export function Hallmark({
   className,
 }: HallmarkProps) {
   /*
-   * A mark is struck once, on resolve -- a punch and a hammer, one blow. It is
-   * not an entrance animation: a strip that was already on screen does not
-   * re-strike on scroll, and reduced motion renders the settled state.
+   * The head advances once when a verdict resolves -- one line of travel, not a
+   * fade. A run already on screen does not re-print on scroll, and reduced
+   * motion renders the settled tape.
    */
   const [settled, setSettled] = useState(true);
   const first = useRef(true);
@@ -93,39 +87,54 @@ export function Hallmark({
     }
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     setSettled(false);
-    const t = setTimeout(() => setSettled(true), 150);
+    const t = setTimeout(() => setSettled(true), 160);
     return () => clearTimeout(t);
   }, [proven, claim]);
 
   return (
     <div
       className={cn(
-        "hallmark",
-        size === "display" && "hallmark--display",
-        !settled && "hallmark--striking",
+        "tape",
+        !proven && "tape--refused",
+        size === "display" && "py-7",
         className
       )}
     >
-      <div className="hallmark__strip">
-        <MakerCartouche>{claim}</MakerCartouche>
-        <AssayCartouche struck={proven} />
-        {observed !== undefined && (
-          <span className="mark mark--standard">
-            <span className="mark__rubric">observed</span>
-            <span className="mark__figure">{observed}</span>
-          </span>
+      <div
+        className={cn(
+          "transition-transform duration-150 ease-[cubic-bezier(0.16,1,0.3,1)]",
+          settled ? "translate-y-0" : "-translate-y-1"
         )}
-        {at && (
-          <span className="mark mark--date" role="img" aria-label={`Struck ${at}`}>
-            <svg viewBox="0 0 40 44" aria-hidden="true" className="mark__shape">
-              <rect x="2" y="2" width="36" height="40" rx="2" />
-            </svg>
-            <span className="mark__label">{at}</span>
-          </span>
+      >
+        <Line label="CLAIM">{claim}</Line>
+
+        {/*
+         * The line the whole product turns on. Present and set solid when the
+         * receipt carried it; reserved and ruled through when it did not,
+         * because an omitted line reads as an oversight and a struck one reads
+         * as a finding.
+         */}
+        {proven ? (
+          <Line label="TRANSFER">{observed !== undefined ? `${observed} RECEIVED` : "RECEIVED"}</Line>
+        ) : (
+          <Line label="TRANSFER" tone="absent">
+            NO SUCH LINE ON THIS TAPE
+          </Line>
         )}
+
+        <Line label="MOVED" tone={proven ? "ink" : "red"}>
+          {observed ?? "—"}
+        </Line>
+
+        {at && <Line label="AT">{at}</Line>}
       </div>
 
-      {reason && <p className="hallmark__reason">{reason}</p>}
+      {reason && (
+        <>
+          <hr className="perforation my-4" />
+          <p className="impression opacity-70">{reason}</p>
+        </>
+      )}
     </div>
   );
 }

@@ -4,7 +4,7 @@ function Skeleton({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
       data-slot="skeleton"
-      className={cn('bg-[var(--bench)] rounded-[2px]', className)}
+      className={cn('bg-[var(--stock-edge)] rounded-[2px]', className)}
       {...props}
     />
   )

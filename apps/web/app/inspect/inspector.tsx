@@ -42,7 +42,7 @@ type Execution = {
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <>
-      <dt className="text-[var(--quiet)]">{label}</dt>
+      <dt className="text-[var(--ribbon-soft)]">{label}</dt>
       <dd className="break-all">{children}</dd>
     </>
   );
@@ -120,13 +120,13 @@ export function Inspector() {
         </Button>
       </form>
 
-      <p className="mt-3 font-mono text-xs text-[var(--quiet)]">
-        Run the <a href="/outcome/demo/" className="underline underline-offset-4 hover:text-[var(--ink)]">live demo</a>{" "}
+      <p className="mt-3 font-mono text-xs text-[var(--ribbon-soft)]">
+        Run the <a href="/outcome/demo/" className="underline underline-offset-4 hover:text-[var(--ribbon)]">live demo</a>{" "}
         and it will link you straight here with its own id.
       </p>
 
       {error && (
-        <p className="mt-6 rounded-[2px] border border-[var(--rule)] bg-[var(--bench)] p-4 font-mono text-sm text-[var(--quiet)]">
+        <p className="mt-6 rounded-[2px] border border-[var(--perf)] bg-[var(--stock-edge)] p-4 font-mono text-sm text-[var(--ribbon-soft)]">
           {error}
         </p>
       )}
@@ -137,15 +137,15 @@ export function Inspector() {
             className={cn(
               "rounded-[2px] border p-5",
               data.status === "completed"
-                ? "border-[var(--rule)] bg-[var(--bench)]"
-                : "border-[var(--assay)] bg-transparent"
+                ? "border-[var(--perf)] bg-[var(--stock-edge)]"
+                : "border-[var(--ribbon-red)] bg-transparent"
             )}
           >
             <div className="flex flex-wrap items-center gap-3">
-              {data.status === "completed" && <CheckCircle2 className="size-4 text-[var(--ink)]" />}
+              {data.status === "completed" && <CheckCircle2 className="size-4 text-[var(--ribbon)]" />}
               <span className="font-mono text-sm font-medium">{data.status}</span>
               {data.sponsored && (
-                <span className="inline-flex items-center gap-1.5 rounded-[2px] border border-[var(--rule)] bg-[var(--bench)] px-2.5 py-0.5 font-mono text-xs text-[var(--ink)]">
+                <span className="inline-flex items-center gap-1.5 rounded-[2px] border border-[var(--perf)] bg-[var(--stock-edge)] px-2.5 py-0.5 font-mono text-xs text-[var(--ribbon)]">
                   <Fuel className="size-3" /> gas sponsored
                 </span>
               )}
@@ -163,7 +163,7 @@ export function Inspector() {
                     href={tx(data.transactionHash)}
                     target="_blank"
                     rel="noopener"
-                    className="underline underline-offset-4 hover:text-[var(--ink)]"
+                    className="underline underline-offset-4 hover:text-[var(--ribbon)]"
                   >
                     {data.transactionHash}
                   </a>
@@ -172,12 +172,12 @@ export function Inspector() {
             </dl>
           </div>
 
-          <div className="rounded-[2px] border border-[var(--rule)] bg-[var(--bench)] p-5">
+          <div className="rounded-[2px] border border-[var(--perf)] bg-[var(--stock-edge)] p-5">
             <h2 className="font-mono text-sm font-medium">What this record does not tell you</h2>
-            <p className="mt-2 text-pretty text-sm leading-relaxed text-[var(--quiet)]">
-              That <code className="font-mono text-[var(--ink)]">status: completed</code> means
+            <p className="mt-2 text-pretty text-sm leading-relaxed text-[var(--ribbon-soft)]">
+              That <code className="font-mono text-[var(--ribbon)]">status: completed</code> means
               KeeperHub sent the transaction and it mined. It does not mean value moved — a
-              transaction can mine, emit no <code className="font-mono text-[var(--ink)]">Transfer</code>,
+              transaction can mine, emit no <code className="font-mono text-[var(--ribbon)]">Transfer</code>,
               and pay nobody. That is the gap this project fills, and why the settlement is checked
               against the receipt before anything is released.
             </p>

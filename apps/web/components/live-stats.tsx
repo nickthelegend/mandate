@@ -8,9 +8,9 @@ import { amount, DEPLOYMENT } from "@/lib/outcome";
 /**
  * The standing totals, read live.
  *
- * Written as one ruled line of the register rather than four cards of
- * big-number-over-small-label: these are the running totals at the foot of a
- * page of entries, and a register does not box its own subtotals.
+ * Written as one printed line of the run rather than four cards of
+ * big-number-over-small-label: these are the running totals struck at the foot of
+ * a run, and a printout does not box its own subtotals.
  *
  * Deliberately shows an em dash while loading rather than a zero. A zero that
  * later becomes a three is a number the page was willing to state before it
@@ -39,14 +39,14 @@ export function LiveStats() {
    */
   if (error) {
     return (
-      <div className="border-t-2 border-[var(--assay)] pt-3">
-        <div className="rubric text-[var(--assay-ink)]">could not read the chain</div>
-        <p className="figure mt-2 text-xs leading-relaxed text-[var(--quiet)]">{error}</p>
+      <div className="border-t-2 border-[var(--ribbon-red)] pt-3">
+        <div className="plate-label text-[var(--ribbon-red-ink)]">could not read the chain</div>
+        <p className="figure mt-2 text-xs leading-relaxed text-[var(--ribbon-soft)]">{error}</p>
         <a
           href={`${DEPLOYMENT.explorer}/address/${DEPLOYMENT.escrow}#events`}
           target="_blank"
           rel="noopener"
-          className="figure mt-3 inline-block text-xs underline-offset-4 hover:text-[var(--ink)] hover:underline"
+          className="figure mt-3 inline-block text-xs underline-offset-4 hover:text-[var(--ribbon)] hover:underline"
         >
           read the events on Etherscan instead →
         </a>
@@ -56,17 +56,17 @@ export function LiveStats() {
 
   return (
     <Link href="/explorer" className="group block">
-      <div className="flex items-baseline justify-between border-b border-[var(--rule)] pb-2">
-        <span className="rubric">The record so far</span>
-        <span className="rubric transition-colors group-hover:text-[var(--ink)]">
-          open the register →
+      <div className="flex items-baseline justify-between border-b border-[var(--perf)] pb-2">
+        <span className="plate-label">The run so far</span>
+        <span className="plate-label transition-colors group-hover:text-[var(--ribbon)]">
+          open the full run →
         </span>
       </div>
 
-      <dl className="flex flex-wrap items-baseline gap-x-12 gap-y-5 border-b-2 border-[var(--ink)] py-6">
+      <dl className="flex flex-wrap items-baseline gap-x-12 gap-y-5 border-b-2 border-[var(--ribbon)] py-6">
         {stats.map((s) => (
           <div key={s.label} className="flex items-baseline gap-3">
-            <dt className="rubric">{s.label}</dt>
+            <dt className="plate-label">{s.label}</dt>
             <dd className="figure text-2xl font-semibold tracking-[-0.03em]">{s.value}</dd>
           </div>
         ))}

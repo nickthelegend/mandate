@@ -6,16 +6,18 @@ import { Hallmark } from "@/components/hallmark";
 import { DEPLOYMENT, tx } from "@/lib/outcome";
 
 /*
- * THESIS: A hallmark is a claim countersigned by someone who checked. This page
- * refuses the hero-metric template and the near-black-plus-neon console alike.
- * OWN-WORLD: A touchstone plate carrying two specimen streaks, sterling sheet
- * below it for the register. Marks are cut in, never floated.
- * STORY: The same demand was settled twice. Both facilitators reported success.
- * One moved money and one did not, and you can open either.
- * FIRST VIEWPORT: Full-bleed touchstone. The demand stated once, then two
- * specimens side by side -- struck and refused -- with both transactions
- * addressable beneath them.
- * FORM: The assay in progress, candidate 6 of 7, seed 453f9a2a.
+ * THESIS: The tape is the record; the summary of the tape is not. This page
+ * refuses the hero-metric template, the neon console, and the paper-and-serif
+ * broadsheet alike.
+ * OWN-WORLD: Cold newsprint printed in aniline violet, red for the second
+ * ribbon, japanned iron as the machine's own band. Sprocket margins and
+ * perforations divide; nothing is boxed.
+ * STORY: One demand went over the wire twice. Both facilitators reported
+ * success. Only one tape carries a TRANSFER line, and you can open both.
+ * FIRST VIEWPORT: The machine band, the demand stated once, then two torn
+ * tapes side by side -- one printed, one with the line struck through where it
+ * should have been.
+ * FORM: The telegraph tape, candidate 6 of 7, seed 5f5aa919.
  */
 
 const DEAD = "0x000000000000000000000000000000000000dEaD";
@@ -77,42 +79,37 @@ const THREE = [
 export default function Home() {
   return (
     <>
-      {/* The bench. Both specimens sit on the same stone, under the same demand. */}
-      <section className="plate">
+      {/* The machine. One demand went over the wire twice; both tapes are here. */}
+      <section className="iron">
         <div className="shell pt-14 pb-16 sm:pt-20 sm:pb-20">
-          <p className="rubric">{DEPLOYMENT.chainName} · settled through KeeperHub</p>
+          <p className="plate-label">{DEPLOYMENT.chainName} · settled through KeeperHub</p>
 
-          <h1 className="mt-7 max-w-4xl text-[clamp(2.5rem,1.4rem+4.2vw,5rem)] font-semibold leading-[0.98] tracking-[-0.035em] text-balance">
-            The facilitator said it paid.
+          <h1 className="mt-7 max-w-4xl text-[clamp(2rem,1.1rem+3.4vw,4rem)] font-bold leading-[1.04] tracking-[-0.05em] text-balance">
+            It said the money moved.
             <br />
-            Nobody countersigned.
+            Read the tape.
           </h1>
 
-          <p className="mt-7 max-w-2xl text-pretty text-lg leading-relaxed text-[var(--quiet-inv)]">
-            A silversmith strikes <span className="text-[var(--sheet-inv)]">sterling</span> on a
-            piece — a claim, made by the party who benefits from it. An assay office tests the metal
-            and strikes its own mark beside it. x402 has the first punch and not the second.
+          <p className="mt-7 max-w-xl text-pretty leading-relaxed text-[var(--ribbon-inv)]">
+            A ticker never summarised the wire — it printed it, and the tape was what you settled
+            arguments with. x402 hands you the summary and throws the tape away.
           </p>
 
-          {/* The demand, stated once, so the divergence below has one cause. */}
-          <div className="mt-14 border-t border-[var(--touchstone-rule)] pt-5">
-            <p className="rubric">One demand, settled twice</p>
-            <p className="figure mt-2 text-sm break-all text-[var(--sheet-inv)]">
+          {/* Stated once, so the divergence below has exactly one cause. */}
+          <div className="mt-14">
+            <p className="plate-label">One demand, sent twice</p>
+            <p className="impression mt-2 break-all text-[var(--stock-inv)]">
               {DEMAND.amount} of {DEMAND.token} to {DEMAND.recipient}
             </p>
           </div>
 
-          <div className="mt-6 grid gap-4 lg:grid-cols-2">
+          <div className="mt-6 grid gap-5 lg:grid-cols-2">
             {SPECIMENS.map((s) => (
-              <div
-                key={s.hash}
-                className={s.proven ? "specimen" : "specimen specimen--refused"}
-              >
-                <p className="rubric">{s.label}</p>
-                <div className={s.proven ? "streak mt-4" : "streak streak--refused mt-4"} />
+              <div key={s.hash}>
+                <p className="plate-label">{s.label}</p>
 
                 <Hallmark
-                  className="mt-6"
+                  className="mt-3"
                   claim={s.claim}
                   proven={s.proven}
                   observed={s.observed}
@@ -120,8 +117,8 @@ export default function Home() {
                 />
 
                 <p
-                  className={`figure mt-5 text-sm ${
-                    s.proven ? "text-[var(--sheet-inv)]" : "text-[var(--assay-lit)]"
+                  className={`impression mt-4 ${
+                    s.proven ? "text-[var(--stock-inv)]" : "impression--red"
                   }`}
                 >
                   {s.outcome}
@@ -130,19 +127,19 @@ export default function Home() {
                   href={tx(s.hash)}
                   target="_blank"
                   rel="noopener"
-                  className="figure mt-2 inline-block text-xs text-[var(--quiet-inv)] underline-offset-4 hover:text-[var(--sheet-inv)] hover:underline"
+                  className="impression mt-1 inline-block text-[var(--ribbon-inv)] underline-offset-4 hover:text-[var(--stock-inv)] hover:underline"
                 >
-                  {s.hash.slice(0, 26)}… open it on Etherscan →
+                  {s.hash.slice(0, 22)}… open it on Etherscan →
                 </a>
               </div>
             ))}
           </div>
 
-          <div className="mt-10 flex flex-wrap gap-3">
-            <Link href="/demo" className="plate-btn plate-btn--lit">
-              Strike one yourself
+          <div className="mt-12 flex flex-wrap gap-3">
+            <Link href="/demo" className="key key--lit">
+              Run the wire yourself
             </Link>
-            <Link href="/docs" className="plate-btn plate-btn--ghost">
+            <Link href="/docs" className="key key--ghost">
               Read the quickstart
             </Link>
           </div>
@@ -155,22 +152,22 @@ export default function Home() {
       </section>
 
       {/* Three claims, each with the transaction that settles it. */}
-      <section className="border-t border-[var(--rule)] bg-[var(--bench)]">
+      <section className="border-t border-[var(--perf)] bg-[var(--stock-edge)]">
         <div className="shell py-20">
           <h2 className="max-w-2xl text-3xl font-semibold tracking-[-0.025em] text-balance sm:text-4xl">
             Three things a neighbouring project cannot truthfully copy.
           </h2>
 
-          <div className="register mt-10">
+          <div className="run mt-10">
             {THREE.map((c) => (
               <div
                 key={c.mark}
-                className="register__row sm:grid-cols-[128px_1fr_auto] sm:items-baseline"
+                className="run__row sm:grid-cols-[128px_1fr_auto] sm:items-baseline"
               >
-                <span className="rubric">{c.mark}</span>
+                <span className="plate-label">{c.mark}</span>
                 <div>
                   <h3 className="text-base font-semibold tracking-[-0.01em]">{c.title}</h3>
-                  <p className="mt-2 max-w-[68ch] text-sm leading-relaxed text-[var(--quiet)]">
+                  <p className="mt-2 max-w-[68ch] text-sm leading-relaxed text-[var(--ribbon-soft)]">
                     {c.body}
                   </p>
                 </div>
@@ -178,7 +175,7 @@ export default function Home() {
                   href={tx(c.proof)}
                   target="_blank"
                   rel="noopener"
-                  className="figure text-xs text-[var(--quiet)] underline-offset-4 hover:text-[var(--ink)] hover:underline"
+                  className="figure text-xs text-[var(--ribbon-soft)] underline-offset-4 hover:text-[var(--ribbon)] hover:underline"
                 >
                   {c.proof.slice(0, 12)}…
                 </a>
@@ -193,15 +190,15 @@ export default function Home() {
         <div className="grid gap-12 lg:grid-cols-[1fr_1.1fr] lg:items-start">
           <div>
             <h2 className="text-3xl font-semibold tracking-[-0.025em] text-balance sm:text-4xl">
-              An assay office you can install.
+              A tape reader you can install.
             </h2>
-            <p className="mt-5 text-pretty leading-relaxed text-[var(--quiet)]">
+            <p className="mt-5 text-pretty leading-relaxed text-[var(--ribbon-soft)]">
               The SDK runs anywhere — browser, edge, or an agent runtime. The MCP server runs with no
               configuration at all: the defaults point at the live deployment, and every read-only
               tool works without a credential. Only settlement moves money, and only settlement needs
               a key.
             </p>
-            <p className="mt-4 text-pretty leading-relaxed text-[var(--quiet)]">
+            <p className="mt-4 text-pretty leading-relaxed text-[var(--ribbon-soft)]">
               The party being asked to trust a payment is the one who most needs to check it, so
               checking must not require a server or a key. This site is built on the published
               package, not a private copy of the logic.
@@ -212,17 +209,17 @@ export default function Home() {
       </section>
 
       {/* The close, back on the stone. */}
-      <section className="plate">
+      <section className="iron">
         <div className="shell py-20">
           <h2 className="max-w-3xl text-2xl font-semibold tracking-[-0.02em] text-balance sm:text-3xl">
             No model in the money path.
           </h2>
-          <p className="mt-5 max-w-[68ch] text-pretty leading-relaxed text-[var(--quiet-inv)]">
+          <p className="mt-5 max-w-[68ch] text-pretty leading-relaxed text-[var(--ribbon-inv)]">
             Every comparable project resolves payment disputes with an LLM judge. When the chain
-            already knows whether value moved, adjudication is a lookup, not an opinion. An assay
-            office does not deliberate either — it weighs the metal.
+            already knows whether value moved, adjudication is a lookup, not an opinion. A tape reader
+            does not deliberate either — it reads what printed.
           </p>
-          <p className="figure mt-10 text-xs text-[var(--quiet-inv)]">
+          <p className="figure mt-10 text-xs text-[var(--ribbon-inv)]">
             {DEPLOYMENT.chainName} · escrow {DEPLOYMENT.escrow} · verified
           </p>
         </div>
