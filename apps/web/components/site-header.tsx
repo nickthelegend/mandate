@@ -31,7 +31,7 @@ export function SiteHeader() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-[var(--rule)] bg-[var(--sheet)]">
-      <div className="mx-auto flex h-14 max-w-6xl items-center gap-8 px-6">
+      <div className="mx-auto flex h-14 max-w-6xl items-center gap-8 overflow-hidden px-6">
         <Link href="/" className="flex items-baseline gap-2.5 whitespace-nowrap">
           <span className="font-display text-sm font-bold uppercase tracking-[0.14em] text-[var(--ink)]">
             Outcome
@@ -39,7 +39,7 @@ export function SiteHeader() {
           <span className="rubric hidden md:inline">Assay Office</span>
         </Link>
 
-        <nav className="no-scrollbar flex flex-1 items-center gap-5 overflow-x-auto">
+        <nav className="no-scrollbar flex min-w-0 flex-1 items-center gap-5 overflow-x-auto">
           {NAV.map((n) => (
             <Link
               key={n.href}

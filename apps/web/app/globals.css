@@ -322,6 +322,18 @@ header nav a.bg-primary {
  * ------------------------------------------------------------------------ */
 
 /*
+ * Nothing is reachable only by scrolling the page sideways.
+ *
+ * Wide content -- the nav, register tables, code blocks -- scrolls inside its
+ * own box. A page that also scrolls horizontally is a layout bug leaking, and
+ * on a phone it reads as broken before anyone reads a word of it.
+ */
+html,
+body {
+  overflow-x: hidden;
+}
+
+/*
  * The ground is a plain rolled sheet.
  *
  * An earlier pass gave it a tiled hairline grid as "mill finish", and the

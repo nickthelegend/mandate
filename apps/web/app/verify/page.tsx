@@ -119,7 +119,21 @@ export default function VerifyPage() {
         ))}
       </div>
 
-      <form onSubmit={submit} className="mt-8 space-y-4">
+      <form
+        onSubmit={submit}
+        /*
+         * The inputs carry native patterns so a submit before hydration is
+         * refused rather than reloading the page. But native validation stops
+         * onSubmit from firing, which would leave the browser's generic "match
+         * the requested format" bubble as the only feedback. Intercepting it
+         * keeps the pre-hydration guard and still says what the field wants.
+         */
+        onInvalid={(e) => {
+          e.preventDefault();
+          setErrors(validate(form));
+        }}
+        className="mt-8 space-y-4"
+      >
         <div className="space-y-2">
           <Label htmlFor="hash" className="font-mono text-xs uppercase tracking-wide text-[var(--quiet)]">
             Transaction hash
