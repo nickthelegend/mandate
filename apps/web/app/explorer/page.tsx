@@ -14,6 +14,7 @@ import { ExternalLink, Loader2 } from "lucide-react";
 import { VerdictBadge } from "@/components/verdict";
 import { amount, short, tx, DEPLOYMENT } from "@/lib/outcome";
 import { cn } from "@/lib/utils";
+import { PageHead } from "@/components/page-head";
 
 function Stat({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
@@ -34,14 +35,15 @@ export default function ExplorerPage() {
   const open = rows?.filter((r) => r.state === "open").length ?? 0;
 
   return (
-    <div className="mx-auto max-w-6xl px-5 py-14">
-      <h1 className="text-3xl font-semibold tracking-tight">Every intent, read from the chain.</h1>
-      <p className="mt-3 max-w-2xl text-pretty leading-relaxed text-[var(--quiet)]">
+    <>
+      <PageHead rubric="The register" title="Every intent, read from the chain.">
         Assembled from {DEPLOYMENT.chainName} events in your browser. Nothing here is seeded, cached,
         or served from a database — each row is an event this contract emitted.
-      </p>
+      </PageHead>
 
-      <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="shell py-12">
+
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Stat label="Intents" value={rows ? String(rows.length) : "—"} />
         <Stat label="Released" value={String(released)} hint="work proven on chain" />
         <Stat label="Refunded" value={String(refunded)} hint="work not proven" />
@@ -127,5 +129,6 @@ export default function ExplorerPage() {
         </p>
       )}
     </div>
+    </>
   );
 }

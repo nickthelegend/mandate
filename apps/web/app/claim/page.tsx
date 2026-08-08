@@ -27,6 +27,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DEPLOYMENT, tx, short } from "@/lib/outcome";
+import { PageHead } from "@/components/page-head";
 
 const ESCROW_ABI = [
   "function claim(bytes32,address,address,uint256,uint64)",
@@ -126,18 +127,18 @@ export default function ClaimPage() {
   const busy = stage === "approving" || stage === "claiming";
 
   return (
-    <div className="mx-auto max-w-3xl px-5 py-14">
-      <h1 className="text-3xl font-semibold tracking-tight text-balance">
-        Post a job with your own wallet.
-      </h1>
-      <p className="mt-3 text-pretty leading-relaxed text-[var(--quiet)]">
+    <>
+      <PageHead rubric="Your wallet" title="Post a job with your own wallet.">
         Your tokens, your signature, your intent. It goes into the same escrow everything else on
         this site uses, and shows up in the explorer under your address. You can reclaim it after an
         hour if nobody does the work.
-      </p>
+      </PageHead>
+
+      <div className="shell py-12">
+      <div className="max-w-3xl">
 
       {!hasWallet && (
-        <p className="mt-6 rounded-[2px] border border-[var(--rule)] bg-[var(--bench)] p-4 text-sm text-[var(--quiet)]">
+        <p className="rounded-[2px] border border-[var(--rule)] bg-[var(--bench)] p-4 text-sm text-[var(--quiet)]">
           No browser wallet detected. This page needs one — everything else here works without.
         </p>
       )}
@@ -217,5 +218,7 @@ export default function ClaimPage() {
         </p>
       </div>
     </div>
+      </div>
+    </>
   );
 }

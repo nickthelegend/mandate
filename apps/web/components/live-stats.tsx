@@ -6,7 +6,11 @@ import { useIntents, useEscrowed } from "outcome-sdk/react";
 import { amount, DEPLOYMENT } from "@/lib/outcome";
 
 /**
- * The headline numbers, read live.
+ * The standing totals, read live.
+ *
+ * Written as one ruled line of the register rather than four cards of
+ * big-number-over-small-label: these are the running totals at the foot of a
+ * page of entries, and a register does not box its own subtotals.
  *
  * Deliberately shows an em dash while loading rather than a zero. A zero that
  * later becomes a three is a number the page was willing to state before it
@@ -35,16 +39,14 @@ export function LiveStats() {
    */
   if (error) {
     return (
-      <div className="rounded-[2px] border border-[var(--assay)] bg-transparent p-5">
-        <div className="font-mono text-xs uppercase tracking-wide text-[var(--assay)]">
-          could not read the chain
-        </div>
-        <p className="mt-2 font-mono text-xs leading-relaxed text-[var(--quiet)]">{error}</p>
+      <div className="border-t-2 border-[var(--assay)] pt-3">
+        <div className="rubric text-[var(--assay-ink)]">could not read the chain</div>
+        <p className="figure mt-2 text-xs leading-relaxed text-[var(--quiet)]">{error}</p>
         <a
           href={`${DEPLOYMENT.explorer}/address/${DEPLOYMENT.escrow}#events`}
           target="_blank"
           rel="noopener"
-          className="mt-3 inline-block font-mono text-xs underline-offset-4 hover:text-[var(--ink)] hover:underline"
+          className="figure mt-3 inline-block text-xs underline-offset-4 hover:text-[var(--ink)] hover:underline"
         >
           read the events on Etherscan instead →
         </a>
@@ -53,18 +55,22 @@ export function LiveStats() {
   }
 
   return (
-    <Link
-      href="/explorer"
-      className="group grid gap-px overflow-hidden rounded-[2px] border border-[var(--rule)] bg-border/60 sm:grid-cols-4"
-    >
-      {stats.map((s) => (
-        <div key={s.label} className="bg-background p-5 transition-colors group-hover:bg-[var(--bench)]">
-          <div className="font-mono text-xs uppercase tracking-wide text-[var(--quiet)]">
-            {s.label}
+    <Link href="/explorer" className="group block">
+      <div className="flex items-baseline justify-between border-b border-[var(--rule)] pb-2">
+        <span className="rubric">The record so far</span>
+        <span className="rubric transition-colors group-hover:text-[var(--ink)]">
+          open the register →
+        </span>
+      </div>
+
+      <dl className="flex flex-wrap items-baseline gap-x-12 gap-y-5 border-b-2 border-[var(--ink)] py-6">
+        {stats.map((s) => (
+          <div key={s.label} className="flex items-baseline gap-3">
+            <dt className="rubric">{s.label}</dt>
+            <dd className="figure text-2xl font-semibold tracking-[-0.03em]">{s.value}</dd>
           </div>
-          <div className="mt-2 font-mono text-3xl font-semibold tabular-nums">{s.value}</div>
-        </div>
-      ))}
+        ))}
+      </dl>
     </Link>
   );
 }

@@ -1,5 +1,6 @@
 import { CodeTabs } from "@/components/code-tabs";
 import { DEPLOYMENT, address } from "@/lib/outcome";
+import { PageHead } from "@/components/page-head";
 
 const TOOLS = [
   ["outcome_intent_id", "Derive the id for a piece of work. Two agents given the same task and payee get the same id, so a duplicate claim is refused on chain rather than paid for twice."],
@@ -30,15 +31,14 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 export default function DocsPage() {
   return (
-    <div className="mx-auto max-w-3xl space-y-10 px-5 py-14">
-      <div>
-        <h1 className="text-3xl font-semibold tracking-tight">Quickstart</h1>
-        <p className="mt-3 text-pretty leading-relaxed text-[var(--quiet)]">
-          Two packages. The SDK is what you call; the MCP server is the same loop exposed as tools an
-          agent can pick up on its own.
-        </p>
-      </div>
+    <>
+      <PageHead rubric="Two packages" title="Quickstart">
+        The SDK is what you call; the MCP server is the same loop exposed as tools an agent can pick
+        up on its own.
+      </PageHead>
 
+      <div className="shell py-12">
+      <div className="max-w-3xl space-y-10">
       <CodeTabs />
 
       <Section title="Reading works without a key">
@@ -152,5 +152,7 @@ return serve(resource);`}
         </div>
       </Section>
     </div>
+      </div>
+    </>
   );
 }

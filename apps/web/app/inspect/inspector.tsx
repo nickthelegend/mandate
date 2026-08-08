@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { tx } from "@/lib/outcome";
 import { cn } from "@/lib/utils";
+import { PageHead } from "@/components/page-head";
 
 const GATEWAY =
   process.env.NEXT_PUBLIC_GATEWAY_URL ?? "https://gateway-production-944e.up.railway.app";
@@ -89,15 +90,15 @@ export function Inspector() {
       : null;
 
   return (
-    <div className="mx-auto max-w-3xl px-5 py-14">
-      <h1 className="text-3xl font-semibold tracking-tight text-balance">
-        Open the execution record.
-      </h1>
-      <p className="mt-3 text-pretty leading-relaxed text-[var(--quiet)]">
+    <>
+      <PageHead rubric="KeeperHub" title="Open the execution record.">
         Every settlement here runs through KeeperHub, which keeps its own account of what it did.
         Paste an execution id to read it — simulated, sent, sponsored, confirmed. No key required:
         a record only the trusting party can read is not evidence.
-      </p>
+      </PageHead>
+
+      <div className="shell py-12">
+      <div className="max-w-3xl">
 
       <form
         onSubmit={(e) => {
@@ -189,5 +190,7 @@ export function Inspector() {
         </div>
       )}
     </div>
+      </div>
+    </>
   );
 }

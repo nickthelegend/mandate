@@ -20,6 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { VerdictPanel } from "@/components/verdict";
 import { DEPLOYMENT, tx } from "@/lib/outcome";
+import { PageHead } from "@/components/page-head";
 
 const DEAD = "0x000000000000000000000000000000000000dEaD";
 
@@ -158,18 +159,18 @@ export function Verifier() {
   };
 
   return (
-    <div className="mx-auto max-w-3xl px-5 py-14">
-      <h1 className="text-3xl font-semibold tracking-tight text-balance">
-        Check a payment yourself.
-      </h1>
-      <p className="mt-3 text-pretty leading-relaxed text-[var(--quiet)]">
+    <>
+      <PageHead rubric="The assay" title="Check a payment yourself.">
         Paste any {DEPLOYMENT.chainName} transaction and state the terms it was supposed to meet.
         Your browser fetches the receipt from a public RPC and reads it for a real ERC-20{" "}
-        <code className="font-mono text-[var(--ink)]">Transfer</code> of that token to that
+        <code className="font-mono text-[var(--sheet-inv)]">Transfer</code> of that token to that
         recipient. Nothing is sent to a server — this page has none.
-      </p>
+      </PageHead>
 
-      <div className="mt-6 flex flex-wrap gap-2">
+      <div className="shell py-12">
+      <div className="max-w-3xl">
+
+      <div className="flex flex-wrap gap-2">
         {SAMPLES.map((s) => (
           <button
             key={s.transactionHash}
@@ -319,5 +320,7 @@ const verdict = await outcome.verify({
         </pre>
       </div>
     </div>
+      </div>
+    </>
   );
 }

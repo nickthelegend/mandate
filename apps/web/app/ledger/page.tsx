@@ -13,6 +13,8 @@
  */
 
 import { useCallback, useEffect, useState } from "react";
+
+import { PageHead } from "@/components/page-head";
 import { VerdictMark } from "@/components/verdict";
 
 const GATEWAY =
@@ -61,17 +63,14 @@ export default function LedgerPage() {
   }, [load]);
 
   return (
-    <div className="mx-auto max-w-5xl px-6 py-16">
-      <p className="rubric">The register</p>
-      <h1 className="mt-4 text-3xl font-semibold tracking-[-0.02em] text-balance sm:text-4xl">
-        Every verdict, and why.
-      </h1>
-      <p className="mt-4 max-w-[68ch] text-pretty leading-relaxed text-[var(--quiet)]">
+    <>
+      <PageHead rubric="The register" title="Every verdict, and why.">
         A service that decides whether an agent gets paid owes it an account of why. This is that
         account — persisted, append-only, and readable without a credential.
-      </p>
+      </PageHead>
 
-      <div className="mt-8 flex flex-wrap items-center gap-5">
+      <div className="shell py-12">
+      <div className="flex flex-wrap items-center gap-5">
         <button type="button" className="plate-btn" onClick={() => void load()} disabled={loading}>
           Re-read
         </button>
@@ -83,20 +82,20 @@ export default function LedgerPage() {
       </div>
 
       {loading && entries.length === 0 && (
-        <div className="mt-10 border-t-2 border-[var(--ink)]">
+        <div className="register mt-10">
           {[0, 1, 2].map((i) => (
             <div key={i} className="flex items-center gap-6 border-b border-[var(--rule)] py-4">
-              <span className="h-3 w-28 bg-[var(--bench)]" />
-              <span className="h-3 w-24 bg-[var(--bench)]" />
-              <span className="h-3 flex-1 bg-[var(--bench)]" />
+              <span className="h-3 w-28 bg-[var(--rule)]" />
+              <span className="h-3 w-24 bg-[var(--rule)]" />
+              <span className="h-3 flex-1 bg-[var(--rule)]" />
             </div>
           ))}
-          <p className="mt-4 rubric">Reading the record…</p>
+          <p className="rubric mt-4">Reading the record…</p>
         </div>
       )}
 
       {error && (
-        <p className="mt-8 border-l-2 border-[var(--assay)] py-1 pl-4 font-mono text-sm text-[var(--quiet)]">
+        <p className="mt-8 border-t-2 border-[var(--assay)] pt-3 font-mono text-sm text-[var(--quiet)]">
           {error}
         </p>
       )}
@@ -160,6 +159,7 @@ export default function LedgerPage() {
           record that empties on redeploy is a debug buffer.
         </p>
       </div>
-    </div>
+      </div>
+    </>
   );
 }

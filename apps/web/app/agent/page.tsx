@@ -18,6 +18,7 @@ import { Bot, CheckCircle2, Loader2, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { tx } from "@/lib/outcome";
 import { cn } from "@/lib/utils";
+import { PageHead } from "@/components/page-head";
 
 const GATEWAY =
   process.env.NEXT_PUBLIC_GATEWAY_URL ?? "https://gateway-production-944e.up.railway.app";
@@ -69,23 +70,20 @@ export default function AgentPage() {
   const paid = cycle?.reports.some((r) => r.outcome?.startsWith("release"));
 
   return (
-    <div className="mx-auto max-w-3xl px-5 py-14">
-      <div className="rubric">
-        <Bot className="size-3" /> no private key · no ETH
-      </div>
-
-      <h1 className="mt-6 text-4xl font-semibold leading-tight tracking-tight text-balance">
-        An agent that gets paid without holding a key.
-      </h1>
-
-      <p className="mt-5 text-pretty leading-relaxed text-[var(--quiet)]">
+    <>
+      <PageHead
+        rubric="No private key · no ETH"
+        title="An agent that gets paid without holding a key."
+      >
         A payer posts a job, escrows the money, and walks away. Nothing after that is driven by a
         human. The agent finds the work, does it through KeeperHub, and hands the verifier a
         transaction hash — never a verdict. It gets paid only because the transfer was proven, and
         it can lose: unproven work refunds the payer and the agent earns nothing.
-      </p>
+      </PageHead>
 
-      <Button size="lg" className="mt-8 gap-2" disabled={running} onClick={() => void run()}>
+      <div className="shell py-12">
+      <div className="max-w-3xl">
+      <Button size="lg" className="gap-2" disabled={running} onClick={() => void run()}>
         {running ? <Loader2 className="size-4 animate-spin" /> : <Bot className="size-4" />}
         {running ? "Working…" : "Post a job and let it run"}
       </Button>
@@ -195,5 +193,7 @@ export default function AgentPage() {
         </div>
       )}
     </div>
+      </div>
+    </>
   );
 }

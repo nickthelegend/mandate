@@ -1,38 +1,66 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-@custom-variant dark (&:is(.dark *));
-
 /*
  * THESIS: A hallmark is a claim countersigned by someone who checked. This
- * surface refuses the near-black-plus-neon console the category ships.
- * OWN-WORLD: Sterling sheet, iron-gall ink, one assay red, marks struck into
- * the ground as insets. Archivo Expanded punches, Geist Mono registers.
- * STORY: A facilitator says sterling; the assay shield beside it is empty.
- * FIRST VIEWPORT: A hallmark strip at display scale, its assay mark unstruck.
- * FORM: Assay office, candidate 7 of 7, seed 93a2da7d.
+ * surface refuses the near-black-plus-neon console the category ships -- and
+ * refuses the flat mid-grey rendition of its own world that shipped before it.
+ * OWN-WORLD: Polished sterling sheet against touchstone black. Marks are cut
+ * into the ground, never floated on it; the touchstone plate is a real dark
+ * field, not a tinted card. Assay red appears on verdicts and nowhere else.
+ * Archivo Expanded punches, Geist Mono registers.
+ * STORY: A facilitator says sterling. The assay is run in front of you. One
+ * specimen takes the mark; the other is refused, and you can open both.
+ * FIRST VIEWPORT: The assay itself in progress -- a full-bleed touchstone
+ * plate carrying two specimen streaks that diverge, struck and unstruck, with
+ * the refused transaction addressable directly beneath.
+ * FORM: The assay in progress, candidate 6 of 7, seed 453f9a2a; live-row state
+ * grammar fused from the split-flap concourse challenger.
  */
 
 :root {
-  /* Sterling sheet, cool. Never cream -- warmth here is the drift to correct. */
-  --sheet: oklch(0.94 0.004 250);
-  --bench: oklch(0.90 0.006 250);
-  --rule: oklch(0.80 0.008 250);
-  --quiet: oklch(0.52 0.012 250);
+  /*
+   * The material range of a real assay office, which the previous rendition
+   * collapsed: sheet, bench and rule all sat inside 14% lightness, so every
+   * surface read as the same grey and nothing had weight. Sterling is bright
+   * and specular; touchstone is basalt black. The distance between them is the
+   * design.
+   */
+  --sheet: oklch(0.965 0.003 240);
+  --bench: oklch(0.905 0.007 240);
+  --rule: oklch(0.775 0.012 240);
+  --quiet: oklch(0.468 0.016 240);
 
   /* Iron-gall: browns as it lightens, exactly as the register hand ages. */
-  --ink: oklch(0.22 0.02 250);
+  --ink: oklch(0.17 0.022 250);
+  /* Touchstone: the basalt slab a streak is drawn on. A ground, not a card. */
+  --touchstone: oklch(0.232 0.018 250);
+  --touchstone-rule: oklch(0.34 0.02 250);
+  /* Sterling read against touchstone. */
+  --sheet-inv: oklch(0.955 0.004 240);
+  --quiet-inv: oklch(0.715 0.015 240);
   /* Oxidised silver, the dark that collects in a punch recess. */
-  --struck: oklch(0.42 0.05 250);
-  /* Assay red: seal, crucible, rejection stamp. A verdict, never an accent. */
-  --assay: oklch(0.52 0.19 25);
+  --struck: oklch(0.38 0.032 250);
+
+  /*
+   * Assay red: seal, crucible, rejection stamp. A verdict, never an accent.
+   * Three values because one cannot clear 4.5:1 against both grounds -- the
+   * deeper one carries small type on sterling, the lit one on touchstone.
+   */
+  --assay: oklch(0.505 0.205 27);
+  --assay-ink: oklch(0.44 0.185 27);
+  --assay-lit: oklch(0.66 0.19 27);
 
   /* Displacement, not float. Recess plus the burr of raised metal below it. */
   --strike: inset 0 1px 0 var(--rule), inset 0 -1px 0 oklch(1 0 0 / 0.75);
   --strike-deep: inset 0 2px 0 var(--rule), inset 0 -1px 0 oklch(1 0 0 / 0.6);
+  --strike-dark: inset 0 1px 0 oklch(0 0 0 / 0.55), inset 0 -1px 0 oklch(1 0 0 / 0.09);
+
+  /* One curve everywhere: a punch decelerating into metal. */
+  --ease-strike: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-
+/* shadcn primitives read these; they are aliases onto the world above. */
 :root {
   --background: var(--sheet);
   --foreground: var(--ink);
@@ -56,8 +84,8 @@
   --radius: 2px;
 }
 
-
 @theme inline {
+  --font-sans: var(--font-archivo), system-ui, sans-serif;
   --font-display: var(--font-archivo), system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
   --color-background: var(--background);
@@ -79,281 +107,64 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --color-chart-1: var(--chart-1);
-  --color-chart-2: var(--chart-2);
-  --color-chart-3: var(--chart-3);
-  --color-chart-4: var(--chart-4);
-  --color-chart-5: var(--chart-5);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-  --color-sidebar: var(--sidebar);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-ring: var(--sidebar-ring);
+  --radius-sm: 2px;
+  --radius-md: 2px;
+  --radius-lg: 2px;
+  --radius-xl: 2px;
 }
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border;
+  }
+
+  html,
+  body {
+    overflow-x: hidden;
   }
 
   body {
     @apply bg-background text-foreground;
+    /* A figure that reflows while loading is a figure the reader cannot trust. */
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* The focus ring is a struck outline, not a glow. */
+  :focus-visible {
+    outline: 2px solid var(--ink);
+    outline-offset: 2px;
+  }
+
+  .plate :focus-visible {
+    outline-color: var(--sheet-inv);
+  }
+
+  ::selection {
+    background: var(--ink);
+    color: var(--sheet);
+  }
+
+  .plate ::selection {
+    background: var(--sheet-inv);
+    color: var(--ink);
   }
 }
 
-/* Glass helpers */
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-.scrollbar-hide {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;
-}
-
-
-@media (min-width: 768px) {
-  .step-line {
-    left: 2.5rem;
-  }
-}
-
-
-.custom-scrollbar::-webkit-scrollbar {
-  width: 4px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(167, 242, 74, 0.2);
-  border-radius: 10px;
-}
-
-
-@keyframes rotateOrb {
-  from {
-    transform: rotateY(0deg) rotateZ(0deg);
-  }
-
-  to {
-    transform: rotateY(360deg) rotateZ(360deg);
-  }
-}
-
-
-@keyframes rotateCounter {
-  from {
-    transform: rotate(360deg);
-  }
-
-  to {
-    transform: rotate(0deg);
-  }
-}
-
-
-@keyframes ringPulse {
-  0% {
-    transform: scale(0.8) rotate(0deg);
-    opacity: 0.2;
-  }
-
-  100% {
-    transform: scale(1.2) rotate(180deg);
-    opacity: 0.8;
-  }
-}
-
-
-@keyframes obolus-marquee {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
-}
-
-/* Mesh Wallet Overrides - Force Black on Lime */
-
-/* Active Nav Header Fix */
-header nav a.bg-primary {
-  color: #000000 !important;
-}
-/* ---------------------------------------------------------------------------
- * Surfaces, rules and figures.
+/* --------------------------------------------------------------------------
+ * The register's vocabulary.
  *
- * The palette is unchanged. What was missing is everything between a colour and
- * a screen: a card that reads as a physical plane, a divider quiet enough to
- * organise without boxing, and numerals that line up in a column of money.
- *
- * The old UI expressed every relationship as a 1px rounded rectangle, so a
- * summary figure, a form and a table all carried the same weight. These give
- * grouping a range: a plane when something is genuinely a distinct object, a
- * rule when it is merely the next section, and nothing at all when proximity
- * already says it.
- * ------------------------------------------------------------------------ */
+ * Grouping has a range here: a touchstone plate when a region is genuinely a
+ * different material, a rule when it is merely the next entry, and nothing at
+ * all when proximity already says it. The previous rendition expressed every
+ * relationship as the same 1px rounded rectangle, which is why a summary
+ * figure, a form and a table all carried identical weight.
+ * ----------------------------------------------------------------------- */
 
 @layer components {
-  /*
-   * A raised plane. The top highlight is what sells it: real cards catch light
-   * on their upper edge, and a border alone reads as an outline drawn on glass.
-   * The shadow carries an offset as well as a blur, so the plane sits above the
-   * page rather than glowing on it.
-   */
-  .surface {
-    background:
-      linear-gradient(
-        to bottom,
-        color-mix(in oklab, var(--color-foreground) 4%, transparent),
-        transparent 40%
-      ),
-      var(--color-card);
-    border: 1px solid color-mix(in oklab, var(--color-foreground) 8%, transparent);
-    border-radius: var(--radius);
-    box-shadow:
-      inset 0 1px 0 0 color-mix(in oklab, var(--color-foreground) 7%, transparent),
-      0 1px 2px -1px rgb(0 0 0 / 0.4),
-      0 8px 24px -12px rgb(0 0 0 / 0.5);
-  }
-
-  /* Interactive planes lift toward the light rather than changing colour. */
-  .surface-interactive {
-    transition:
-      border-color 180ms cubic-bezier(0.16, 1, 0.3, 1),
-      box-shadow 180ms cubic-bezier(0.16, 1, 0.3, 1),
-      transform 180ms cubic-bezier(0.16, 1, 0.3, 1);
-  }
-
-  .surface-interactive:hover {
-    border-color: color-mix(in oklab, var(--color-foreground) 16%, transparent);
-    box-shadow:
-      inset 0 1px 0 0 color-mix(in oklab, var(--color-foreground) 10%, transparent),
-      0 2px 4px -2px rgb(0 0 0 / 0.4),
-      0 16px 32px -16px rgb(0 0 0 / 0.6);
-  }
-
-  /*
-   * Selected state carries the accent on the edge and a wash inside, so a
-   * chosen option is legible without the lime shouting over the content.
-   */
-  .surface-selected {
-    border-color: color-mix(in oklab, var(--color-primary) 45%, transparent);
-    background:
-      linear-gradient(
-        to bottom,
-        color-mix(in oklab, var(--color-primary) 8%, transparent),
-        transparent 55%
-      ),
-      var(--color-card);
-    box-shadow:
-      inset 0 1px 0 0 color-mix(in oklab, var(--color-primary) 22%, transparent),
-      0 1px 2px -1px rgb(0 0 0 / 0.4),
-      0 12px 28px -14px color-mix(in oklab, var(--color-primary) 22%, black);
-  }
-
-  /* A divider that organises without drawing a box. */
-  .rule {
-    border: 0;
-    border-top: 1px solid color-mix(in oklab, var(--color-foreground) 8%, transparent);
-  }
-
-  /*
-   * Money. Tabular figures so digits sit in a column and a changing value does
-   * not shift the ones beside it, and a tighter track because large numerals
-   * carry more built-in sidebearing than letters do.
-   */
-  .figure {
-    font-variant-numeric: tabular-nums;
-    font-feature-settings: "tnum" 1, "ss01" 1;
-    letter-spacing: -0.02em;
-  }
-
-  .figure-lg {
-    font-variant-numeric: tabular-nums;
-    font-feature-settings: "tnum" 1;
-    letter-spacing: -0.035em;
-    line-height: 0.95;
-  }
-
-  /*
-   * The quiet label that names a figure.
-   *
-   * 60% rather than the 45% this started at: uppercase at 11px is the smallest
-   * text on the page, and the lighter tint measured about 3.7:1 against this
-   * background -- under the 4.5:1 that small text needs. Quiet has to stop
-   * where legible ends.
-   */
-  .label {
-    font-size: 0.6875rem;
-    line-height: 1.2;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: color-mix(in oklab, var(--color-foreground) 60%, transparent);
-  }
-}
-
-/* ---------------------------------------------------------------------------
- * Layout layer.
- *
- * The tokens above solved colour and surface. What was still missing was the
- * page: every route put its objects straight onto flat black, so a single card
- * read as debris rather than as content, and a sparse page read as a bug.
- *
- * Three things fix that, and they are all here rather than repeated per route:
- * an ambient ground that gives the black somewhere to be, a page shell that
- * gives every route the same opening rhythm, and grids that stay composed when
- * they hold one item instead of nine.
- * ------------------------------------------------------------------------ */
-
-/*
- * Nothing is reachable only by scrolling the page sideways.
- *
- * Wide content -- the nav, register tables, code blocks -- scrolls inside its
- * own box. A page that also scrolls horizontally is a layout bug leaking, and
- * on a phone it reads as broken before anyone reads a word of it.
- */
-html,
-body {
-  overflow-x: hidden;
-}
-
-/*
- * The ground is a plain rolled sheet.
- *
- * An earlier pass gave it a tiled hairline grid as "mill finish", and the
- * detector was right to flag it: a two-axis line field is a generated-UI
- * signature, not a material. Sterling sheet has no pattern on it. The rules
- * that organise this surface come from the register -- real structure, drawn
- * where content actually divides -- so the ground needs nothing.
- */
-
-/* Content has to sit above the ground. */
-body > * {
-  position: relative;
-  z-index: 1;
-}
-
-@layer components {
-  /* The column every route shares. One max-width, one gutter, one rhythm. */
+  /* The column every route shares. */
   .shell {
     width: 100%;
-    max-width: 78rem;
+    max-width: 72rem;
     margin-inline: auto;
     padding-inline: 1.25rem;
   }
@@ -365,324 +176,506 @@ body > * {
   }
 
   /*
-   * Page opening. An eyebrow, a title, a line of prose, and optionally an
-   * action on the right. Every route using the same block is most of what
-   * makes a set of pages feel like one product.
+   * A touchstone plate: the basalt slab, full-bleed. This is the world's dark
+   * material, so it owns whole regions rather than tinting a card. Text inside
+   * it flips to sterling automatically.
    */
-  .page-head {
-    display: grid;
-    gap: 0.75rem;
-    padding-block: 3rem 2rem;
-  }
-
-  @media (min-width: 900px) {
-    .page-head[data-actions] {
-      grid-template-columns: minmax(0, 1fr) auto;
-      align-items: end;
-      column-gap: 2rem;
-    }
-  }
-
-  .page-title {
-    font-size: clamp(2rem, 1.2rem + 2.6vw, 3.25rem);
-    line-height: 1.02;
-    letter-spacing: -0.035em;
-    font-weight: 500;
-    text-wrap: balance;
-  }
-
-  .page-lede {
-    max-width: 52ch;
-    color: color-mix(in oklab, var(--color-foreground) 62%, transparent);
-    line-height: 1.6;
-    text-wrap: pretty;
+  /*
+   * Anchors inherit their colour under Tailwind's preflight, so the plate does
+   * not restate it for links. A `.plate a` rule here would outrank every
+   * single-class control inside it -- which is exactly how the primary action
+   * once rendered as sterling text on a sterling plate, invisible.
+   */
+  .plate {
+    background: var(--touchstone);
+    color: var(--sheet-inv);
   }
 
   /*
-   * Auto-fit grid with a floor.
-   *
-   * `auto-fill` with a minimum is what stops one merchant from rendering as a
-   * lonely third of a row: the track sizes to the content it has instead of
-   * reserving space for content it does not.
+   * A specimen: metal laid on the stone and streaked for testing. The band is
+   * a real brushed-metal graduation, which is this world's own material rather
+   * than decorative chrome -- a flat fill would read as a card, which is
+   * precisely the container this world refuses.
    */
-  .grid-cards {
-    display: grid;
-    gap: 1rem;
-    grid-template-columns: repeat(auto-fill, minmax(min(19rem, 100%), 1fr));
+  .specimen {
+    border: 1px solid var(--touchstone-rule);
+    background: linear-gradient(
+      177deg,
+      oklch(1 0 0 / 0.085) 0%,
+      oklch(1 0 0 / 0.03) 38%,
+      oklch(0 0 0 / 0.12) 100%
+    );
+    box-shadow: var(--strike-dark);
+    padding: 1.5rem 1.5rem 1.25rem;
   }
 
-  /* Asymmetric split for a primary object beside its supporting column. */
-  .split {
-    display: grid;
-    gap: 1.25rem;
-    align-items: start;
+  .specimen--refused {
+    border-color: color-mix(in oklab, var(--assay-lit) 55%, var(--touchstone-rule));
   }
 
-  @media (min-width: 960px) {
-    .split {
-      grid-template-columns: minmax(0, 1.62fr) minmax(20rem, 1fr);
-    }
+  /* The streak itself: metal drawn down the stone, left to right. */
+  .streak {
+    height: 3px;
+    background: linear-gradient(
+      to right,
+      transparent,
+      var(--quiet-inv) 12%,
+      var(--sheet-inv) 48%,
+      var(--quiet-inv) 82%,
+      transparent
+    );
+    opacity: 0.85;
   }
 
-  /*
-   * Stat tile. The label sits above the figure, not beside it, because a column
-   * of money is read down the digits and anything to the left of them breaks
-   * that column.
-   */
-  .stat {
-    display: grid;
-    gap: 0.375rem;
-    padding: 1.125rem 1.25rem;
-  }
-
-  .stat-value {
-    font-variant-numeric: tabular-nums;
-    font-feature-settings: "tnum" 1;
-    letter-spacing: -0.03em;
-    line-height: 1;
-    font-size: clamp(1.5rem, 1.1rem + 1.2vw, 2rem);
-  }
-
-  .stat-note {
-    font-size: 0.75rem;
-    color: color-mix(in oklab, var(--color-foreground) 55%, transparent);
-  }
-
-  /*
-   * Empty state.
-   *
-   * The version this replaces was a sentence and a button centred in a void,
-   * which reads as a page that failed to load rather than one with nothing in
-   * it yet. A hatched plane at least says "this is the container, and it is
-   * empty" -- the shape of the thing survives its own emptiness.
-   */
-  .empty {
-    display: grid;
-    place-items: center;
-    gap: 0.75rem;
-    padding: clamp(2.5rem, 6vw, 4.5rem) 1.5rem;
-    text-align: center;
-    border: 1px dashed color-mix(in oklab, var(--color-foreground) 14%, transparent);
-    border-radius: var(--radius);
-    background-image: repeating-linear-gradient(
-      -45deg,
-      color-mix(in oklab, var(--color-foreground) 2.5%, transparent) 0 1px,
-      transparent 1px 9px
+  .streak--refused {
+    background: linear-gradient(
+      to right,
+      transparent,
+      color-mix(in oklab, var(--assay-lit) 70%, transparent) 14%,
+      var(--assay-lit) 50%,
+      color-mix(in oklab, var(--assay-lit) 55%, transparent) 84%,
+      transparent
     );
   }
 
-  /* A hairline plate for grouped rows -- lighter than a surface, still an object. */
-  .plate {
-    border: 1px solid color-mix(in oklab, var(--color-foreground) 8%, transparent);
-    border-radius: var(--radius);
-    overflow: clip;
+  /* Column heads and field labels. Never an eyebrow over every section. */
+  .rubric {
+    font-family: var(--font-display);
+    font-size: 0.6875rem;
+    font-weight: 500;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--quiet);
   }
 
-  .plate > * + * {
-    border-top: 1px solid color-mix(in oklab, var(--color-foreground) 8%, transparent);
+  .plate .rubric {
+    color: var(--quiet-inv);
+  }
+
+  /* Every hash, address, amount and timestamp. */
+  .figure {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+    letter-spacing: -0.01em;
+  }
+
+  /*
+   * A run of ruled entries. Rules do the work borders would, so entries never
+   * become a stack of boxes.
+   */
+  .register {
+    border-top: 2px solid var(--ink);
+  }
+
+  .plate .register {
+    border-top-color: var(--sheet-inv);
+  }
+
+  .register__row {
+    display: grid;
+    gap: 0.5rem 1.5rem;
+    border-bottom: 1px solid var(--rule);
+    padding-block: 1.25rem;
+  }
+
+  .plate .register__row {
+    border-bottom-color: var(--touchstone-rule);
+  }
+
+  /*
+   * A struck plate. Pressed metal: the ink rule under it is the burr thrown up
+   * by the punch, and the active state deepens the recess rather than moving
+   * the element away from the page.
+   */
+  .plate-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--bench);
+    color: var(--ink);
+    border: 1px solid var(--rule);
+    border-bottom: 2px solid var(--ink);
+    border-radius: 2px;
+    box-shadow: var(--strike);
+    padding: 0.625rem 1.125rem;
+    font-family: var(--font-display);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    transition:
+      background-color 140ms var(--ease-strike),
+      box-shadow 140ms var(--ease-strike),
+      transform 140ms var(--ease-strike);
+  }
+
+  .plate-btn:hover:not(:disabled) {
+    background: var(--sheet);
+  }
+
+  .plate-btn:active:not(:disabled) {
+    box-shadow: var(--strike-deep);
+    transform: translateY(1px);
+  }
+
+  .plate-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  /*
+   * A ruled blank. The rule the hand writes on is drawn as an inset shadow
+   * rather than a bottom border: it belongs to the same strike that recesses
+   * the field, and a 2px border on a radiused box fights its own corners.
+   */
+  .field {
+    background: var(--bench);
+    border: 0;
+    border-radius: 2px;
+    box-shadow: inset 0 1px 0 var(--rule), inset 0 -2px 0 var(--rule);
+    transition:
+      box-shadow 140ms var(--ease-strike),
+      background-color 140ms var(--ease-strike);
+  }
+
+  .field:hover:not(:disabled) {
+    box-shadow: inset 0 1px 0 var(--rule), inset 0 -2px 0 var(--quiet);
+  }
+
+  .field:focus {
+    background: var(--sheet);
+    box-shadow: inset 0 1px 0 var(--rule), inset 0 -2px 0 var(--ink);
+  }
+
+  .field[aria-invalid="true"] {
+    box-shadow: inset 0 1px 0 var(--rule), inset 0 -2px 0 var(--assay);
+  }
+
+  /* Secondary: the same plate, unstruck at the foot. */
+  .plate-btn--quiet {
+    background: transparent;
+    border-bottom-color: var(--rule);
+    box-shadow: none;
+  }
+
+  /* On touchstone, the plate is polished metal against the stone. */
+  .plate-btn--lit {
+    background: var(--sheet-inv);
+    color: var(--ink);
+    border-color: var(--sheet-inv);
+    border-bottom-color: var(--ink);
+  }
+
+  .plate-btn--lit:hover:not(:disabled) {
+    background: #fff;
+  }
+
+  .plate-btn--ghost {
+    background: transparent;
+    color: var(--sheet-inv);
+    border-color: var(--touchstone-rule);
+    border-bottom-color: var(--quiet-inv);
+    box-shadow: none;
+  }
+
+  .plate-btn--ghost:hover:not(:disabled) {
+    background: oklch(1 0 0 / 0.07);
   }
 }
 
-/* ---- The assay office ---------------------------------------------------
- * Marks are struck into the sheet, never floated above it. Depth here is
- * displacement: a recess with the burr of raised metal along its lower edge.
- * ------------------------------------------------------------------------ */
+/* --------------------------------------------------------------------------
+ * Marks.
+ *
+ * A cartouche's silhouette carries its meaning, so a verdict survives
+ * greyscale and colour never carries it alone. Marks are cut into the ground:
+ * the shape is filled when struck and left as an incised outline when not.
+ * ----------------------------------------------------------------------- */
+
 @layer components {
   .hallmark {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
+    display: grid;
+    gap: 1rem;
   }
 
   .hallmark__strip {
     display: flex;
-    align-items: stretch;
-    gap: 8px;
     flex-wrap: wrap;
+    align-items: stretch;
+    gap: 0.5rem;
   }
 
   .mark {
-    position: relative;
-    display: inline-grid;
-    place-items: center;
-    min-width: 76px;
-    padding: 10px 12px 8px;
-    border-radius: 2px;
+    display: grid;
+    justify-items: center;
+    gap: 0.5rem;
+    min-width: 84px;
+    padding: 0.875rem 0.875rem 0.75rem;
     background: var(--bench);
+    border: 1px solid var(--rule);
+    border-radius: 2px;
     box-shadow: var(--strike);
-    text-align: center;
   }
 
-  /* The cartouche silhouette carries the meaning, so state survives greyscale. */
+  .plate .mark {
+    background: oklch(1 0 0 / 0.05);
+    border-color: var(--touchstone-rule);
+    box-shadow: var(--strike-dark);
+  }
+
   .mark__shape {
-    width: 26px;
-    height: 28px;
-    fill: none;
-    stroke: var(--struck);
-    stroke-width: 2.5;
+    width: 30px;
+    height: 33px;
+    flex: none;
   }
 
-  .mark--maker .mark__shape { fill: var(--struck); stroke: none; }
-  .mark--assayed .mark__shape { fill: var(--ink); stroke: none; }
-
-  /* The empty shield. An incised outline and nothing inside it: the maker said
-   * sterling and nobody countersigned. Dashed, because the punch never landed. */
-  .mark--unassayed {
-    background: transparent;
-    box-shadow: inset 0 0 0 1px var(--assay);
-  }
-  .mark--unassayed .mark__shape {
-    stroke: var(--assay);
-    stroke-dasharray: 4 3;
-  }
-  .mark--unassayed .mark__label { color: var(--assay); }
-
-  .mark__label,
-  .mark__rubric {
-    margin-top: 6px;
+  .mark__label {
     font-family: var(--font-display);
-    font-size: 0.5625rem;
-    font-weight: 600;
+    font-size: 0.625rem;
+    font-weight: 700;
     letter-spacing: 0.1em;
     text-transform: uppercase;
-    color: var(--quiet);
-    white-space: nowrap;
+    text-align: center;
+    font-stretch: expanded;
   }
 
-  .mark--maker .mark__label,
-  .mark--assayed .mark__label { color: var(--ink); }
+  .mark__rubric {
+    font-family: var(--font-display);
+    font-size: 0.625rem;
+    font-weight: 500;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--quiet);
+  }
 
-  .mark--standard,
-  .mark--date { min-width: 0; }
+  .plate .mark__rubric {
+    color: var(--quiet-inv);
+  }
 
   .mark__figure {
     font-family: var(--font-mono);
     font-variant-numeric: tabular-nums;
-    font-size: 0.9375rem;
-    color: var(--ink);
+    font-size: 1.125rem;
+    letter-spacing: -0.02em;
   }
 
-  .mark--date .mark__label {
-    font-family: var(--font-mono);
-    letter-spacing: 0;
-    text-transform: none;
+  /* Struck: the punch went in and the recess is filled. */
+  .mark--maker .mark__shape,
+  .mark--assayed .mark__shape,
+  .mark--date .mark__shape {
+    fill: var(--struck);
+    stroke: none;
+  }
+
+  .plate .mark--maker .mark__shape,
+  .plate .mark--assayed .mark__shape,
+  .plate .mark--date .mark__shape {
+    fill: var(--sheet-inv);
+  }
+
+  /*
+   * Unstruck: the loudest element on the page. An incised outline with nothing
+   * inside it -- the assay office declined to put its punch on this piece.
+   */
+  .mark--unassayed .mark__shape {
+    fill: none;
+    stroke: var(--assay);
+    stroke-width: 2.5;
+    stroke-dasharray: 5 4;
+  }
+
+  .plate .mark--unassayed .mark__shape {
+    stroke: var(--assay-lit);
+  }
+
+  .mark--unassayed {
+    border-color: color-mix(in oklab, var(--assay) 45%, var(--rule));
+  }
+
+  .mark--unassayed .mark__label {
+    color: var(--assay-ink);
+  }
+
+  .plate .mark--unassayed {
+    border-color: color-mix(in oklab, var(--assay-lit) 55%, var(--touchstone-rule));
+  }
+
+  .plate .mark--unassayed .mark__label {
+    color: var(--assay-lit);
+  }
+
+  .mark--standard,
+  .mark--date {
+    align-content: center;
   }
 
   .hallmark__reason {
     font-family: var(--font-mono);
     font-size: 0.8125rem;
-    line-height: 1.6;
+    line-height: 1.65;
     color: var(--quiet);
     max-width: 68ch;
   }
 
-  /* Display scale: the strip is the first viewport, not a badge in a card. */
-  .hallmark--display .mark { min-width: 116px; padding: 20px 20px 16px; }
-  .hallmark--display .mark__shape { width: 44px; height: 48px; }
-  .hallmark--display .mark__label { font-size: 0.6875rem; }
-  .hallmark--display .mark__figure { font-size: 1.5rem; }
+  .plate .hallmark__reason {
+    color: var(--quiet-inv);
+  }
 
-  /* One blow. Exponential settle from an already-visible default, so the strip
-   * is legible even if the animation never runs. */
-  .hallmark__strip .mark { transition: transform 150ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 150ms; }
-  .hallmark--striking .mark { transform: translateY(-2px); box-shadow: var(--strike-deep); }
+  /* Display scale: the strip is the first viewport's subject, not a badge. */
+  .hallmark--display .mark {
+    min-width: 124px;
+    padding: 1.25rem 1.25rem 1rem;
+  }
+
+  .hallmark--display .mark__shape {
+    width: 46px;
+    height: 50px;
+  }
+
+  .hallmark--display .mark__label {
+    font-size: 0.6875rem;
+  }
+
+  .hallmark--display .mark__figure {
+    font-size: 1.625rem;
+  }
+
+  /*
+   * One blow, on resolve. Not an entrance: a strip already on screen does not
+   * re-strike on scroll, and reduced motion renders the settled state.
+   */
+  .hallmark__strip .mark {
+    transition:
+      transform 150ms var(--ease-strike),
+      box-shadow 150ms var(--ease-strike);
+  }
+
+  .hallmark--striking .mark {
+    transform: translateY(-2px);
+    box-shadow: var(--strike-deep);
+  }
 
   @media (prefers-reduced-motion: reduce) {
-    .hallmark__strip .mark { transition: none; }
-    .hallmark--striking .mark { transform: none; box-shadow: var(--strike); }
+    .hallmark__strip .mark {
+      transition: none;
+    }
+
+    .hallmark--striking .mark {
+      transform: none;
+      box-shadow: var(--strike);
+    }
   }
-
-  /* A register page: ruled entries on sheet, hard left, no nested containers. */
-  .register { border-top: 2px solid var(--ink); }
-
-  .register__row {
-    display: grid;
-    gap: 4px 20px;
-    padding: 16px 0;
-    border-bottom: 1px solid var(--rule);
-  }
-
-  .rubric {
-    font-family: var(--font-display);
-    font-size: 0.6875rem;
-    font-weight: 500;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--quiet);
-  }
-
-  .figure {
-    font-family: var(--font-mono);
-    font-variant-numeric: tabular-nums;
-    color: var(--ink);
-  }
-
-  /* A struck plate: the world's button. Takes the blow on press. */
-  .plate-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 18px;
-    border: 0;
-    border-bottom: 2px solid var(--ink);
-    border-radius: 2px;
-    background: var(--bench);
-    box-shadow: var(--strike);
-    color: var(--ink);
-    font-family: var(--font-display);
-    font-size: 0.75rem;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    cursor: pointer;
-  }
-
-  .plate-btn:active { box-shadow: var(--strike-deep); transform: translateY(1px); }
-  .plate-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-  .plate-btn--quiet { border-bottom-color: var(--rule); }
 }
 
+/* --------------------------------------------------------------------------
+ * Verdicts.
+ *
+ * The inline mark used inside a register row, and the panel a full verdict
+ * renders into.
+ * ----------------------------------------------------------------------- */
+
 @layer components {
-  /* The assay mark at row scale. Shape carries the state; colour reinforces. */
   .verdict-mark {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 0.4375rem;
     font-family: var(--font-display);
-    font-size: 0.6875rem;
-    font-weight: 600;
-    letter-spacing: 0.08em;
+    font-size: 0.625rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
+    white-space: nowrap;
   }
 
-  .verdict-mark svg { width: 14px; height: 16px; flex: none; }
+  .verdict-mark svg {
+    width: 13px;
+    height: 15px;
+    flex: none;
+  }
 
-  .verdict-mark--proven { color: var(--ink); }
-  .verdict-mark--proven svg { fill: var(--ink); stroke: none; }
+  .verdict-mark--proven {
+    color: var(--ink);
+  }
 
-  /* Incised and empty: the punch never landed. */
-  .verdict-mark--not_proven { color: var(--assay); }
+  .verdict-mark--proven svg {
+    fill: var(--ink);
+    stroke: none;
+  }
+
+  .verdict-mark--not_proven {
+    color: var(--assay-ink);
+  }
+
   .verdict-mark--not_proven svg {
     fill: none;
     stroke: var(--assay);
+    stroke-width: 2.5;
+    stroke-dasharray: 5 4;
+  }
+
+  .verdict-mark--awaiting {
+    color: var(--quiet);
+  }
+
+  .verdict-mark--awaiting svg {
+    fill: none;
+    stroke: var(--rule);
     stroke-width: 2;
-    stroke-dasharray: 3 2.5;
   }
 
-  /* Nobody has ruled yet. Not zero, and not a refusal. */
-  .verdict-mark--awaiting { color: var(--quiet); }
-  .verdict-mark--awaiting svg { fill: none; stroke: var(--rule); stroke-width: 2; }
+  .plate .verdict-mark--proven {
+    color: var(--sheet-inv);
+  }
 
+  .plate .verdict-mark--proven svg {
+    fill: var(--sheet-inv);
+  }
+
+  .plate .verdict-mark--not_proven {
+    color: var(--assay-lit);
+  }
+
+  .plate .verdict-mark--not_proven svg {
+    stroke: var(--assay-lit);
+  }
+
+  .plate .verdict-mark--awaiting {
+    color: var(--quiet-inv);
+  }
+
+  .plate .verdict-mark--awaiting svg {
+    stroke: var(--touchstone-rule);
+  }
+
+  /*
+   * A verdict reads as an entry ruled into the register: a 2px head rule above
+   * it, the way a column is opened, and hairlines elsewhere.
+   *
+   * Deliberately not a coloured bar down the leading edge. That device is the
+   * single most recognisable tell of a generated interface, and a register does
+   * not mark a refused entry by painting its margin -- it rules the head of the
+   * entry in the other ink.
+   */
   .verdict-panel {
-    padding: 20px;
     border: 1px solid var(--rule);
+    border-top: 2px solid var(--ink);
     border-radius: 2px;
-    background: var(--sheet);
+    background: var(--bench);
+    padding: 1.25rem 1.375rem;
   }
 
-  /* A refusal is ruled in assay red on its leading edge, the way a register
-   * strikes a rejected entry. One rule, not a tinted card. */
   .verdict-panel--unassayed {
-    border-left: 2px solid var(--assay);
+    border-color: color-mix(in oklab, var(--assay) 35%, var(--rule));
+    border-top-color: var(--assay);
+    background: transparent;
   }
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }

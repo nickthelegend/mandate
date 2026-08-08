@@ -6,26 +6,52 @@ import { Hallmark } from "@/components/hallmark";
 import { DEPLOYMENT, tx } from "@/lib/outcome";
 
 /*
- * THESIS: A hallmark is a claim countersigned by someone who checked. The first
- * viewport is a hallmark with its assay mark missing -- not a headline about
- * verification.
- * OWN-WORLD: Sterling sheet, iron-gall ink, one assay red, marks struck as
- * insets. Archivo punches, Geist Mono registers.
- * STORY: The facilitator said sterling. Nobody countersigned. The article was
- * withheld -- and here is the transaction.
- * FIRST VIEWPORT: A display-scale hallmark strip, its assay shield an empty
- * dashed outline in assay red, with the Etherscan link directly beneath.
- * FORM: Assay office, candidate 7 of 7, seed 93a2da7d.
+ * THESIS: A hallmark is a claim countersigned by someone who checked. This page
+ * refuses the hero-metric template and the near-black-plus-neon console alike.
+ * OWN-WORLD: A touchstone plate carrying two specimen streaks, sterling sheet
+ * below it for the register. Marks are cut in, never floated.
+ * STORY: The same demand was settled twice. Both facilitators reported success.
+ * One moved money and one did not, and you can open either.
+ * FIRST VIEWPORT: Full-bleed touchstone. The demand stated once, then two
+ * specimens side by side -- struck and refused -- with both transactions
+ * addressable beneath them.
+ * FORM: The assay in progress, candidate 6 of 7, seed 453f9a2a.
  */
 
-/** The refused settlement. A real transaction; the numbers are its own. */
-const REFUSED = {
-  hash: "0x6db7218d717f5be3c3b37f386593bf0bdf3760b0407ac1145c617ac172136603",
-  claim: "SUCCESS: TRUE",
-  observed: "0",
-  reason:
-    "no Transfer of 0x0d864A62… to 0x…dEaD in 1 log(s). The transaction mined, emitted a log, and moved nothing.",
+const DEAD = "0x000000000000000000000000000000000000dEaD";
+
+/*
+ * One demand, settled twice. Both verified against the chain from this repo
+ * before being written down here: same token, same recipient, same amount, and
+ * the only difference is whether the money moved.
+ */
+const DEMAND = {
+  amount: "1000000",
+  token: "0x0d864A625c280F7f9B9AD024d12F94f5D6DCCF13",
+  recipient: DEAD,
 };
+
+const SPECIMENS = [
+  {
+    label: "Settled by a lying facilitator",
+    claim: "SUCCESS: TRUE",
+    proven: false,
+    observed: "0",
+    hash: "0x6db7218d717f5be3c3b37f386593bf0bdf3760b0407ac1145c617ac172136603",
+    reason:
+      "no Transfer of 0x0d864A62… to 0x…dEaD in 1 log(s). It mined, it emitted a log, and it moved nothing.",
+    outcome: "HTTP 402 — the article was withheld",
+  },
+  {
+    label: "Settled honestly",
+    claim: "SUCCESS: TRUE",
+    proven: true,
+    observed: "1000000",
+    hash: "0x3aac3134ba7c4ce4e12c04e206ad7ce468318607fdb7a8e7ad85e91a70fe72ee",
+    reason: "observed 1000000 reaching 0x…dEaD in 2 log(s).",
+    outcome: "HTTP 200 — the article was served",
+  },
+] as const;
 
 const THREE = [
   {
@@ -51,63 +77,96 @@ const THREE = [
 export default function Home() {
   return (
     <>
-      {/* The thesis, struck. Not a hero: the artifact leads. */}
-      <section className="mx-auto max-w-6xl px-6 pt-16 pb-20 sm:pt-24">
-        <p className="rubric">Sepolia · settled through KeeperHub</p>
+      {/* The bench. Both specimens sit on the same stone, under the same demand. */}
+      <section className="plate">
+        <div className="shell pt-14 pb-16 sm:pt-20 sm:pb-20">
+          <p className="rubric">{DEPLOYMENT.chainName} · settled through KeeperHub</p>
 
-        <h1 className="mt-6 max-w-3xl text-4xl font-semibold leading-[1.08] tracking-[-0.02em] text-balance sm:text-6xl">
-          The facilitator said it paid. Nobody countersigned.
-        </h1>
+          <h1 className="mt-7 max-w-4xl text-[clamp(2.5rem,1.4rem+4.2vw,5rem)] font-semibold leading-[0.98] tracking-[-0.035em] text-balance">
+            The facilitator said it paid.
+            <br />
+            Nobody countersigned.
+          </h1>
 
-        <p className="mt-6 max-w-xl text-pretty text-lg leading-relaxed text-[var(--quiet)]">
-          A silversmith strikes <span className="text-[var(--ink)]">sterling</span> on a piece — a
-          claim, made by the party who benefits from it. An assay office tests the metal and strikes
-          its own mark beside it. x402 has the first punch and not the second.
-        </p>
+          <p className="mt-7 max-w-2xl text-pretty text-lg leading-relaxed text-[var(--quiet-inv)]">
+            A silversmith strikes <span className="text-[var(--sheet-inv)]">sterling</span> on a
+            piece — a claim, made by the party who benefits from it. An assay office tests the metal
+            and strikes its own mark beside it. x402 has the first punch and not the second.
+          </p>
 
-        <div className="mt-12 border-t-2 border-[var(--ink)] pt-8">
-          <Hallmark
-            size="display"
-            claim={REFUSED.claim}
-            proven={false}
-            observed={REFUSED.observed}
-            at="09:22:16"
-            reason={REFUSED.reason}
-          />
-          <a
-            href={tx(REFUSED.hash)}
-            target="_blank"
-            rel="noopener"
-            className="mt-8 inline-block font-mono text-xs text-[var(--quiet)] underline-offset-4 hover:text-[var(--ink)] hover:underline"
-          >
-            {REFUSED.hash.slice(0, 30)}… open it on Etherscan and check
-          </a>
+          {/* The demand, stated once, so the divergence below has one cause. */}
+          <div className="mt-14 border-t border-[var(--touchstone-rule)] pt-5">
+            <p className="rubric">One demand, settled twice</p>
+            <p className="figure mt-2 text-sm break-all text-[var(--sheet-inv)]">
+              {DEMAND.amount} of {DEMAND.token} to {DEMAND.recipient}
+            </p>
+          </div>
+
+          <div className="mt-6 grid gap-4 lg:grid-cols-2">
+            {SPECIMENS.map((s) => (
+              <div
+                key={s.hash}
+                className={s.proven ? "specimen" : "specimen specimen--refused"}
+              >
+                <p className="rubric">{s.label}</p>
+                <div className={s.proven ? "streak mt-4" : "streak streak--refused mt-4"} />
+
+                <Hallmark
+                  className="mt-6"
+                  claim={s.claim}
+                  proven={s.proven}
+                  observed={s.observed}
+                  reason={s.reason}
+                />
+
+                <p
+                  className={`figure mt-5 text-sm ${
+                    s.proven ? "text-[var(--sheet-inv)]" : "text-[var(--assay-lit)]"
+                  }`}
+                >
+                  {s.outcome}
+                </p>
+                <a
+                  href={tx(s.hash)}
+                  target="_blank"
+                  rel="noopener"
+                  className="figure mt-2 inline-block text-xs text-[var(--quiet-inv)] underline-offset-4 hover:text-[var(--sheet-inv)] hover:underline"
+                >
+                  {s.hash.slice(0, 26)}… open it on Etherscan →
+                </a>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-10 flex flex-wrap gap-3">
+            <Link href="/demo" className="plate-btn plate-btn--lit">
+              Strike one yourself
+            </Link>
+            <Link href="/docs" className="plate-btn plate-btn--ghost">
+              Read the quickstart
+            </Link>
+          </div>
         </div>
+      </section>
 
-        <div className="mt-10 flex flex-wrap gap-3">
-          <Link href="/demo" className="plate-btn">
-            Strike one yourself
-          </Link>
-          <Link href="/docs" className="plate-btn plate-btn--quiet">
-            Read the quickstart
-          </Link>
-        </div>
-
-        <div className="mt-16">
-          <LiveStats />
-        </div>
+      {/* Off the stone and onto the sheet: the standing record. */}
+      <section className="shell py-14">
+        <LiveStats />
       </section>
 
       {/* Three claims, each with the transaction that settles it. */}
       <section className="border-t border-[var(--rule)] bg-[var(--bench)]">
-        <div className="mx-auto max-w-6xl px-6 py-20">
-          <h2 className="max-w-2xl text-2xl font-semibold tracking-[-0.015em] text-balance sm:text-3xl">
+        <div className="shell py-20">
+          <h2 className="max-w-2xl text-3xl font-semibold tracking-[-0.025em] text-balance sm:text-4xl">
             Three things a neighbouring project cannot truthfully copy.
           </h2>
 
           <div className="register mt-10">
             {THREE.map((c) => (
-              <div key={c.mark} className="register__row sm:grid-cols-[120px_1fr_auto] sm:items-baseline">
+              <div
+                key={c.mark}
+                className="register__row sm:grid-cols-[128px_1fr_auto] sm:items-baseline"
+              >
                 <span className="rubric">{c.mark}</span>
                 <div>
                   <h3 className="text-base font-semibold tracking-[-0.01em]">{c.title}</h3>
@@ -130,10 +189,10 @@ export default function Home() {
       </section>
 
       {/* What you install. */}
-      <section className="mx-auto max-w-6xl px-6 py-20">
+      <section className="shell py-20">
         <div className="grid gap-12 lg:grid-cols-[1fr_1.1fr] lg:items-start">
           <div>
-            <h2 className="text-2xl font-semibold tracking-[-0.015em] text-balance sm:text-3xl">
+            <h2 className="text-3xl font-semibold tracking-[-0.025em] text-balance sm:text-4xl">
               An assay office you can install.
             </h2>
             <p className="mt-5 text-pretty leading-relaxed text-[var(--quiet)]">
@@ -152,18 +211,19 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="border-t border-[var(--rule)]">
-        <div className="mx-auto max-w-2xl px-6 py-20">
-          <h2 className="text-xl font-semibold tracking-[-0.015em] text-balance">
+      {/* The close, back on the stone. */}
+      <section className="plate">
+        <div className="shell py-20">
+          <h2 className="max-w-3xl text-2xl font-semibold tracking-[-0.02em] text-balance sm:text-3xl">
             No model in the money path.
           </h2>
-          <p className="mt-4 text-pretty leading-relaxed text-[var(--quiet)]">
+          <p className="mt-5 max-w-[68ch] text-pretty leading-relaxed text-[var(--quiet-inv)]">
             Every comparable project resolves payment disputes with an LLM judge. When the chain
             already knows whether value moved, adjudication is a lookup, not an opinion. An assay
             office does not deliberate either — it weighs the metal.
           </p>
-          <p className="mt-8 font-mono text-xs text-[var(--quiet)]">
-            {DEPLOYMENT.chainName} · escrow {DEPLOYMENT.escrow.slice(0, 10)}… · verified
+          <p className="figure mt-10 text-xs text-[var(--quiet-inv)]">
+            {DEPLOYMENT.chainName} · escrow {DEPLOYMENT.escrow} · verified
           </p>
         </div>
       </section>

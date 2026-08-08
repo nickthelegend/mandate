@@ -30,10 +30,10 @@ export function SiteHeader() {
   const active = (href: string) => (href === "/" ? path === "/" : path.startsWith(href));
 
   return (
-    <header className="sticky top-0 z-50 border-b border-[var(--rule)] bg-[var(--sheet)]">
-      <div className="mx-auto flex h-14 max-w-6xl items-center gap-8 overflow-hidden px-6">
+    <header className="plate sticky top-0 z-50 border-b border-[var(--touchstone-rule)]">
+      <div className="shell flex h-14 items-center gap-8 overflow-hidden">
         <Link href="/" className="flex items-baseline gap-2.5 whitespace-nowrap">
-          <span className="font-display text-sm font-bold uppercase tracking-[0.14em] text-[var(--ink)]">
+          <span className="font-display text-sm font-bold uppercase tracking-[0.16em] text-[var(--sheet-inv)]">
             Outcome
           </span>
           <span className="rubric hidden md:inline">Assay Office</span>
@@ -48,8 +48,8 @@ export function SiteHeader() {
               className={cn(
                 "rubric whitespace-nowrap border-b-2 pb-0.5 transition-colors",
                 active(n.href)
-                  ? "border-[var(--ink)] text-[var(--ink)]"
-                  : "border-transparent hover:text-[var(--ink)]"
+                  ? "border-[var(--sheet-inv)] text-[var(--sheet-inv)]"
+                  : "border-transparent hover:text-[var(--sheet-inv)]"
               )}
             >
               {n.label}
@@ -61,7 +61,7 @@ export function SiteHeader() {
           href="https://github.com/nickthelegend/outcome"
           target="_blank"
           rel="noopener"
-          className="rubric hidden whitespace-nowrap hover:text-[var(--ink)] lg:inline"
+          className="rubric hidden whitespace-nowrap hover:text-[var(--sheet-inv)] lg:inline"
         >
           Source
         </a>

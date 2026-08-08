@@ -7,3 +7,6 @@ contracts/cache/
 .next/
 out/
 *.tsbuildinfo
+
+# Local design screenshots
+.shots/

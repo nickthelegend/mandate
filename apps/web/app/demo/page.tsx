@@ -19,6 +19,7 @@ import { CheckCircle2, Loader2, ShieldAlert, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { tx } from "@/lib/outcome";
 import { cn } from "@/lib/utils";
+import { PageHead } from "@/components/page-head";
 
 const GATEWAY =
   process.env.NEXT_PUBLIC_GATEWAY_URL ?? "https://gateway-production-944e.up.railway.app";
@@ -71,23 +72,19 @@ export default function DemoPage() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-5 py-14">
-      <div className="rubric">
-        <span className="inline-block size-1.5 rounded-[2px] bg-[var(--bench)]" />
-        every run is a real Sepolia transaction
-      </div>
-
-      <h1 className="mt-6 text-4xl font-semibold leading-tight tracking-tight text-balance">
-        Buy an article twice. Once you get it, once you don&rsquo;t.
-      </h1>
-
-      <p className="mt-5 text-pretty leading-relaxed text-[var(--quiet)]">
-        Same protocol, same client, same <code className="font-mono text-[var(--ink)]">success: true</code>{" "}
+    <>
+      <PageHead
+        rubric="Every run is a real Sepolia transaction"
+        title={<>Buy an article twice. Once you get it, once you don&rsquo;t.</>}
+      >
+        Same protocol, same client, same <code className="font-mono text-[var(--sheet-inv)]">success: true</code>{" "}
         from the facilitator. The only difference is that one of the two settlements actually moved
         money — and only one of them gets the article.
-      </p>
+      </PageHead>
 
-      <div className="mt-8 grid gap-3 sm:grid-cols-2">
+      <div className="shell py-12">
+      <div className="max-w-3xl">
+      <div className="grid gap-3 sm:grid-cols-2">
         <Button size="lg" className="gap-2" disabled={running !== null} onClick={() => run("honest")}>
           {running === "honest" ? <Loader2 className="size-4 animate-spin" /> : <CheckCircle2 className="size-4" />}
           {running === "honest" ? "Paying…" : "Pay honestly"}
@@ -228,5 +225,7 @@ export default function DemoPage() {
         </p>
       </div>
     </div>
+      </div>
+    </>
   );
 }

@@ -3,6 +3,7 @@ import { ArrowRight, ShieldCheck, ShieldAlert } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { tx } from "@/lib/outcome";
+import { PageHead } from "@/components/page-head";
 
 /**
  * The x402 argument, with both live transactions.
@@ -32,16 +33,16 @@ const RUNS = [
 
 export default function X402Page() {
   return (
-    <div className="mx-auto max-w-3xl px-5 py-14">
-      <div className="rubric">
-        x402 · scheme <code>exact</code> · EIP-3009 · Sepolia
-      </div>
+    <>
+      <PageHead
+        rubric="x402 · scheme exact · EIP-3009 · Sepolia"
+        title="x402 never checks the transaction it was handed."
+      />
 
-      <h1 className="mt-6 text-4xl font-semibold leading-tight tracking-tight text-balance">
-        x402 never checks the transaction it was handed.
-      </h1>
+      <div className="shell py-12">
+      <div className="max-w-3xl">
 
-      <div className="mt-6 space-y-4 leading-relaxed text-[var(--quiet)]">
+      <div className="space-y-4 leading-relaxed text-[var(--quiet)]">
         <p>
           The flow is: a server answers <code className="font-mono text-[var(--ink)]">402</code> with
           what it wants paid, the client signs an EIP-3009 authorisation into an{" "}
@@ -150,5 +151,7 @@ npm run pay:lying --prefix apps/gateway   # lying   -> 402`}
         </Button>
       </div>
     </div>
+      </div>
+    </>
   );
 }
