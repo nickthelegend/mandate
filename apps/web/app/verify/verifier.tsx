@@ -160,7 +160,7 @@ export function Verifier() {
 
   return (
     <>
-      <PageHead rubric="Read the tape" title="Check a payment yourself.">
+      <PageHead rubric="Verify" title="Check a payment yourself.">
         Paste any {DEPLOYMENT.chainName} transaction and state the terms it was supposed to meet.
         Your browser fetches the receipt from a public RPC and reads it for a real ERC-20{" "}
         <code className="font-mono text-[var(--on-navy)]">Transfer</code> of that token to that
@@ -175,7 +175,7 @@ export function Verifier() {
           <button
             key={s.transactionHash}
             onClick={() => load(s)}
-            className="group rounded-[2px] border border-[var(--line)] px-3 py-2 text-left transition-colors hover:border-[var(--ink)] hover:bg-[var(--surface)]"
+            className="group rounded-[10px] border border-[var(--line)] px-3 py-2 text-left transition-colors hover:border-[var(--ink)] hover:bg-[var(--surface)]"
           >
             <span className="block text-sm font-medium">{s.label}</span>
             <span className="block font-mono text-xs text-[var(--ink-3)]">{s.blurb}</span>
@@ -280,7 +280,7 @@ export function Verifier() {
       </form>
 
       {error && (
-        <p className="mt-6 rounded-[2px] border border-[var(--line)] bg-[var(--surface)] p-4 font-mono text-sm text-[var(--ink-3)]">
+        <p className="mt-6 rounded-[10px] border border-[var(--line)] bg-[var(--surface)] p-4 font-mono text-sm text-[var(--ink-3)]">
           {error}
         </p>
       )}
@@ -299,9 +299,9 @@ export function Verifier() {
         </div>
       )}
 
-      <div className="mt-14 rounded-[2px] border border-[var(--line)] bg-[var(--surface)] p-5">
+      <div className="mt-14 rounded-[10px] border border-[var(--line)] bg-[var(--surface)] p-5">
         <h2 className="font-mono text-sm font-medium">The same call, in your own code</h2>
-        <pre className="mt-3 overflow-x-auto rounded-[2px] bg-[var(--page)] p-4 font-mono text-xs leading-relaxed text-[var(--ink)]">
+        <pre className="mt-3 overflow-x-auto rounded-[10px] bg-[var(--panel)] p-4 font-mono text-xs leading-relaxed text-[var(--ink)]">
 {`import { OutcomeClient } from "outcome-sdk";
 
 const outcome = new OutcomeClient({

@@ -150,7 +150,7 @@ export default function Home() {
                   href={tx(c.hash)}
                   target="_blank"
                   rel="noopener"
-                  className="figure mt-4 text-xs text-[var(--brand)] underline-offset-4 hover:underline"
+                  className="figure mt-4 text-xs text-[var(--brand-lit)] underline-offset-4 hover:underline"
                 >
                   {c.hash.slice(0, 16)}… on Etherscan →
                 </a>

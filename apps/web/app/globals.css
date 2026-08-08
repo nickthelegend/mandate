@@ -18,35 +18,46 @@
 :root {
   /* ── Polaris brand ─────────────────────────────────────────── */
   --brand: #1c6fd0;
-  --brand-ink: #0a4f9e;
-  --brand-wash: #eef5fd;
+  --brand-ink: #4b95e8;
+  /* Blue at full saturation is too dark to read as text on navy. */
+  --brand-lit: #7db4f2;
+  --brand-wash: rgba(28, 111, 208, 0.16);
   /* The action colour. Polaris puts it on dark, in a pill, and nowhere else. */
   --lime: #a6f24a;
   --lime-ink: #05080f;
 
-  /* ── Polaris surfaces ──────────────────────────────────────── */
-  --navy: #0a0e16;
-  --navy-raised: #0c111b;
-  --navy-line: #1b2231;
-  --page: #ffffff;
-  --surface: #f7f8fa;
-  --panel: #fbfcff;
+  /*
+   * Dark-first, on Polaris's own navy.
+   *
+   * Polaris runs a dark shell with light dashboard panels inside it. Outcome is
+   * all shell -- there is no dashboard here, only argument and evidence -- so
+   * the light panels went and the navy carries the whole product. Three levels
+   * so sections still have rhythm without a white slab between them.
+   */
+  --page: #0d121c;
+  --deep: #070a11;
+  --surface: #121926;
+  --panel: #161e2c;
+  --navy: #070a11;
+  --navy-raised: #121926;
+  --navy-line: #202939;
 
-  /* ── Polaris text ramp ─────────────────────────────────────── */
-  --ink: #101828;
-  --ink-2: #475467;
-  --ink-3: #667085;
-  --ink-4: #98a2b3;
+  /* ── Text ramp, inverted ───────────────────────────────────── */
+  --ink: #ffffff;
+  --ink-2: #ccd3de;
+  --ink-3: #98a2b3;
+  --ink-4: #6b7482;
   --on-navy: #ffffff;
-  --on-navy-2: #cbd0d8;
-  --on-navy-3: #8a93a3;
+  --on-navy-2: #ccd3de;
+  --on-navy-3: #98a2b3;
 
-  /* ── Polaris lines and depth ───────────────────────────────── */
-  --line: #eaecf0;
-  --line-2: #eef0f3;
-  --shadow-sm: 0 1px 6px rgba(16, 24, 40, 0.035);
-  --shadow-md: 0 2px 10px rgba(16, 24, 40, 0.06);
-  --shadow-lg: 0 12px 32px -12px rgba(16, 24, 40, 0.18);
+  /* ── Lines and depth ───────────────────────────────────────── */
+  --line: #202939;
+  --line-2: #2a3446;
+  /* On dark, separation is a lighter edge rather than a cast shadow. */
+  --shadow-sm: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  --shadow-md: 0 4px 16px -6px rgba(0, 0, 0, 0.6);
+  --shadow-lg: 0 18px 40px -18px rgba(0, 0, 0, 0.75);
 
   /*
    * The verdict pair. The one thing Polaris has no token for, because no
@@ -54,10 +65,12 @@
    * nothing". Proven borrows the brand blue rather than inventing a green:
    * a proof is not a success message.
    */
-  --proven: #1c6fd0;
-  --proven-wash: #eef5fd;
-  --refused: #d92d20;
-  --refused-wash: #fef3f2;
+  --proven: #7db4f2;
+  --proven-wash: rgba(28, 111, 208, 0.14);
+  --proven-line: rgba(28, 111, 208, 0.45);
+  --refused: #fda29b;
+  --refused-wash: rgba(217, 45, 32, 0.12);
+  --refused-line: rgba(217, 45, 32, 0.45);
 
   --radius: 12px;
 }
@@ -77,7 +90,7 @@
   --muted: var(--surface);
   --muted-foreground: var(--ink-3);
   --accent: var(--brand-wash);
-  --accent-foreground: var(--brand-ink);
+  --accent-foreground: var(--brand-lit);
   --destructive: var(--refused);
   --destructive-foreground: #ffffff;
   --border: var(--line);
@@ -164,14 +177,18 @@
     }
   }
 
-  /* Polaris's dark section: navy ground, white type, lime for the one action. */
+  /*
+   * The deepest band. Everything is navy now, so this no longer flips colour --
+   * it drops a step, which is what still makes a hero or a closing section read
+   * as separate from the run of the page.
+   */
   .on-navy {
-    background: var(--navy);
-    color: var(--on-navy);
+    background: var(--deep);
+    color: var(--ink);
   }
 
   .on-navy-raised {
-    background: var(--navy-raised);
+    background: var(--surface);
   }
 
   /*
@@ -180,21 +197,21 @@
    */
   .dotfield {
     background:
-      radial-gradient(circle at 1px 1px, rgba(151, 163, 184, 0.3) 1px, transparent 1.35px),
+      radial-gradient(circle at 1px 1px, rgba(148, 163, 184, 0.11) 1px, transparent 1.35px),
       linear-gradient(180deg, var(--panel) 0%, var(--page) 100%);
     background-size: 14px 14px, 100% 100%;
   }
 
   /* A Polaris card: white, hairline, generous radius, shadow that barely lifts. */
   .card-p {
-    background: var(--page);
+    background: var(--surface);
     border: 1px solid var(--line);
     border-radius: 14px;
     box-shadow: var(--shadow-sm);
   }
 
   .card-p--flat {
-    background: var(--surface);
+    background: var(--panel);
     box-shadow: none;
   }
 
@@ -278,13 +295,14 @@
   }
 
   .btn--outline {
-    background: var(--page);
+    background: var(--surface);
     color: var(--ink);
-    border: 1px solid var(--line);
+    border: 1px solid var(--line-2);
     box-shadow: var(--shadow-sm);
   }
 
   .btn--outline:hover:not(:disabled) {
+    background: var(--panel);
     border-color: var(--ink-4);
   }
 
@@ -302,8 +320,9 @@
 
   .field {
     width: 100%;
-    background: var(--page);
-    border: 1px solid var(--line);
+    background: var(--surface);
+    color: var(--ink);
+    border: 1px solid var(--line-2);
     border-radius: 10px;
     padding: 0.625rem 0.875rem;
     box-shadow: var(--shadow-sm);
@@ -322,12 +341,13 @@
 
   .field:focus {
     outline: none;
-    border-color: var(--brand);
+    background: var(--panel);
+    border-color: var(--brand-lit);
     box-shadow: 0 0 0 4px var(--brand-wash);
   }
 
   .field[aria-invalid="true"] {
-    border-color: var(--refused);
+    border-color: var(--refused-line);
   }
 
   .field[aria-invalid="true"]:focus {
@@ -361,7 +381,7 @@
 
   .verdict--proven {
     background: var(--proven-wash);
-    color: var(--brand-ink);
+    color: var(--proven);
   }
 
   .verdict--proven svg {
@@ -371,7 +391,7 @@
 
   .verdict--not_proven {
     background: var(--refused-wash);
-    color: #b42318;
+    color: var(--refused);
   }
 
   .verdict--not_proven svg {
@@ -391,20 +411,6 @@
     stroke-width: 2;
   }
 
-  .on-navy .verdict--proven {
-    background: rgba(28, 111, 208, 0.18);
-    color: #9dc6f5;
-  }
-
-  .on-navy .verdict--not_proven {
-    background: rgba(217, 45, 32, 0.16);
-    color: #fda29b;
-  }
-
-  .on-navy .verdict--awaiting {
-    background: rgba(255, 255, 255, 0.08);
-    color: var(--on-navy-3);
-  }
 
   /*
    * The settlement panel. Left-hand rule is deliberate and is the one place it
@@ -414,19 +420,19 @@
   .settlement {
     border: 1px solid var(--line);
     border-radius: 14px;
-    background: var(--page);
+    background: var(--surface);
     box-shadow: var(--shadow-sm);
     padding: 1.25rem 1.375rem;
   }
 
   .settlement--refused {
-    border-color: #fecdca;
-    background: var(--refused-wash);
+    border-color: var(--refused-line);
+    background: linear-gradient(180deg, var(--refused-wash), transparent 60%), var(--surface);
   }
 
   .settlement--proven {
-    border-color: #b2ddff;
-    background: var(--proven-wash);
+    border-color: var(--proven-line);
+    background: linear-gradient(180deg, var(--proven-wash), transparent 60%), var(--surface);
   }
 
   /* A row of key/value facts, the way Polaris sets a summary. */

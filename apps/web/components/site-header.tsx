@@ -30,7 +30,7 @@ export function SiteHeader() {
   const active = (href: string) => path.startsWith(href);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-[var(--line)] bg-white/90 backdrop-blur-sm">
+    <header className="sticky top-0 z-50 border-b border-[var(--line)] bg-[var(--deep)]/85 backdrop-blur-md">
       <div className="shell flex h-16 items-center gap-6">
         <Link href="/" className="shrink-0">
           <Logo />

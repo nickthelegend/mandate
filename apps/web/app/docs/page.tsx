@@ -60,7 +60,7 @@ export default function DocsPage() {
           read the transaction the facilitator named and confirm the money reached{" "}
           <code className="font-mono text-[var(--ink)]">payTo</code> before you serve anything.
         </p>
-        <pre className="overflow-x-auto rounded-[2px] border border-[var(--line)] bg-[var(--surface)] p-4 font-mono text-xs leading-relaxed text-[var(--ink)]">
+        <pre className="overflow-x-auto rounded-[10px] border border-[var(--line)] bg-[var(--surface)] p-4 font-mono text-xs leading-relaxed text-[var(--ink)]">
 {`import { verifySettlement } from "outcome-sdk/x402";
 
 const verdict = await verifySettlement(outcome, {
@@ -82,7 +82,7 @@ return serve(resource);`}
       </Section>
 
       <Section title="The six tools">
-        <div className="divide-y divide-border/50 overflow-hidden rounded-[2px] border border-[var(--line)]">
+        <div className="divide-y divide-border/50 overflow-hidden rounded-[10px] border border-[var(--line)]">
           {TOOLS.map(([name, desc]) => (
             <div key={name} className="p-4">
               <code className="font-mono text-sm text-[var(--ink)]">{name}</code>
@@ -93,7 +93,7 @@ return serve(resource);`}
       </Section>
 
       <Section title="Configuration">
-        <div className="overflow-x-auto rounded-[2px] border border-[var(--line)]">
+        <div className="overflow-x-auto rounded-[10px] border border-[var(--line)]">
           <table className="w-full min-w-[560px] text-sm">
             <thead>
               <tr className="border-b border-[var(--line)] bg-[var(--surface)] text-left font-mono text-xs uppercase tracking-wide">
@@ -132,7 +132,7 @@ return serve(resource);`}
       </Section>
 
       <Section title="The deployment">
-        <div className="overflow-hidden rounded-[2px] border border-[var(--line)] font-mono text-xs">
+        <div className="overflow-hidden rounded-[10px] border border-[var(--line)] font-mono text-xs">
           {[
             ["chain", `${DEPLOYMENT.chainName} (${DEPLOYMENT.chainId})`, null],
             ["escrow", DEPLOYMENT.escrow, address(DEPLOYMENT.escrow)],

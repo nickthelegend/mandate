@@ -11,7 +11,7 @@
  * against. "Awaiting" is a separate thing entirely: nobody has ruled yet.
  *
  * Not-proven is not an error colour. A refund is the system working. What
- * carries weight is the *absence* of the assay mark, not a red alarm.
+ * carries weight is the *absence* of a matching transfer, not a red alarm.
  *
  * And the shape carries the state, never the colour alone: a filled disc, a
  * struck ring and an open ring stay distinguishable in greyscale.

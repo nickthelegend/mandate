@@ -75,7 +75,7 @@ export default function X402Page() {
           return (
             <div
               key={r.hash}
-              className={`rounded-[2px] border p-5 ${
+              className={`rounded-[10px] border p-5 ${
                 good
                   ? "border-[var(--line)] bg-[var(--surface)]"
                   : "border-[var(--refused)] bg-transparent"
@@ -109,7 +109,7 @@ export default function X402Page() {
       </div>
 
       <h2 className="mt-14 text-xl font-semibold tracking-tight">The step that was added</h2>
-      <pre className="mt-4 overflow-x-auto rounded-[2px] border border-[var(--line)] bg-[var(--surface)] p-5 font-mono text-xs leading-relaxed text-[var(--ink)]">
+      <pre className="mt-4 overflow-x-auto rounded-[10px] border border-[var(--line)] bg-[var(--surface)] p-5 font-mono text-xs leading-relaxed text-[var(--ink)]">
 {`import { verifySettlement } from "outcome-sdk/x402";
 
 // after the facilitator returns, before the resource is served
@@ -128,9 +128,9 @@ return serve(resource);`}
         asymmetry is the whole of it.
       </p>
 
-      <div className="mt-10 rounded-[2px] border border-[var(--line)] bg-[var(--surface)] p-5">
+      <div className="mt-10 rounded-[10px] border border-[var(--line)] bg-[var(--surface)] p-5">
         <h3 className="font-mono text-sm font-medium">Run it yourself</h3>
-        <pre className="mt-3 overflow-x-auto rounded-[2px] bg-[var(--page)] p-4 font-mono text-xs leading-relaxed text-[var(--ink)]">
+        <pre className="mt-3 overflow-x-auto rounded-[10px] bg-[var(--panel)] p-4 font-mono text-xs leading-relaxed text-[var(--ink)]">
 {`git clone https://github.com/nickthelegend/outcome
 cd outcome && npm install
 

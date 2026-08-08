@@ -24,15 +24,21 @@ Any future change that starts by inventing a world has already gone wrong.
 
 ## Colors
 
-Strategy: **Polaris's own.** A white product surface, navy for full-bleed
-sections, brand blue for anything interactive, and the lime spent once per view
-on the single action that matters.
+Strategy: **Polaris's own, dark-first.** Polaris runs a dark shell with light
+dashboard panels inside it. Outcome is all shell — there is no dashboard here,
+only argument and evidence — so the light panels went and the navy carries the
+whole product. Brand blue for anything interactive, and the lime spent once per
+view on the single action that matters.
+
+Three levels of navy give sections rhythm without a white slab between them:
+`--deep #070a11` for hero and closing bands, `--page #0d121c` for the run of the
+page, `--surface #121926` for cards and raised bands.
 
 ### Primary
 
 `--brand: #1c6fd0` — Polaris blue. Links, active nav, primary buttons, and the
-*proven* verdict. `--brand-ink: #0a4f9e` for hover and small text;
-`--brand-wash: #eef5fd` for tinted backgrounds.
+*proven* verdict. `--brand-ink: #4b95e8` for hover; `--brand-lit: #7db4f2` for links and
+small text; `--brand-wash` is a translucent blue for tinted backgrounds.
 
 ### Action
 
@@ -42,18 +48,21 @@ success colour, not a status, and never a border.
 
 ### Surfaces
 
-- `--navy: #0a0e16` / `--navy-raised: #0c111b` / `--navy-line: #1b2231`
-- `--page: #ffffff`, `--surface: #f7f8fa`, `--panel: #fbfcff`
+- `--deep: #070a11` · `--page: #0d121c` · `--surface: #121926` · `--panel: #161e2c`
+- Lines: `--line: #202939`, `--line-2: #2a3446`
 
 ### Text ramp
 
-`--ink: #101828` · `--ink-2: #475467` · `--ink-3: #667085` · `--ink-4: #98a2b3`,
-and on navy: `#ffffff` · `--on-navy-2: #cbd0d8` · `--on-navy-3: #8a93a3`.
+`--ink: #ffffff` · `--ink-2: #ccd3de` · `--ink-3: #98a2b3` · `--ink-4: #6b7482`.
+
+**Blue at full saturation is unreadable as text on navy.** `--brand #1c6fd0` is
+for fills only; `--brand-lit #7db4f2` carries links and small type.
 
 ### Verdicts
 
-`--proven: #1c6fd0` on `--proven-wash: #eef5fd`, and `--refused: #d92d20` on
-`--refused-wash: #fef3f2`.
+`--proven: #7db4f2` on a translucent blue wash, and `--refused: #fda29b` on a
+translucent red one. Both washes are `rgba` so a settlement card tints the
+surface beneath it rather than punching a flat block into the page.
 
 **Proven deliberately borrows the brand blue rather than inventing a green.** A
 proof is not a success message. Green would make "proven" read as congratulation
@@ -92,19 +101,20 @@ reader cannot trust.
 `.shell` — `max-width: 76rem`, 1.25rem gutter rising to 2rem at 768px. Every
 route uses it, so every surface shares one left edge.
 
-Full-bleed navy sections (`.on-navy`) alternate with white and `--surface`
-bands. `.dotfield` is Polaris's dotted paper texture for a light section that
-needs to sit apart without a border.
+`.on-navy` drops a section to `--deep` — it no longer flips colour, it drops a
+step, which is what still makes a hero or a closing band read as separate.
+`.dotfield` is Polaris's dotted texture, dimmed for the dark ground, for a
+section that needs to sit apart without a border.
 
 Radii: 10px fields, 14px cards, `999px` buttons.
 
 ## Elevation & Depth
 
-Polaris shadows are almost invisible and that is the point — they separate, they
-do not lift.
+On a dark ground a cast shadow does nothing — separation comes from a lighter
+top edge instead.
 
-- `--shadow-sm: 0 1px 6px rgba(16, 24, 40, 0.035)` — cards, buttons, fields.
-- `--shadow-md`, `--shadow-lg` for the rare raised panel.
+- `--shadow-sm: inset 0 1px 0 rgba(255,255,255,0.04)` — cards, buttons, fields.
+- `--shadow-md`, `--shadow-lg` are real cast shadows, for the rare floating panel.
 
 Buttons and links rise `translateY(-1px)` on hover. That 1px is Polaris's whole
 interaction signature; do not replace it with a scale or a glow.
@@ -114,17 +124,18 @@ interaction signature; do not replace it with a scale or a glow.
 ### Buttons (`.btn`)
 
 Pills. `--brand` for ordinary primary actions, `--lime` for the one action per
-view, `--outline` on white, `--ghost-navy` on dark.
+view, `--outline` for a raised secondary, `--ghost-navy` for a translucent one.
 
 ### Cards (`.card-p`)
 
-White, 1px `--line`, 14px radius, `--shadow-sm`. `--flat` drops to `--surface`
-with no shadow; `--navy` is the dark-section variant.
+`--surface`, 1px `--line`, 14px radius, `--shadow-sm`. `--flat` drops to
+`--panel` with no edge highlight.
 
 ### Fields (`.field`)
 
-White, 1px `--line`, 10px radius. Focus is a `--brand` border plus a 4px
-`--brand-wash` ring. Invalid swaps both to red.
+`--surface`, 1px `--line-2`, 10px radius. Focus lifts the background to
+`--panel`, borders in `--brand-lit`, and adds a 4px `--brand-wash` ring. Invalid
+swaps both to red.
 
 ### Verdict (`.verdict`)
 
@@ -158,6 +169,8 @@ outside it. Drawn as inline SVG (`components/logo.tsx`), also at
 ### Don't:
 
 - Invent a visual world for Outcome. It is a Polaris product.
+- Introduce a white or near-white surface. The product is dark-first; a light
+  slab between navy sections is the thing this revision removed.
 - Use green for proven, or lime for anything that is not an action.
 - Add a fifth item to the header nav. Four is the demo path; the rest is footer.
 - Gradients as decoration, glassmorphism, glowing edges, pulsing dots.

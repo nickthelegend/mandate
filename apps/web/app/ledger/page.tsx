@@ -64,7 +64,7 @@ export default function LedgerPage() {
 
   return (
     <>
-      <PageHead rubric="The decision record" title="Every verdict, and why.">
+      <PageHead rubric="Decision ledger" title="Every verdict, and why.">
         A service that decides whether an agent gets paid owes it an account of why. This is that
         account — persisted, append-only, and readable without a credential.
       </PageHead>

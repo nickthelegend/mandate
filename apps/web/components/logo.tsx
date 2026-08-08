@@ -56,13 +56,13 @@ export function OutcomeMark({
 }
 
 /** Mark plus wordmark, set the way Polaris sets its own. */
-export function Logo({ onNavy = false }: { onNavy?: boolean }) {
+export function Logo() {
   return (
     <span className="flex items-center gap-2">
       <OutcomeMark />
       <span
         className="text-[19px] font-bold tracking-[-0.03em]"
-        style={{ color: onNavy ? "#fff" : "var(--ink)" }}
+        style={{ color: "var(--ink)" }}
       >
         Outcome
       </span>

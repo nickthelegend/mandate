@@ -33,15 +33,15 @@ export function Settlement({
       </div>
 
       <div className="mt-4 grid grid-cols-2 gap-3">
-        <div className="rounded-[10px] bg-white/70 px-3 py-2.5">
+        <div className="rounded-[10px] border border-white/[0.06] bg-white/[0.04] px-3 py-2.5">
           <p className="text-[11px] font-medium text-[var(--ink-3)]">Facilitator claimed</p>
           <p className="figure mt-0.5 text-sm font-semibold text-[var(--ink)]">{claim}</p>
         </div>
-        <div className="rounded-[10px] bg-white/70 px-3 py-2.5">
+        <div className="rounded-[10px] border border-white/[0.06] bg-white/[0.04] px-3 py-2.5">
           <p className="text-[11px] font-medium text-[var(--ink-3)]">Chain actually moved</p>
           <p
             className={`figure mt-0.5 text-sm font-semibold ${
-              proven ? "text-[var(--brand-ink)]" : "text-[#b42318]"
+              proven ? "text-[var(--proven)]" : "text-[var(--refused)]"
             }`}
           >
             {observed}
@@ -51,13 +51,13 @@ export function Settlement({
 
       <p className="mt-3.5 text-[13px] leading-relaxed text-[var(--ink-2)]">{reason}</p>
 
-      <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-black/[0.06] pt-3">
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-white/[0.07] pt-3">
         <span className="figure text-xs font-semibold text-[var(--ink)]">{outcome}</span>
         <a
           href={href}
           target="_blank"
           rel="noopener"
-          className="figure text-xs text-[var(--ink-3)] underline-offset-4 hover:text-[var(--brand)] hover:underline"
+          className="figure text-xs text-[var(--ink-3)] underline-offset-4 hover:text-[var(--brand-lit)] hover:underline"
         >
           open on Etherscan →
         </a>

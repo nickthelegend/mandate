@@ -138,7 +138,7 @@ export default function ClaimPage() {
       <div className="max-w-3xl">
 
       {!hasWallet && (
-        <p className="rounded-[2px] border border-[var(--line)] bg-[var(--surface)] p-4 text-sm text-[var(--ink-3)]">
+        <p className="rounded-[10px] border border-[var(--line)] bg-[var(--surface)] p-4 text-sm text-[var(--ink-3)]">
           No browser wallet detected. This page needs one — everything else here works without.
         </p>
       )}
@@ -149,7 +149,7 @@ export default function ClaimPage() {
         </Button>
       ) : (
         <div className="mt-8 space-y-5">
-          <div className="rounded-[2px] border border-[var(--line)] bg-[var(--surface)] p-4 font-mono text-xs">
+          <div className="rounded-[10px] border border-[var(--line)] bg-[var(--surface)] p-4 font-mono text-xs">
             <span className="text-[var(--ink-3)]">connected </span>
             {account}
           </div>
@@ -182,13 +182,13 @@ export default function ClaimPage() {
       )}
 
       {error && (
-        <p className="mt-6 rounded-[2px] border border-[var(--refused)] bg-transparent p-4 font-mono text-sm text-[var(--refused)]">
+        <p className="mt-6 rounded-[10px] border border-[var(--refused)] bg-transparent p-4 font-mono text-sm text-[var(--refused)]">
           {error}
         </p>
       )}
 
       {claimTx && (
-        <div className="mt-6 rounded-[2px] border border-[var(--line)] bg-[var(--surface)] p-5">
+        <div className="mt-6 rounded-[10px] border border-[var(--line)] bg-[var(--surface)] p-5">
           <p className="font-mono text-sm font-medium text-[var(--ink)]">
             Escrowed. The payee has not been paid.
           </p>
@@ -208,7 +208,7 @@ export default function ClaimPage() {
         </div>
       )}
 
-      <div className="mt-14 rounded-[2px] border border-[var(--line)] bg-[var(--surface)] p-5">
+      <div className="mt-14 rounded-[10px] border border-[var(--line)] bg-[var(--surface)] p-5">
         <h2 className="font-mono text-sm font-medium">What you cannot do here</h2>
         <p className="mt-2 text-pretty text-sm leading-relaxed text-[var(--ink-3)]">
           Release the funds. Settlement needs a KeeperHub credential, and the escrow only accepts a

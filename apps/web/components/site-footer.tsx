@@ -22,7 +22,7 @@ const MORE = [
 
 export function SiteFooter() {
   return (
-    <footer className="mt-20 border-t border-[var(--line)] bg-[var(--surface)]">
+    <footer className="mt-20 border-t border-[var(--line)] bg-[var(--deep)]">
       <div className="shell py-14">
         <div className="grid gap-10 md:grid-cols-[1.2fr_1fr]">
           <div>
@@ -40,7 +40,7 @@ export function SiteFooter() {
               href={source(DEPLOYMENT.escrow)}
               target="_blank"
               rel="noopener"
-              className="figure mt-4 inline-block text-xs text-[var(--ink-3)] underline-offset-4 hover:text-[var(--brand)] hover:underline"
+              className="figure mt-4 inline-block text-xs text-[var(--ink-3)] underline-offset-4 hover:text-[var(--brand-lit)] hover:underline"
             >
               OutcomeEscrow · {DEPLOYMENT.escrow.slice(0, 18)}… · verified
             </a>
@@ -52,7 +52,7 @@ export function SiteFooter() {
               {MORE.map((m) => (
                 <li key={m.href}>
                   <Link href={m.href} className="group block">
-                    <span className="text-sm font-medium text-[var(--ink-2)] group-hover:text-[var(--brand)]">
+                    <span className="text-sm font-medium text-[var(--ink-2)] group-hover:text-[var(--brand-lit)]">
                       {m.label}
                     </span>
                     <span className="block text-xs text-[var(--ink-4)]">{m.note}</span>

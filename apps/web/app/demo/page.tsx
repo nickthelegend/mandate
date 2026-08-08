@@ -106,7 +106,7 @@ export default function DemoPage() {
       </p>
 
       {error && (
-        <p className="mt-6 rounded-[2px] border border-[var(--line)] bg-[var(--surface)] p-4 font-mono text-sm text-[var(--ink-3)]">
+        <p className="mt-6 rounded-[10px] border border-[var(--line)] bg-[var(--surface)] p-4 font-mono text-sm text-[var(--ink-3)]">
           {error}
         </p>
       )}
@@ -115,7 +115,7 @@ export default function DemoPage() {
         <div className="mt-8">
           <div
             className={cn(
-              "rounded-[2px] border p-5",
+              "rounded-[10px] border p-5",
               result.served
                 ? "border-[var(--line)] bg-[var(--surface)]"
                 : "border-[var(--refused)] bg-transparent"
@@ -160,7 +160,7 @@ export default function DemoPage() {
               )}
               {/*
                * Don't take the verdict above on trust either. Every term the 402
-               * demanded travels with the link, so the assay page reads this
+               * demanded travels with the link, so the verify page reads this
                * exact settlement against this exact demand -- and reaches the
                * same answer in the visitor's own browser.
                */}
@@ -175,7 +175,7 @@ export default function DemoPage() {
             </div>
           </div>
 
-          <ol className="mt-6 space-y-px overflow-hidden rounded-[2px] border border-[var(--line)]">
+          <ol className="mt-6 space-y-px overflow-hidden rounded-[10px] border border-[var(--line)]">
             {result.steps.map((s, i) => (
               <li key={`${s.label}-${i}`} className="bg-background p-4">
                 <div className="flex items-baseline gap-3">
@@ -202,7 +202,7 @@ export default function DemoPage() {
           </ol>
 
           {result.article && (
-            <div className="mt-6 rounded-[2px] border border-[var(--line)] bg-[var(--surface)] p-5">
+            <div className="mt-6 rounded-[10px] border border-[var(--line)] bg-[var(--surface)] p-5">
               <h2 className="font-medium tracking-tight">{result.article.title}</h2>
               <p className="mt-2 text-pretty text-sm leading-relaxed text-[var(--ink-3)]">
                 {result.article.body}
@@ -212,7 +212,7 @@ export default function DemoPage() {
         </div>
       )}
 
-      <div className="mt-14 rounded-[2px] border border-[var(--line)] bg-[var(--surface)] p-5">
+      <div className="mt-14 rounded-[10px] border border-[var(--line)] bg-[var(--surface)] p-5">
         <h2 className="font-mono text-sm font-medium">What the lying facilitator does</h2>
         <p className="mt-2 text-pretty text-sm leading-relaxed text-[var(--ink-3)]">
           It submits an <code className="font-mono text-[var(--ink)]">approve</code> instead of the

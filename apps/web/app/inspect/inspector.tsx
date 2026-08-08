@@ -126,7 +126,7 @@ export function Inspector() {
       </p>
 
       {error && (
-        <p className="mt-6 rounded-[2px] border border-[var(--line)] bg-[var(--surface)] p-4 font-mono text-sm text-[var(--ink-3)]">
+        <p className="mt-6 rounded-[10px] border border-[var(--line)] bg-[var(--surface)] p-4 font-mono text-sm text-[var(--ink-3)]">
           {error}
         </p>
       )}
@@ -135,7 +135,7 @@ export function Inspector() {
         <div className="mt-8 space-y-4">
           <div
             className={cn(
-              "rounded-[2px] border p-5",
+              "rounded-[10px] border p-5",
               data.status === "completed"
                 ? "border-[var(--line)] bg-[var(--surface)]"
                 : "border-[var(--refused)] bg-transparent"
@@ -145,7 +145,7 @@ export function Inspector() {
               {data.status === "completed" && <CheckCircle2 className="size-4 text-[var(--ink)]" />}
               <span className="font-mono text-sm font-medium">{data.status}</span>
               {data.sponsored && (
-                <span className="inline-flex items-center gap-1.5 rounded-[2px] border border-[var(--line)] bg-[var(--surface)] px-2.5 py-0.5 font-mono text-xs text-[var(--ink)]">
+                <span className="inline-flex items-center gap-1.5 rounded-[10px] border border-[var(--line)] bg-[var(--surface)] px-2.5 py-0.5 font-mono text-xs text-[var(--ink)]">
                   <Fuel className="size-3" /> gas sponsored
                 </span>
               )}
@@ -172,7 +172,7 @@ export function Inspector() {
             </dl>
           </div>
 
-          <div className="rounded-[2px] border border-[var(--line)] bg-[var(--surface)] p-5">
+          <div className="rounded-[10px] border border-[var(--line)] bg-[var(--surface)] p-5">
             <h2 className="font-mono text-sm font-medium">What this record does not tell you</h2>
             <p className="mt-2 text-pretty text-sm leading-relaxed text-[var(--ink-3)]">
               That <code className="font-mono text-[var(--ink)]">status: completed</code> means

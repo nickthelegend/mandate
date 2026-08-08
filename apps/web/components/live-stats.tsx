@@ -8,7 +8,7 @@ import { amount, DEPLOYMENT } from "@/lib/outcome";
 /**
  * The standing totals, read live.
  *
- * Written as one printed line of the run rather than four cards of
+ * Written as one line of running totals rather than four cards of
  * big-number-over-small-label: these are the running totals struck at the foot of
  * a run, and a printout does not box its own subtotals.
  *
@@ -57,9 +57,9 @@ export function LiveStats() {
   return (
     <Link href="/explorer" className="group block">
       <div className="flex items-baseline justify-between border-b border-[var(--line)] pb-2">
-        <span className="eyebrow">The run so far</span>
+        <span className="eyebrow">On chain so far</span>
         <span className="eyebrow transition-colors group-hover:text-[var(--ink)]">
-          open the full run →
+          open the explorer →
         </span>
       </div>
 

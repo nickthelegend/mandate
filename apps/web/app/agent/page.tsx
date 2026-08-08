@@ -93,14 +93,14 @@ export default function AgentPage() {
       </p>
 
       {error && (
-        <p className="mt-6 rounded-[2px] border border-[var(--line)] bg-[var(--surface)] p-4 font-mono text-sm text-[var(--ink-3)]">
+        <p className="mt-6 rounded-[10px] border border-[var(--line)] bg-[var(--surface)] p-4 font-mono text-sm text-[var(--ink-3)]">
           {error}
         </p>
       )}
 
       {cycle && (
         <div className="mt-8 space-y-4">
-          <div className="rounded-[2px] border border-[var(--line)] bg-[var(--surface)] p-5">
+          <div className="rounded-[10px] border border-[var(--line)] bg-[var(--surface)] p-5">
             <div className="font-mono text-xs uppercase tracking-wide text-[var(--ink-3)]">
               the payer posts and leaves
             </div>
@@ -133,7 +133,7 @@ export default function AgentPage() {
           )}
 
           {cycle.reports.length === 0 && (
-            <p className="rounded-[2px] border border-[var(--line)] p-5 font-mono text-sm text-[var(--ink-3)]">
+            <p className="rounded-[10px] border border-[var(--line)] p-5 font-mono text-sm text-[var(--ink-3)]">
               The agent found no open work this cycle.
             </p>
           )}
@@ -144,7 +144,7 @@ export default function AgentPage() {
               <div
                 key={r.intentId}
                 className={cn(
-                  "rounded-[2px] border p-5",
+                  "rounded-[10px] border p-5",
                   released
                     ? "border-[var(--line)] bg-[var(--surface)]"
                     : "border-[var(--refused)] bg-transparent"
@@ -180,7 +180,7 @@ export default function AgentPage() {
           })}
 
           {paid && (
-            <div className="rounded-[2px] border border-[var(--line)] bg-[var(--surface)] p-5">
+            <div className="rounded-[10px] border border-[var(--line)] bg-[var(--surface)] p-5">
               <h2 className="font-mono text-sm font-medium">Who signed all that</h2>
               <p className="mt-2 text-pretty text-sm leading-relaxed text-[var(--ink-3)]">
                 Not the agent. Open the work transaction and the sender is KeeperHub&rsquo;s relayer;

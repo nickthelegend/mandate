@@ -18,7 +18,7 @@ import { PageHead } from "@/components/page-head";
 
 function Stat({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
-    <div className="rounded-[2px] border border-[var(--line)] bg-[var(--surface)] p-4">
+    <div className="rounded-[10px] border border-[var(--line)] bg-[var(--surface)] p-4">
       <div className="font-mono text-xs uppercase tracking-wide text-[var(--ink-3)]">{label}</div>
       <div className="mt-1.5 font-mono text-2xl font-semibold tabular-nums">{value}</div>
       {hint && <div className="mt-1 text-xs text-[var(--ink-3)]">{hint}</div>}
@@ -36,7 +36,7 @@ export default function ExplorerPage() {
 
   return (
     <>
-      <PageHead rubric="Read from the chain" title="Every intent, read from the chain.">
+      <PageHead rubric="Intent explorer" title="Every intent, read from the chain.">
         Assembled from {DEPLOYMENT.chainName} events in your browser. Nothing here is seeded, cached,
         or served from a database — each row is an event this contract emitted.
       </PageHead>
@@ -61,13 +61,13 @@ export default function ExplorerPage() {
       )}
 
       {error && (
-        <p className="mt-10 rounded-[2px] border border-[var(--line)] bg-[var(--surface)] p-4 font-mono text-sm text-[var(--ink-3)]">
+        <p className="mt-10 rounded-[10px] border border-[var(--line)] bg-[var(--surface)] p-4 font-mono text-sm text-[var(--ink-3)]">
           {error}
         </p>
       )}
 
       {rows && rows.length > 0 && (
-        <div className="mt-8 overflow-x-auto rounded-[2px] border border-[var(--line)]">
+        <div className="mt-8 overflow-x-auto rounded-[10px] border border-[var(--line)]">
           <table className="w-full min-w-[820px] text-sm">
             <thead>
               <tr className="border-b border-[var(--line)] bg-[var(--surface)] text-left font-mono text-xs uppercase tracking-wide text-[var(--ink-3)]">
@@ -90,7 +90,7 @@ export default function ExplorerPage() {
                   </td>
                   <td className="px-4 py-3">
                     {r.state === "open" ? (
-                      <span className="inline-flex items-center gap-1.5 rounded-[2px] border border-[var(--line)] px-2.5 py-0.5 font-mono text-xs text-[var(--ink-3)]">
+                      <span className="inline-flex items-center gap-1.5 rounded-[10px] border border-[var(--line)] px-2.5 py-0.5 font-mono text-xs text-[var(--ink-3)]">
                         awaiting verdict
                       </span>
                     ) : (
