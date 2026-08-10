@@ -78,3 +78,24 @@ export {
   type AuthoriseResult,
   type PolicyDecisionLike,
 } from "./authority.ts";
+
+/* Writing a spend policy on chain, through KeeperHub rather than a local key. */
+export {
+  anchorPolicy,
+  pauseAnchoredPolicy,
+  updateAnchoredPolicy,
+  POLICY_REGISTRY_ABI,
+  type AnchorConfig,
+  type AnchorResult,
+} from "./policy-anchor.ts";
+
+/* Reading the anchor back, so it governs the decision instead of decorating it. */
+export {
+  assertAnchored,
+  readAnchoredPolicy,
+  statusFromAnchor,
+  POLICY_STATUS,
+  PolicyAnchorMismatch,
+  PolicyNotUsable,
+  type AnchoredPolicyRecord,
+} from "./policy-loader.ts";

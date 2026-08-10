@@ -18,10 +18,11 @@ import type { Address, Hex } from "./viem-shim.ts";
  * now real (plus the `policy.active` lookup), so this slice produces the full BLOCKED_* family
  * for them AND the first ESCALATED_* outcomes (`ESCALATED_THRESHOLD`, `ESCALATED_PER_CALL_CAP`).
  *
- * Still stubbed (their rules are no-ops, see `rules.ts`), so these codes are NOT produced here:
- * BLOCKED_REPLAY (replay/CBC), BLOCKED_VENDOR_RISK / ESCALATED_VENDOR_RISK (vendor LCB), and
- * ESCALATED_PROOF_TIER (proof tier). Also not in scope for this preflight engine:
- * REJECTED_UNAUTHENTICATED, REJECTED_STALE_INTENT, ESCALATED_SIGNER_DOWN.
+ * All fifteen rules are live, so the full BLOCKED_* and ESCALATED_* families are reachable,
+ * including BLOCKED_REPLAY (replay/CBC), BLOCKED_VENDOR_RISK / ESCALATED_VENDOR_RISK (vendor
+ * LCB) and ESCALATED_PROOF_TIER. Out of scope for a preflight engine, and produced by the
+ * caller rather than here: REJECTED_UNAUTHENTICATED, REJECTED_STALE_INTENT,
+ * ESCALATED_SIGNER_DOWN.
  *
  * Fail-closed (I2): every code here except APPROVED withholds the spend. An ESCALATED_* outcome
  * withholds too — it routes to the approval pipeline (§7.2), it is NOT an approval.
@@ -69,10 +70,9 @@ export type PolicyStatus = "ACTIVE" | "PAUSED" | "REVOKED" | "EXPIRED";
 export type OnPerCallCapExceeded = "ESCALATE" | "BLOCK";
 
 /**
- * The slice of §8 `policies.rules` JSON this partial engine reads. Nesting and field names mirror
- * §8 exactly for every field the ten implemented rules need. The three still-stubbed rules
- * (replay/CBC, vendor LCB, proof tier) read nothing here, so §8's `vendors`, `proof`, and
- * challenge-envelope fields are intentionally absent — they arrive with those rules.
+ * The slice of §8 `policies.rules` JSON this engine reads. Nesting and field names mirror §8
+ * exactly. All fifteen rules are live; §8's `vendors`, `proof` and challenge-envelope fields are
+ * read by the vendor-LCB, proof-tier and replay rules respectively.
  *
  * TWO ADDITIONS not literally in §8's JSON (flagged per the task's "say so explicitly" rule):
  *   • `recipients: {allow, deny}` — §8's JSON has category/vendor/agent allow-deny lists but NO
