@@ -19,7 +19,7 @@
  * the spend is still gone.
  */
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Loader2, RotateCw } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -196,6 +196,16 @@ export function AuthorityConsole() {
   /** The code is returned once, at creation, so the page has to keep it. */
   const [codes, setCodes] = useState<Record<string, string>>({});
   const [resolving, setResolving] = useState<string | null>(null);
+  /*
+   * An in-flight guard that does not wait for a render.
+   *
+   * `disabled={busy !== null}` is set from state, and state lands on the next
+   * render — so two clicks inside the same frame both get through, the second
+   * request hits the server's throttle, and the user is shown "one decision at
+   * a time" for doing nothing worse than double-clicking. A ref flips
+   * synchronously, so the second click is dropped before a request exists.
+   */
+  const inFlight = useRef(false);
   /** Seconds the current request has been running, so a wait never looks hung. */
   const [elapsed, setElapsed] = useState(0);
 
@@ -235,6 +245,8 @@ export function AuthorityConsole() {
   }, [refresh]);
 
   async function spend(i: number) {
+    if (inFlight.current) return;
+    inFlight.current = true;
     setBusy(i);
     setOutcome(null);
     setError(null);
@@ -269,11 +281,14 @@ export function AuthorityConsole() {
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
+      inFlight.current = false;
       setBusy(null);
     }
   }
 
   async function resolve(id: string, action: "APPROVE" | "DENY") {
+    if (inFlight.current) return;
+    inFlight.current = true;
     setResolving(id);
     setError(null);
     try {
@@ -295,6 +310,7 @@ export function AuthorityConsole() {
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
+      inFlight.current = false;
       setResolving(null);
     }
   }

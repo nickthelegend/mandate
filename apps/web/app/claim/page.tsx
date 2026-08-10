@@ -18,7 +18,7 @@
  * the key to everyone's escrow.
  */
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { BrowserProvider, Contract, type Eip1193Provider } from "ethers";
 import { intentId as deriveIntentId } from "outcome-sdk";
 import { ArrowRight, Loader2, Wallet2 } from "lucide-react";
@@ -83,7 +83,16 @@ export default function ClaimPage() {
     }
   }, []);
 
+  /*
+   * Synchronous in-flight guard. `disabled` comes from state and state lands on
+   * the next render, so two clicks in one frame both fire a request -- and on
+   * the paid routes the second one is a real duplicate attempt, not just noise.
+   */
+  const inFlight = useRef(false);
+
   async function postJob() {
+    if (inFlight.current) return;
+    inFlight.current = true;
     setError(null);
     setClaimTx(null);
     try {
@@ -121,6 +130,11 @@ export default function ClaimPage() {
       const err = e as { shortMessage?: string; message?: string };
       setError(err.shortMessage ?? err.message ?? String(e));
       setStage("idle");
+    } finally {
+      // Released on every path. Without this the guard latches on the first
+      // run and the button is dead for the rest of the session -- including
+      // after the user fixes whatever the error told them to fix.
+      inFlight.current = false;
     }
   }
 

@@ -12,7 +12,7 @@
  * the agent's own address appears only as the payee.
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Bot, CheckCircle2, Loader2, XCircle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -59,7 +59,16 @@ export default function AgentPage() {
   const [cycle, setCycle] = useState<Cycle | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  /*
+   * Synchronous in-flight guard. `disabled` comes from state and state lands on
+   * the next render, so two clicks in one frame both fire a request -- and on
+   * the paid routes the second one is a real duplicate attempt, not just noise.
+   */
+  const inFlight = useRef(false);
+
   async function run() {
+    if (inFlight.current) return;
+    inFlight.current = true;
     setRunning(true);
     setCycle(null);
     setError(null);
@@ -78,6 +87,7 @@ export default function AgentPage() {
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
+      inFlight.current = false;
       setRunning(false);
     }
   }

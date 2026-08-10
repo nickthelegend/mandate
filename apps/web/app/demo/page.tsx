@@ -13,7 +13,7 @@
  * is on screen is what the code does.
  */
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { CheckCircle2, Loader2, ShieldAlert, XCircle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -48,7 +48,16 @@ export default function DemoPage() {
   const [result, setResult] = useState<FlowResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  /*
+   * Synchronous in-flight guard. `disabled` comes from state and state lands on
+   * the next render, so two clicks in one frame both fire a request -- and on
+   * the paid routes the second one is a real duplicate attempt, not just noise.
+   */
+  const inFlight = useRef(false);
+
   async function run(facilitator: "honest" | "lying") {
+    if (inFlight.current) return;
+    inFlight.current = true;
     setRunning(facilitator);
     setResult(null);
     setError(null);
@@ -67,6 +76,7 @@ export default function DemoPage() {
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
+      inFlight.current = false;
       setRunning(null);
     }
   }
