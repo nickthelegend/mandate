@@ -197,15 +197,22 @@ export function AuthorityConsole() {
   const [codes, setCodes] = useState<Record<string, string>>({});
   const [resolving, setResolving] = useState<string | null>(null);
   /*
-   * An in-flight guard that does not wait for a render.
+   * In-flight guards that do not wait for a render.
    *
-   * `disabled={busy !== null}` is set from state, and state lands on the next
-   * render — so two clicks inside the same frame both get through, the second
-   * request hits the server's throttle, and the user is shown "one decision at
-   * a time" for doing nothing worse than double-clicking. A ref flips
-   * synchronously, so the second click is dropped before a request exists.
+   * `disabled` is set from state and state lands on the next render, so two
+   * clicks inside the same frame both get through: the second hits the
+   * server's throttle and the user is told "one decision at a time" for doing
+   * nothing worse than double-clicking. A ref flips synchronously.
+   *
+   * ONE PER ACTION, and the distinction is load-bearing. A single shared guard
+   * meant a spend held the lock until its reconciling refetch finished -- and
+   * the optimistic update renders the held-spend row BEFORE that, so anyone
+   * who pressed Release the moment it appeared had the click silently dropped:
+   * no request, no spinner, no error, nothing. Spending and answering an
+   * escalation are different actions and must not block each other.
    */
-  const inFlight = useRef(false);
+  const spending = useRef(false);
+  const answering = useRef(false);
   /** Seconds the current request has been running, so a wait never looks hung. */
   const [elapsed, setElapsed] = useState(0);
 
@@ -245,8 +252,8 @@ export function AuthorityConsole() {
   }, [refresh]);
 
   async function spend(i: number) {
-    if (inFlight.current) return;
-    inFlight.current = true;
+    if (spending.current) return;
+    spending.current = true;
     setBusy(i);
     setOutcome(null);
     setError(null);
@@ -312,18 +319,21 @@ export function AuthorityConsole() {
           ]);
         }
       }
+      // Released before the refetch: reconciling is bookkeeping, and holding
+      // the guard across it is what swallowed the next click.
+      spending.current = false;
       await refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
-      inFlight.current = false;
+      spending.current = false;
       setBusy(null);
     }
   }
 
   async function resolve(id: string, action: "APPROVE" | "DENY") {
-    if (inFlight.current) return;
-    inFlight.current = true;
+    if (answering.current) return;
+    answering.current = true;
     setResolving(id);
     setError(null);
     try {
@@ -354,11 +364,12 @@ export function AuthorityConsole() {
           );
         }
       }
+      answering.current = false;
       await refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
-      inFlight.current = false;
+      answering.current = false;
       setResolving(null);
     }
   }
