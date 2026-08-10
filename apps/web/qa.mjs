@@ -94,14 +94,9 @@ let heroNote = "";
 for (const [path, re] of [
   ["/", /budget\s+it\s+cannot\s+exceed/i],
   ["/authority/", /Spend it down/i],
-  ["/demo/", /facilitator/i],
-  ["/agent/", /agent/i],
-  ["/verify/", /Check a payment yourself/i],
-  ["/claim/", /wallet/i],
   ["/ledger/", /decision|verdict/i],
-  ["/explorer/", /intent/i],
   ["/inspect/", /execution/i],
-  ["/x402/", /402/i],
+  ["/inspect/", /execution/i],
   ["/docs/", /mandate_verify|Quickstart/i],
 ]) {
   await check(`renders ${path}`, async () => {
@@ -157,97 +152,6 @@ await check("unknown route shows the branded 404 with a way out", async () => {
   return `http ${r?.status()}, ${outs} ways out`;
 });
 
-// ── /verify: the form, and every way to get it wrong ────────────────────────
-console.log("\nVERIFY FORM");
-const fill = async (id, v) =>
-  page.evaluate(
-    ([i, val]) => {
-      const el = document.getElementById(i);
-      const set = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
-      set.call(el, val);
-      el.dispatchEvent(new Event("input", { bubbles: true }));
-    },
-    [id, v]
-  );
-const submit = () => page.evaluate(() => {
-  [...document.querySelectorAll("button")].find((b) => /Read the receipt/.test(b.textContent))?.click();
-});
-
-await check("sample loads and verifies against the chain", async () => {
-  await go("/verify/");
-  await page.evaluate(() =>
-    [...document.querySelectorAll("button")].find((b) => /Mined, moved nothing/.test(b.textContent))?.click()
-  );
-  await page.waitForTimeout(600);
-  await submit();
-  await page.waitForTimeout(9000);
-  const v = await page.evaluate(() => document.querySelector(".verdict")?.textContent?.trim());
-  if (!v) fail("no verdict", "the sample produced nothing");
-  return v ?? "";
-});
-
-await check("malformed hash is refused with a readable message", async () => {
-  await go("/verify/");
-  await fill("hash", "nonsense");
-  await submit();
-  await page.waitForTimeout(1200);
-  if (!(await has(/0x followed by 64 hex/i))) fail("no validation message", "bad hash accepted or unexplained");
-  return "";
-});
-
-await check("non-numeric amount is refused", async () => {
-  await fill("hash", `0x${"a".repeat(64)}`);
-  await fill("amt", "1.5");
-  await submit();
-  await page.waitForTimeout(1000);
-  if (!(await has(/whole digits only/i))) fail("no validation message", "bad amount accepted");
-  return "";
-});
-
-await check("bad address is refused", async () => {
-  await fill("amt", "1000000");
-  await fill("to", "0xnope");
-  await submit();
-  await page.waitForTimeout(1000);
-  if (!(await has(/0x followed by 40 hex/i))) fail("no validation message", "bad address accepted");
-  return "";
-});
-
-await check("a hash that is well-formed but unknown to the chain", async () => {
-  await go("/verify/");
-  await fill("hash", `0x${"1".repeat(64)}`);
-  await submit();
-  await page.waitForTimeout(10000);
-  const t = await page.evaluate(() => document.body.innerText);
-  if (!/not proven|no transaction|not found|could not/i.test(t)) {
-    fail("unhandled", "an unknown hash produced neither a verdict nor an error");
-  }
-  return "";
-});
-
-await check("double-submitting does not double-render or crash", async () => {
-  await go("/verify/");
-  await page.evaluate(() =>
-    [...document.querySelectorAll("button")].find((b) => /Paid — a real transfer/.test(b.textContent))?.click()
-  );
-  await page.waitForTimeout(500);
-  await submit();
-  await submit();
-  await page.waitForTimeout(9000);
-  const n = await page.evaluate(() => document.querySelectorAll(".verdict").length);
-  if (n > 1) fail("duplicate verdicts", `${n} verdict panels after a double submit`);
-  return `${n} panel`;
-});
-
-await check("deep link prefills and verifies", async () => {
-  await go(
-    "/verify/?hash=0x3aac3134ba7c4ce4e12c04e206ad7ce468318607fdb7a8e7ad85e91a70fe72ee&token=0x0d864A625c280F7f9B9AD024d12F94f5D6DCCF13&to=0x000000000000000000000000000000000000dEaD&min=1000000"
-  );
-  const v = await page.evaluate(() => document.getElementById("hash")?.value ?? "");
-  if (!v.startsWith("0x3aac3134")) fail("deep link ignored", `hash field held ${v.slice(0, 20)}`);
-  return "prefilled";
-});
-
 // ── /inspect ────────────────────────────────────────────────────────────────
 console.log("\nINSPECT");
 await check("malformed execution id is refused locally", async () => {
@@ -273,20 +177,6 @@ await check("empty execution id does not fire a request", async () => {
   );
   await page.waitForTimeout(1500);
   return "";
-});
-
-// ── /claim without a wallet ─────────────────────────────────────────────────
-console.log("\nCLAIM (no wallet installed)");
-await check("connect is disabled and says why", async () => {
-  await go("/claim/");
-  const state = await page.evaluate(() => {
-    const b = [...document.querySelectorAll("button")].find((x) => /connect/i.test(x.textContent));
-    return { found: !!b, disabled: b?.disabled, text: document.body.innerText };
-  });
-  if (!state.found) fail("no connect button", "");
-  else if (!state.disabled) fail("enabled without a wallet", "connect was clickable with no provider");
-  if (!/wallet/i.test(state.text)) fail("no explanation", "nothing tells the user they need a wallet");
-  return "disabled";
 });
 
 // ── /authority: the core flow and its edges ─────────────────────────────────
@@ -351,43 +241,6 @@ await check("browser back then forward leaves the page working", async () => {
   return "";
 });
 
-await check("a paced route shows a countdown, not a stale number", async () => {
-  await go("/demo/");
-  // The 429 IS the result under test here, so it is not a defect for this one
-  // item. Everything it produces on screen is still asserted below.
-  page.__expectBadRequest = true;
-  /*
-   * Consume the pace first, from the page's own origin.
-   *
-   * Clicking twice cannot trigger it -- the UI correctly disables both buttons
-   * while a run is in flight, so the second click never becomes a request.
-   * This is what a second visitor arriving inside the window looks like, which
-   * is the case the countdown exists for.
-   */
-  // Fire and do NOT await: the pace is consumed when the request starts, but
-  // awaiting it means waiting out a full 14s purchase, by which point the 15s
-  // window has almost expired and the click races it.
-  await page.evaluate((g) => {
-    void fetch(`${g}/demo?facilitator=lying`).catch(() => {});
-  }, GATEWAY);
-  await page.waitForTimeout(700);
-  await page.evaluate(() =>
-    [...document.querySelectorAll("button")].find((b) => /honestly/i.test(b.textContent))?.click()
-  );
-  await page.waitForTimeout(3500);
-  const first = await page.evaluate(() => document.body.innerText.match(/Ready again in (\d+)s/)?.[1]);
-  if (!first) return fail("no countdown", "a paced refusal did not surface a countdown");
-  const disabled = await page.evaluate(
-    () => [...document.querySelectorAll("button")].filter((b) => /Pay /.test(b.textContent)).every((b) => b.disabled)
-  );
-  if (!disabled) fail("clickable during the pace", "a button that will refuse is still enabled");
-  await page.waitForTimeout(3000);
-  const second = await page.evaluate(() => document.body.innerText.match(/Ready again in (\d+)s/)?.[1]);
-  if (second && Number(second) >= Number(first)) fail("countdown is stale", `${first}s then ${second}s`);
-  page.__expectBadRequest = false;
-  return `counted ${first}s → ${second ?? "0"}s, buttons disabled`;
-});
-
 // ── responsive ──────────────────────────────────────────────────────────────
 console.log("\nRESPONSIVE");
 for (const [name, w, h] of [
@@ -397,7 +250,7 @@ for (const [name, w, h] of [
 ]) {
   await check(`no horizontal overflow at ${name}`, async () => {
     await page.setViewportSize({ width: w, height: h });
-    for (const p of ["/", "/authority/", "/verify/", "/ledger/", "/docs/"]) {
+    for (const p of ["/", "/authority/", "/ledger/", "/docs/"]) {
       current = `${name} ${p}`;
       await page.goto(`${BASE}${p}`, { waitUntil: "networkidle", timeout: 60000 });
       await page.waitForTimeout(1800);
@@ -418,7 +271,7 @@ await check("no console.log noise on any page", async () => {
   page.on("console", (m) => {
     if (m.type() === "log" && !ignored(m.text())) logs.push(m.text().slice(0, 60));
   });
-  for (const p of ["/", "/authority/", "/verify/", "/ledger/", "/explorer/", "/docs/"]) {
+  for (const p of ["/", "/authority/", "/ledger/", "/docs/"]) {
     current = `logs ${p}`;
     await page.goto(`${BASE}${p}`, { waitUntil: "networkidle", timeout: 60000 });
     await page.waitForTimeout(1500);
@@ -428,7 +281,7 @@ await check("no console.log noise on any page", async () => {
 });
 
 await check("every page has a real title and description", async () => {
-  for (const p of ["/", "/authority/", "/verify/", "/docs/"]) {
+  for (const p of ["/", "/authority/", "/docs/"]) {
     current = `meta ${p}`;
     await page.goto(`${BASE}${p}`, { waitUntil: "domcontentloaded", timeout: 60000 });
     const meta = await page.evaluate(() => ({

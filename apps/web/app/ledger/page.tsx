@@ -20,17 +20,28 @@ import { VerdictMark } from "@/components/verdict";
 const GATEWAY =
   process.env.NEXT_PUBLIC_GATEWAY_URL ?? "https://gateway-production-944e.up.railway.app";
 
+/**
+ * One decision, as the authority recorded it.
+ *
+ * This page used to read the x402 audit trail from a product that no longer
+ * exists, and the route it fetched was deleted with it — so it 404'd while
+ * looking, to a reader, like an empty ledger. It now reads the authority's own
+ * decision record: what was asked for, what was decided, and which rule decided
+ * it, refusals included.
+ */
 type Entry = {
   at: string;
-  tool: string;
-  intentId?: string;
-  outcome: string;
-  detail: string;
+  decision: string;
+  failedRule: string | null;
+  reason: string;
+  amount: number;
+  recipient: string;
+  category: string;
+  transactionHash?: string;
 };
 
-/** Verdicts that mean money moved, so the row can say so at a glance. */
-const GOOD = new Set(["proven", "release:succeeded"]);
-const BAD = new Set(["not_proven", "refund:succeeded", "refused"]);
+/** The one verdict that means money moved. Everything else refused or held. */
+const APPROVED = "APPROVED";
 
 export default function LedgerPage() {
   const [entries, setEntries] = useState<Entry[]>([]);
@@ -42,14 +53,15 @@ export default function LedgerPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`${GATEWAY}/audit?limit=100`);
+      const res = await fetch(`${GATEWAY}/authority/log?limit=100`);
       const body = await res.json();
       if (!res.ok) {
         setError(body.error ?? `gateway returned ${res.status}`);
         return;
       }
       // Newest first for reading; the API hands them back oldest-first.
-      setEntries([...(body.entries as Entry[])].reverse());
+      // The API already answers newest-first, which is the order a reader wants.
+      setEntries(body.entries as Entry[]);
       setTotal(body.total as number);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : String(e));
@@ -123,19 +135,21 @@ export default function LedgerPage() {
             </thead>
             <tbody>
               {entries.map((e, i) => {
-                const good = GOOD.has(e.outcome);
-                const bad = BAD.has(e.outcome);
+                const good = e.decision === APPROVED;
+                const bad = e.decision.startsWith("BLOCKED_") || e.decision.startsWith("REJECTED_");
                 return (
                   <tr key={`${e.at}-${i}`} className="border-b border-[var(--line)] align-top">
                     <td className="figure whitespace-nowrap px-3 py-4 text-xs text-[var(--ink-3)]">
                       {e.at.replace("T", " ").slice(0, 19)}
                     </td>
-                    <td className="figure whitespace-nowrap px-3 py-4 text-xs">{e.tool}</td>
+                    <td className="figure whitespace-nowrap px-3 py-4 text-xs">
+                      {e.failedRule ?? "—"}
+                    </td>
                     <td className="px-3 py-4">
                       <VerdictMark state={good ? "proven" : bad ? "not_proven" : "awaiting"} />
                     </td>
                     <td className="max-w-[46ch] px-3 py-4 font-mono text-xs leading-relaxed text-[var(--ink-3)]">
-                      {e.detail}
+                      {e.reason}
                     </td>
                   </tr>
                 );
