@@ -61,6 +61,14 @@ import {
 } from "outcome-sdk/node";
 import { proposeDecision, ledgerPartitionKey } from "outcome-policy";
 import { hashCanonicalJson } from "outcome-policy/canon";
+import {
+  mongoBureau,
+  mongoSnapshots,
+  scoreFromSources,
+  toVendorScoreInject,
+  epochOf,
+  type ScoreResult,
+} from "outcome-bureau";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 
@@ -139,6 +147,22 @@ export type AuthorityOutcome = {
   budget: { limit: number; spentBefore: number; spentAfter: number; remaining: number };
   callsInLastHour: number;
   anchor: { registry: string; policyHash: string; onChainStatus: string; usable: boolean };
+  /**
+   * What the bureau said about this payee, and therefore what
+   * `vendor.lcbFloor` compared against. Present on every decision, including
+   * the ones another rule refused first -- a reader should not have to guess
+   * whether the floor was even consulted.
+   */
+  vendor?: {
+    payee: string;
+    lcb: number;
+    score: number;
+    sigma: number;
+    band: string;
+    floor: number;
+    epoch: number;
+    features: { key: string; value: number; weightApplied: number; observed: boolean; note: string }[];
+  };
   executionId?: string;
   transactionHash?: string;
   executionError?: string;
@@ -201,6 +225,8 @@ export type Authority = {
   partitionKey: string;
   decide(req: SpendRequest): Promise<AuthorityOutcome>;
   history(limit: number): Promise<DecisionRecord[]>;
+  /** Score a payee on demand, from the same sources a decision would use. */
+  score(payee: string): Promise<ScoreResult>;
   state(): Promise<{
     policyId: string;
     policyHash: string;
@@ -210,6 +236,8 @@ export type Authority = {
     remaining: number;
     callsInLastHour: number;
     decisions: { total: number; approved: number; refused: number };
+    /** The floor a payee's bound must clear, and what it is compared against. */
+    vendorFloor: number | null;
   }>;
 };
 
@@ -220,6 +248,34 @@ export async function createAuthority(args: {
   mongoDb: string;
 }): Promise<Authority> {
   const ledger = await mongoLedger({ uri: args.mongoUri, db: args.mongoDb });
+
+  /*
+   * The bureau, and the snapshot store in front of it.
+   *
+   * A score is pinned per 6-hour epoch rather than recomputed per request. Not
+   * only for cost: a score that drifts between two spends seconds apart makes a
+   * refusal impossible to reproduce, and a decision that cites a number nobody
+   * can recover is not an explanation.
+   */
+  const bureau = await mongoBureau({
+    uri: args.mongoUri,
+    db: args.mongoDb,
+    provider: args.provider,
+    token: TOKEN,
+  });
+  const snapshots = await mongoSnapshots({ uri: args.mongoUri, db: args.mongoDb });
+
+  const vendorFloor = (POLICY_DOC.rules as { vendors?: { minScoreLCB: number } }).vendors?.minScoreLCB;
+
+  async function scoreFor(payee: string, nowMs: number): Promise<ScoreResult> {
+    const epoch = epochOf(nowMs);
+    const cached = await snapshots.get(payee, epoch);
+    if (cached) return cached;
+    const fresh = await scoreFromSources(bureau, payee, { nowMs });
+    await snapshots.put(fresh);
+    return fresh;
+  }
+
   const policyId = POLICY_ID;
   const partitionKey = ledgerPartitionKey(policyId || null);
   const dailyLimit = Number((POLICY_DOC.rules as { budgets: { daily: number } }).budgets.daily);
@@ -254,6 +310,13 @@ export async function createAuthority(args: {
 
       const now = Date.now();
 
+      /*
+       * The payee's score, read outside the lease for the same reason the
+       * anchor is: it is Mongo plus a handful of receipt reads, and no
+       * concurrent request can invalidate it inside this decision's window.
+       */
+      const vendorScore = vendorFloor === undefined ? null : await scoreFor(req.recipient, now);
+
       return ledger.withLease(partitionKey, async () => {
         const before = await ledger.read(partitionKey, now);
 
@@ -272,10 +335,20 @@ export async function createAuthority(args: {
           policyHash: POLICY_HASH,
         };
 
+        /*
+         * The bureau's verdict joins the ledger window here, which is the only
+         * place `vendor.lcbFloor` reads. It carries the LOWER-confidence bound
+         * rather than the raw score: a payee with a good score and thin
+         * evidence must not clear a floor that a well-evidenced payee clears.
+         */
+        const state = vendorScore
+          ? { ...before, vendorScore: toVendorScoreInject(vendorScore) }
+          : before;
+
         const { decision, effects } = proposeDecision(
           toIntent(req) as never,
           policy as never,
-          before as never,
+          state as never,
           { nowMs: now }
         );
 
@@ -370,6 +443,26 @@ export async function createAuthority(args: {
             onChainStatus: anchorError ? "unusable" : (onChainStatus?.status ?? "unknown"),
             usable: Boolean(anchor?.usable),
           },
+          ...(vendorScore
+            ? {
+                vendor: {
+                  payee: vendorScore.subject,
+                  lcb: vendorScore.lcb,
+                  score: vendorScore.score,
+                  sigma: vendorScore.sigma,
+                  band: vendorScore.band,
+                  floor: vendorFloor!,
+                  epoch: vendorScore.epoch,
+                  features: vendorScore.features.map((f) => ({
+                    key: f.key,
+                    value: f.value,
+                    weightApplied: f.weightApplied,
+                    observed: f.implemented,
+                    note: f.note,
+                  })),
+                },
+              }
+            : {}),
           ...(executionId ? { executionId } : {}),
           ...(transactionHash ? { transactionHash } : {}),
           ...(executionError ? { executionError } : {}),
@@ -379,6 +472,10 @@ export async function createAuthority(args: {
 
     async history(limit) {
       return ledger.decisions(limit, partitionKey);
+    },
+
+    async score(payee) {
+      return scoreFor(payee, Date.now());
     },
 
     async state() {
@@ -406,6 +503,7 @@ export async function createAuthority(args: {
         remaining: Math.max(0, dailyLimit - w.budgetUsage.effectiveToday),
         callsInLastHour: w.callsInLastHour,
         decisions: { total: s.total, approved: s.approved, refused: s.refused },
+        vendorFloor: vendorFloor ?? null,
       };
     },
   };

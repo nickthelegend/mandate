@@ -17,7 +17,12 @@
  */
 
 import { JsonRpcProvider, Contract } from "ethers";
-import { KeeperHubClient, anchorPolicy, readAnchoredPolicy } from "outcome-sdk/node";
+import {
+  KeeperHubClient,
+  anchorPolicy,
+  updateAnchoredPolicy,
+  readAnchoredPolicy,
+} from "outcome-sdk/node";
 
 import { POLICY_DOC, POLICY_HASH, REGISTRY } from "./authority.ts";
 
@@ -85,6 +90,43 @@ if (flag === "--pause" || flag === "--resume") {
     process.exit(1);
   }
   await setStatus(flag === "--pause" ? "pausePolicy" : "resumePolicy", arg);
+  process.exit(0);
+}
+
+if (flag === "--update") {
+  if (!arg) {
+    console.error("usage: --update <policyId>");
+    process.exit(1);
+  }
+  /*
+   * Re-anchor an edited document.
+   *
+   * This is the only way to widen a budget, and it is deliberately a
+   * transaction rather than a file save: the registry bumps the version and
+   * emits an event, so "we raised the limit afterwards" is a timestamped fact
+   * rather than something an operator can deny.
+   */
+  const before = await readAnchoredPolicy(provider, REGISTRY, arg);
+  console.log(`registry holds ${before.policyHash} (v${before.version})`);
+  console.log(`document hashes to ${POLICY_HASH}`);
+  if (before.policyHash.toLowerCase() === POLICY_HASH.toLowerCase()) {
+    console.log("already anchored to this document; nothing to do.");
+    process.exit(0);
+  }
+
+  const res = await updateAnchoredPolicy(
+    kh,
+    { registry: REGISTRY, chainId: CHAIN_ID },
+    {
+      policyId: arg,
+      policyHash: POLICY_HASH,
+      expiry: Math.floor(Date.now() / 1000) + 30 * 24 * 3600,
+    },
+    { timeoutMs: 180_000 }
+  );
+  console.log(`updated: ${res.status}  tx ${res.transactionHash}`);
+  const after = await readAnchoredPolicy(provider, REGISTRY, arg);
+  console.log(`  now: v${after.version} hash=${after.policyHash} usable=${after.usable}`);
   process.exit(0);
 }
 

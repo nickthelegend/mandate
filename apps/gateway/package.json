@@ -13,7 +13,8 @@
   "dependencies": {
     "ethers": "^6.17.0",
     "outcome-sdk": "*",
-    "outcome-policy": "*"
+    "outcome-policy": "*",
+    "outcome-bureau": "*"
   },
   "devDependencies": {
     "@types/node": "^22.20.1",

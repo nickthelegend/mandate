@@ -1,0 +1,30 @@
+{
+  "name": "outcome-bureau",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Deterministic vendor reliability scoring. Enforcement reads the lower-confidence bound, never the raw score.",
+  "main": "./dist/esm/index.js",
+  "types": "./dist/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/esm/index.js",
+      "default": "./dist/esm/index.js"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "rm -rf dist && tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "node --experimental-strip-types --test test/*.test.ts"
+  },
+  "dependencies": {
+    "ethers": "^6.17.0",
+    "mongodb": "^7.5.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.1",
+    "typescript": "^5.9.3"
+  },
+  "engines": { "node": ">=22" }
+}
