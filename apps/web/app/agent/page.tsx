@@ -12,7 +12,7 @@
  * the agent's own address appears only as the payee.
  */
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Bot, CheckCircle2, Loader2, XCircle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -41,6 +41,21 @@ type Cycle = {
 
 export default function AgentPage() {
   const [running, setRunning] = useState(false);
+  /*
+   * A visible clock. This cycle is four real transactions and takes the better
+   * part of a minute; a bare spinner for that long reads as a hang, and the
+   * person watching gives up before the thing they came to see happens.
+   */
+  const [elapsed, setElapsed] = useState(0);
+
+  useEffect(() => {
+    if (!running) {
+      setElapsed(0);
+      return;
+    }
+    const t = setInterval(() => setElapsed((e) => e + 1), 1000);
+    return () => clearInterval(t);
+  }, [running]);
   const [cycle, setCycle] = useState<Cycle | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -83,9 +98,14 @@ export default function AgentPage() {
 
       <div className="shell py-10 sm:py-14">
       <div className="max-w-3xl">
-      <Button size="lg" className="gap-2" disabled={running} onClick={() => void run()}>
+      <p className="mt-6 text-[12px] leading-relaxed text-[var(--ink-3)]">
+        Four real Sepolia transactions — post, escrow, work, settle — so this takes roughly 40
+        seconds. The timer runs on the button.
+      </p>
+
+      <Button size="lg" className="mt-3 gap-2" disabled={running} onClick={() => void run()}>
         {running ? <Loader2 className="size-4 animate-spin" /> : <Bot className="size-4" />}
-        {running ? "Working…" : "Post a job and let it run"}
+        {running ? `Working… ${elapsed}s` : "Post a job and let it run"}
       </Button>
 
       <p className="mt-3 font-mono text-xs text-[var(--ink-3)]">

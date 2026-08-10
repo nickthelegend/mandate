@@ -51,6 +51,21 @@ const RATE_WINDOW_MS = 60 * 60 * 1000;
 /** How long a lease is honoured before it is assumed the holder died mid-section. */
 const LEASE_TTL_MS = 15_000;
 
+/**
+ * Money, rounded to the cent it is actually denominated in.
+ *
+ * The engine carries display-unit amounts as JS numbers, so accumulating them
+ * drifts: 1.65 + 0.20 stored as 1.8499999999999999, which then renders in a
+ * budget readout and reads as a bug even though it is within a rounding error
+ * of correct. Rounded at the point of accumulation rather than at the point of
+ * display, because a stored total that is wrong in the twelfth decimal is still
+ * a stored total that is wrong -- and it is the number a later comparison
+ * against the daily limit is made from.
+ */
+function money(v: number): number {
+  return Math.round(v * 1e6) / 1e6;
+}
+
 /** UTC day bucket. Must agree with `outcome-policy`'s `utcDayKey` -- same slice, same reason. */
 export function utcDayKey(nowMs: number): string {
   return new Date(nowMs).toISOString().slice(0, 10);
@@ -239,9 +254,9 @@ function windowFrom(doc: LedgerDoc | null, nowMs: number): LedgerWindow {
 
   return {
     budgetUsage: {
-      settledToday,
-      reservedActiveToday,
-      effectiveToday: settledToday + reservedActiveToday,
+      settledToday: money(settledToday),
+      reservedActiveToday: money(reservedActiveToday),
+      effectiveToday: money(settledToday + reservedActiveToday),
     },
     recentIntents: (doc.recentIntents ?? []).filter(
       (i) => nowMs - i.createdAtMs < RECENT_INTENT_RETENTION_MS
@@ -306,7 +321,7 @@ export async function mongoLedger(opts: {
        * the read and the write are not racing another decider.
        */
       const rolled = !existing || existing.dayKey !== today;
-      const settled = (rolled ? 0 : existing.settledToday) + effects.budget.amount;
+      const settled = money((rolled ? 0 : existing.settledToday) + effects.budget.amount);
 
       const recent = [...(existing?.recentIntents ?? []), effects.duplicate.recentIntent].filter(
         (i) => now - i.createdAtMs < RECENT_INTENT_RETENTION_MS

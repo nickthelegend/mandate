@@ -147,6 +147,23 @@ export type SpendRequest = {
   recipient: string;
   /** Distinguishes otherwise identical intents, so a second click is not a duplicate. */
   nonce: number;
+  /**
+   * Which agent under this policy is asking.
+   *
+   * One owner's policy governs many agents, and each gets its own budget,
+   * duplicate window, cooldown clocks and rate limit. That is the real
+   * deployment shape -- a team does not give every agent a shared wallet and
+   * hope -- and it is what stops one agent's spending from silently consuming
+   * another's headroom.
+   *
+   * It also fixes what was, in practice, the worst bug in the product. With a
+   * single shared partition, the demo's duplicate window was global: the first
+   * visitor to buy market data locked that exact purchase for everyone else for
+   * an hour, and the day's budget drained for everyone at once. The button
+   * promising "inside every limit" answered BLOCKED_DUPLICATE to the second
+   * person who pressed it.
+   */
+  agent: string;
 };
 
 export type AuthorityOutcome = {
@@ -222,16 +239,38 @@ export type AuthorityOutcome = {
  */
 function taskHashOf(req: SpendRequest): `0x${string}` {
   return hashCanonicalJson({
+    agent: req.agent,
     endpoint: req.endpoint,
     category: req.category,
     recipient: req.recipient.toLowerCase(),
   });
 }
 
+/**
+ * The ledger partition for one agent under this policy.
+ *
+ * `outcome-policy`'s own `ledgerPartitionKey` keys on the policy alone, because
+ * untch's model is one policy per agent -- their comment says so. Outcome runs
+ * one anchored policy over many agents, so the key carries both. The rules, the
+ * hash and the on-chain anchor are still shared and still the thing being
+ * enforced; only the spend history is per agent, which is exactly the state
+ * that should be.
+ */
+function partitionFor(policyId: string, agent: string): string {
+  return `${ledgerPartitionKey(policyId || null)}:agent:${agent}`;
+}
+
+/** Agent ids are ours to constrain: they become part of a storage key. */
+export const AGENT_ID = /^[a-z0-9][a-z0-9_-]{2,63}$/i;
+/** The agent a caller gets when it does not name one. */
+export const DEFAULT_AGENT = "shared";
+
 function toIntent(req: SpendRequest) {
   return {
     owner: OWNER as `0x${string}`,
-    buyerAgentId: 1n,
+    // Derived from the agent id so two agents are distinguishable to the engine
+    // as well as to the ledger, rather than every caller being agent number one.
+    buyerAgentId: BigInt(`0x${hashCanonicalJson({ agent: req.agent }).slice(2, 14)}`),
     workerAgentId: 0n,
     token: TOKEN as `0x${string}`,
     // The per-call ceiling travels with the amount: the bound rule runs ahead of
@@ -255,7 +294,7 @@ export type Authority = {
   ledger: SpendLedger;
   partitionKey: string;
   decide(req: SpendRequest): Promise<AuthorityOutcome>;
-  history(limit: number): Promise<DecisionRecord[]>;
+  history(limit: number, agent?: string): Promise<DecisionRecord[]>;
   /** Score a payee on demand, from the same sources a decision would use. */
   score(payee: string): Promise<ScoreResult>;
   /** An operator's answer to a held spend. */
@@ -273,10 +312,11 @@ export type Authority = {
     executionError?: string;
     budget?: { spentBefore: number; spentAfter: number; remaining: number };
   }>;
-  escalations(limit: number, status?: string): Promise<EscalationRecord[]>;
+  escalations(limit: number, status?: string, agent?: string): Promise<EscalationRecord[]>;
   /** Expire anything past its deadline. Silence defaults to denied. */
   sweepEscalations(): Promise<{ expired: string[] }>;
-  state(): Promise<{
+  state(agent?: string): Promise<{
+    agent: string;
     policyId: string;
     policyHash: string;
     rules: Record<string, unknown>;
@@ -370,7 +410,8 @@ export async function createAuthority(args: {
   }
 
   const policyId = POLICY_ID;
-  const partitionKey = ledgerPartitionKey(policyId || null);
+  /** The default partition, for callers that do not name an agent. */
+  const partitionKey = partitionFor(policyId, DEFAULT_AGENT);
   const dailyLimit = Number((POLICY_DOC.rules as { budgets: { daily: number } }).budgets.daily);
 
   async function readAnchor() {
@@ -410,8 +451,10 @@ export async function createAuthority(args: {
        */
       const vendorScore = vendorFloor === undefined ? null : await scoreFor(req.recipient, now);
 
-      return ledger.withLease(partitionKey, async () => {
-        const before = await ledger.read(partitionKey, now);
+      const part = partitionFor(policyId, req.agent);
+
+      return ledger.withLease(part, async () => {
+        const before = await ledger.read(part, now);
 
         /*
          * The chain overrides the document's own status field. A paused policy
@@ -454,8 +497,17 @@ export async function createAuthority(args: {
         let opened: { id: string; code: string; expiresAt: string } | undefined;
 
         if (approved && effects) {
-          // Charge first. See the note at the top of this file on why this order.
-          await ledger.apply(effects as never);
+          /*
+           * Re-key the effects onto this agent's partition before applying.
+           *
+           * `proposeDecision` stamps them with `ledgerPartitionKey(policyId)`,
+           * which is the policy-only key -- correct for untch, where one policy
+           * governs one agent. Here it would charge the spend to a partition
+           * nothing reads, so the budget would never accumulate and the daily
+           * limit would silently never bind. Charged first; see the note at the
+           * top of this file on why that order.
+           */
+          await ledger.apply({ ...effects, partitionKey: part } as never);
           const run = await runTransfer(decision, req.recipient, req.amount);
           executionId = run.executionId;
           transactionHash = run.transactionHash;
@@ -490,11 +542,11 @@ export async function createAuthority(args: {
           });
         }
 
-        const after = await ledger.read(partitionKey, now);
+        const after = await ledger.read(part, now);
 
         const record: DecisionRecord = {
           at: new Date(now).toISOString(),
-          partitionKey,
+          partitionKey: part,
           policyId,
           policyVersion: POLICY_DOC.version,
           intentHash: decision.intentHash,
@@ -579,8 +631,8 @@ export async function createAuthority(args: {
       });
     },
 
-    async history(limit) {
-      return ledger.decisions(limit, partitionKey);
+    async history(limit, agent) {
+      return ledger.decisions(limit, partitionFor(policyId, agent ?? DEFAULT_AGENT));
     },
 
     async score(payee) {
@@ -618,9 +670,11 @@ export async function createAuthority(args: {
        * when the request was made.
        */
       const now = Date.now();
-      const released = await ledger.withLease(partitionKey, async () => {
-        const before = await ledger.read(partitionKey, now);
-        const held = rec.heldSpend as unknown as SpendRequest;
+      const held = rec.heldSpend as unknown as SpendRequest;
+      const heldPart = partitionFor(policyId, held.agent ?? DEFAULT_AGENT);
+
+      const released = await ledger.withLease(heldPart, async () => {
+        const before = await ledger.read(heldPart, now);
 
         const { decision, effects } = proposeDecision(
           toIntent(held) as never,
@@ -650,9 +704,10 @@ export async function createAuthority(args: {
           } as const;
         }
 
-        await ledger.apply(effects as never);
+        // Same re-keying on the release path, for the same reason.
+        await ledger.apply({ ...effects, partitionKey: heldPart } as never);
         const run = await runTransfer(decision, rec.recipient, rec.amount);
-        const after = await ledger.read(partitionKey, now);
+        const after = await ledger.read(heldPart, now);
         return { decision, run, before, after } as const;
       });
 
@@ -684,19 +739,23 @@ export async function createAuthority(args: {
       };
     },
 
-    async escalations(limit, status) {
-      return escalations.list(limit, status as never);
+    async escalations(limit, status, agent) {
+      const all = await escalations.list(limit, status as never);
+      if (!agent) return all;
+      // An operator should see their own agent's held spends, not everyone's.
+      return all.filter((e) => (e.heldSpend as { agent?: string })?.agent === agent);
     },
 
     async sweepEscalations() {
       return escalations.sweep();
     },
 
-    async state() {
+    async state(agent) {
       const now = Date.now();
+      const part = partitionFor(policyId, agent ?? DEFAULT_AGENT);
       const [w, s] = await Promise.all([
-        ledger.read(partitionKey, now),
-        ledger.stats(partitionKey, now),
+        ledger.read(part, now),
+        ledger.stats(part, now),
       ]);
 
       let onChain: Awaited<ReturnType<Authority["state"]>>["onChain"];
@@ -709,6 +768,7 @@ export async function createAuthority(args: {
       }
 
       return {
+        agent: agent ?? DEFAULT_AGENT,
         policyId,
         policyHash: POLICY_HASH,
         rules: POLICY_DOC.rules,

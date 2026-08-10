@@ -6,6 +6,7 @@ import { DashboardPreview } from "@/components/dashboard-preview";
 import { DecisionDemo } from "@/components/decision-demo";
 import { CodeTabs } from "@/components/code-tabs";
 import { DEPLOYMENT, tx, address } from "@/lib/outcome";
+import { HeroChain } from "@/components/hero-chain";
 
 /*
  * Built for a judge with ninety seconds.
@@ -20,37 +21,47 @@ const REGISTRY = DEPLOYMENT.registry;
 const RELAYER = "0xA17cb6adb58277E5b4A44B8c1ECB449BB6614E87";
 
 /*
- * The authority, proven end to end on Sepolia. Every hash here was checked
- * against the chain before it was written down, and every one was sent by
- * KeeperHub's relayer rather than a local key -- which is the whole claim.
+ * The authority, proven end to end on Sepolia.
+ *
+ * Every hash was checked against the chain before it was written down, and
+ * every one was sent by KeeperHub's relayer rather than a local key -- which is
+ * the whole claim.
+ *
+ * They are also all from the policy the gateway is enforcing RIGHT NOW, id
+ * 1096875…6629. An earlier version of this list narrated a different policy
+ * from an earlier build: real transactions, honestly labelled, describing
+ * something that was no longer running. Anyone who cross-referenced the anchor
+ * against /authority would have found two different policies and been right to
+ * wonder what else was stale.
  */
 const CHAIN_OF_CUSTODY = [
   {
     step: "Anchor the policy",
     detail: "Written through KeeperHub, so the registry records its wallet as owner.",
     result: "owner = KeeperHub",
-    hash: "0x6f023b48e20fb70939a18f8051f800474eae0e0c0f5a89db15dec3ad93a5aad0",
+    hash: "0x17cc144a475c94e2243dd859166a90ab2fd2923728f876de5bc9dda7054a9ad2",
     kind: "ok" as const,
   },
   {
     step: "Agent spends inside policy",
     detail: "Fifteen rules pass, and only then does KeeperHub move the money.",
     result: "APPROVED",
-    hash: "0xe9f84233c0e06f5eee5f2c709413c86de4b0e733d75b6bf65b99f60a3d3d801d",
+    hash: "0xd8bd2b6170811f38831ea6b118f142ecaebbf0b2389e137e2ac5e508062288b8",
     kind: "ok" as const,
   },
   {
     step: "Someone edits the policy file",
-    detail: "The document no longer hashes to what the registry stores.",
+    detail:
+      "The document stops hashing to what the registry stores, and every spend is refused until it is re-anchored — which is itself a transaction.",
     result: "PolicyAnchorMismatch",
-    hash: null,
+    hash: "0xdd035281df43216c5873e6822d92f0092c963166adb9113261dfcfd1d235f4e8",
     kind: "bad" as const,
   },
   {
     step: "Kill switch pulled",
     detail: "A pause KeeperHub signs. Every agent reading the registry stops.",
     result: "PAUSED",
-    hash: "0x76478512c7a87cd2e5df233e280b897bd6b8eb9990b7cc9f9955fbf9611f70ab",
+    hash: "0x384a73fe41aaad058d171984d17838b08a50ebab440bc40d3d4e47db436e1b9d",
     kind: "bad" as const,
   },
   {
@@ -77,22 +88,11 @@ export default function Home() {
       <section className="frame h-[calc(100vh-24px)] w-full sm:h-[calc(100vh-32px)]">
         {/* Ambient only: muted, looping, not interactive, with a poster so the
             frame is never a grey rectangle while the file loads. */}
-        <video
-          className="pointer-events-none absolute inset-0 h-full w-full object-cover"
-          autoPlay
-          loop
-          muted
-          playsInline
-          preload="auto"
-          disableRemotePlayback
-          poster="https://images.unsplash.com/photo-1557683316-973673baf926?w=1600&q=60"
-        >
-          <source
-            src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260424_064411_9e9d7f84-9277-41f4-ab10-59172d89e6be.mp4"
-            type="video/mp4"
-          />
-        </video>
-        <div className="absolute inset-0 bg-white/10" />
+        {/*
+          * The backdrop is the fifteen-rule chain, running -- not a stock
+          * video. See components/hero-chain.tsx for why that mattered.
+          */}
+        <HeroChain />
 
         <div className="relative z-10 flex h-full flex-col">
           <Navbar />

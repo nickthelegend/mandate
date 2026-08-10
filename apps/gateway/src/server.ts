@@ -34,7 +34,19 @@ import {
 import { createFacilitator, type FacilitatorMode } from "./facilitator.ts";
 import { runPurchase } from "./flow.ts";
 import { runAgentCycle } from "./agent-run.ts";
-import { createAuthority, POLICY_ID, type Authority } from "./authority.ts";
+import { createAuthority, POLICY_ID, AGENT_ID, DEFAULT_AGENT, type Authority } from "./authority.ts";
+
+/**
+ * Which agent a request speaks for.
+ *
+ * Every agent under this policy gets its own budget and its own duplicate
+ * window, so a caller that does not name one falls back to the shared agent
+ * rather than silently borrowing somebody else's headroom.
+ */
+function agentOf(url: URL, body?: Record<string, unknown>): string | null {
+  const raw = String(body?.agent ?? url.searchParams.get("agent") ?? DEFAULT_AGENT);
+  return AGENT_ID.test(raw) ? raw : null;
+}
 
 const PORT = Number(process.env.PORT ?? 4402);
 /** Where this server is reachable, for the self-call the demo endpoint makes. */
@@ -277,7 +289,9 @@ const server = createServer(async (req, res) => {
    */
   if (url.pathname === "/authority") {
     try {
-      return json(res, 200, await (await getAuthority()).state());
+      const agent = agentOf(url);
+      if (!agent) return json(res, 400, { error: "bad agent id" });
+      return json(res, 200, await (await getAuthority()).state(agent));
     } catch (e: unknown) {
       return json(res, 503, { error: e instanceof Error ? e.message : String(e) });
     }
@@ -299,7 +313,9 @@ const server = createServer(async (req, res) => {
       // Sweeping on read keeps expiry honest without a scheduler: nothing can
       // be listed as PENDING once its deadline has passed.
       await authority.sweepEscalations();
-      const entries = await authority.escalations(limit, status);
+      const agent = agentOf(url);
+      if (!agent) return json(res, 400, { error: "bad agent id" });
+      const entries = await authority.escalations(limit, status, agent);
       return json(res, 200, {
         returned: entries.length,
         entries: entries.map((e) => ({
@@ -363,7 +379,9 @@ const server = createServer(async (req, res) => {
   if (url.pathname === "/authority/log") {
     const limit = Math.min(Number(url.searchParams.get("limit") ?? 25) || 25, 100);
     try {
-      const entries = await (await getAuthority()).history(limit);
+      const agent = agentOf(url);
+      if (!agent) return json(res, 400, { error: "bad agent id" });
+      const entries = await (await getAuthority()).history(limit, agent);
       return json(res, 200, { returned: entries.length, entries });
     } catch (e: unknown) {
       return json(res, 503, { error: e instanceof Error ? e.message : String(e) });
@@ -374,27 +392,13 @@ const server = createServer(async (req, res) => {
     if (req.method !== "POST") return json(res, 405, { error: "POST only" });
 
     /*
-     * Deliberately not behind the /demo cooldown.
+     * Validated BEFORE the throttle, not after.
      *
-     * This route already has a spend limiter, and it is the product: $5 a day,
-     * $1 a call, 20 calls an hour, enforced from a persisted ledger against a
-     * policy anchored on chain. Bolting an IP cooldown on top would rate-limit
-     * the refusals -- which are free, and are the thing a reader most wants to
-     * click through -- while adding nothing to the approvals the policy is
-     * already bounding. If the daily budget is not sufficient protection for
-     * this endpoint, then the whole claim being made here is wrong.
-     *
-     * The short throttle that remains is only to keep one client from holding
-     * the partition lease continuously and starving everyone else.
+     * The throttle used to run first, so a caller sending two malformed
+     * requests got 429 for the second and never learned what was wrong with
+     * the first. A rate limit is for well-formed traffic; a bad request should
+     * be told it is bad immediately, and it costs nothing to say so.
      */
-    const waitMs = spendAllowed(clientIp(req));
-    if (waitMs > 0) {
-      return json(res, 429, {
-        error: "one decision at a time per client",
-        retryAfterSeconds: Math.ceil(waitMs / 1000),
-      });
-    }
-
     let body: Record<string, unknown>;
     try {
       body = JSON.parse(await readBody(req));
@@ -406,9 +410,8 @@ const server = createServer(async (req, res) => {
     const category = String(body.category ?? "market-data");
     const endpoint = String(body.endpoint ?? "https://api.example.com/v1/data");
     const recipient = String(body.recipient ?? "0x000000000000000000000000000000000000dEaD");
+    const agent = agentOf(url, body);
 
-    // Validated here so a bad request is answered as a bad request, rather than
-    // reaching the engine and coming back as a policy refusal it did not earn.
     if (!Number.isFinite(amount) || amount <= 0) {
       return json(res, 400, { error: "amount must be a positive number of USDT" });
     }
@@ -416,7 +419,37 @@ const server = createServer(async (req, res) => {
     if (!/^0x[0-9a-fA-F]{40}$/.test(recipient)) {
       return json(res, 400, { error: "recipient must be a 20-byte address" });
     }
-    if (!/^https?:\/\//.test(endpoint)) return json(res, 400, { error: "endpoint must be a URL" });
+    if (!/^https?:\/\/[\w.-]+(:\d+)?(\/[\w./~%+-]*)?(\?[\w=&.%+-]*)?$/.test(endpoint) || endpoint.length > 300) {
+      return json(res, 400, { error: "endpoint must be a plain http(s) URL" });
+    }
+    /*
+     * The category is constrained here rather than only compared to the allow
+     * list, because a refused spend is still RECORDED -- the decision log is
+     * append-only and public by design, with no delete path. Anything accepted
+     * here is therefore permanent and served to every reader of /authority/log.
+     * A payload posted as a category once sat in that ledger for good.
+     */
+    if (!/^[a-z0-9][a-z0-9 _.-]{0,39}$/i.test(category)) {
+      return json(res, 400, {
+        error: "category must be 1-40 chars of letters, digits, space, dot, dash or underscore",
+      });
+    }
+    if (!agent) {
+      return json(res, 400, { error: "agent must be 3-64 chars of letters, digits, dash or underscore" });
+    }
+
+    /*
+     * The throttle is lease-fairness only, not a spend limit. This route
+     * already has one, and it is the product: the policy's own budget, per
+     * call cap and rate limit, enforced per agent from a persisted ledger.
+     */
+    const waitMs = spendAllowed(clientIp(req) + ":" + agent);
+    if (waitMs > 0) {
+      return json(res, 429, {
+        error: "one decision at a time per client",
+        retryAfterSeconds: Math.ceil(waitMs / 1000),
+      });
+    }
 
     try {
       const authority = await getAuthority();
@@ -425,6 +458,7 @@ const server = createServer(async (req, res) => {
         category,
         endpoint,
         recipient,
+        agent,
         // The nonce is what makes two identical requests distinguishable. Taken
         // from the clock rather than a counter so it survives a restart without
         // colliding with an intent already inside its duplicate window.
