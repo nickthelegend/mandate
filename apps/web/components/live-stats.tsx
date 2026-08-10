@@ -40,7 +40,7 @@ export function LiveStats() {
   if (error) {
     return (
       <div className="border-t-2 border-[var(--refused)] pt-3">
-        <div className="eyebrow text-[#b42318]">could not read the chain</div>
+        <div className="text-[11px] font-medium uppercase tracking-wide text-neutral-500 text-[#b42318]">could not read the chain</div>
         <p className="figure mt-2 text-xs leading-relaxed text-[var(--ink-3)]">{error}</p>
         <a
           href={`${DEPLOYMENT.explorer}/address/${DEPLOYMENT.escrow}#events`}
@@ -57,8 +57,8 @@ export function LiveStats() {
   return (
     <Link href="/explorer" className="group block">
       <div className="flex items-baseline justify-between border-b border-[var(--line)] pb-2">
-        <span className="eyebrow">On chain so far</span>
-        <span className="eyebrow transition-colors group-hover:text-[var(--ink)]">
+        <span className="text-[11px] font-medium uppercase tracking-wide text-neutral-500">On chain so far</span>
+        <span className="text-[11px] font-medium uppercase tracking-wide text-neutral-500 transition-colors group-hover:text-[var(--ink)]">
           open the explorer →
         </span>
       </div>
@@ -66,7 +66,7 @@ export function LiveStats() {
       <dl className="flex flex-wrap items-baseline gap-x-12 gap-y-5 border-b-2 border-[var(--ink)] py-6">
         {stats.map((s) => (
           <div key={s.label} className="flex items-baseline gap-3">
-            <dt className="eyebrow">{s.label}</dt>
+            <dt className="text-[11px] font-medium uppercase tracking-wide text-neutral-500">{s.label}</dt>
             <dd className="figure text-2xl font-semibold tracking-[-0.03em]">{s.value}</dd>
           </div>
         ))}

@@ -163,11 +163,11 @@ export function Verifier() {
       <PageHead rubric="Verify" title="Check a payment yourself.">
         Paste any {DEPLOYMENT.chainName} transaction and state the terms it was supposed to meet.
         Your browser fetches the receipt from a public RPC and reads it for a real ERC-20{" "}
-        <code className="font-mono text-[var(--on-navy)]">Transfer</code> of that token to that
+        <code className="font-mono text-[var(--ink)]">Transfer</code> of that token to that
         recipient. Nothing is sent to a server — this page has none.
       </PageHead>
 
-      <div className="shell py-12">
+      <div className="shell py-10 sm:py-14">
       <div className="max-w-3xl">
 
       <div className="flex flex-wrap gap-2">

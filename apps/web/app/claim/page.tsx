@@ -134,7 +134,7 @@ export default function ClaimPage() {
         hour if nobody does the work.
       </PageHead>
 
-      <div className="shell py-12">
+      <div className="shell py-10 sm:py-14">
       <div className="max-w-3xl">
 
       {!hasWallet && (

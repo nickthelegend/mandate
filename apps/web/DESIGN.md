@@ -1,141 +1,133 @@
-# Design System: Outcome on Polaris
+# Design System: Outcome
 
 ## Overview
 
-**Outcome is a Polaris product and looks like one.** The system here is not
-invented for this repo — it is Polaris's own, ported from `polaris-landing`:
-brand blue `#1c6fd0`, the lime action colour `#a6f24a`, the near-black navy
-surfaces, the Untitled-UI grey ramp, Poppins, generous radii, and the soft
-low-opacity shadow.
+A light product surface with one orange doing all the work, a near-black pill
+for the primary action, and every page opening inside a clipped, rounded frame.
+Inter throughout, with Instrument Serif italic on a single accent word.
 
-This file records that port and the one thing Outcome adds.
+**The frame is the signature.** Each route opens with a rounded panel inset from
+the page edge, and everything inside it — background video, floating navbar,
+headline, dashboard tray — is cut off by the same corners. Content bleeding past
+the bottom edge is deliberate: it says the surface continues past what you can
+see, which is exactly what a live system does.
 
-**What Outcome adds, and only this:** a verdict pair. No payments UI ships with
-the state this product exists to render — a settlement that *succeeded* and
-still paid nobody. That is `--proven` / `--refused`, and everything else on this
-page is Polaris's.
+**What Outcome adds to the theme:** a verdict pair. No marketing surface ships
+with the state this product exists to render — a settlement that *succeeded* and
+still paid nobody. That is `--proven` / `--refused`.
 
-**What this replaced, and why it must not come back.** Three visual worlds were
-built here before this one and all three were rejected: a near-black console
-with an emerald accent, a struck-metal assay office in sterling greys, and a
-ticker-tape world in violet on newsprint. They were coherent and they were not
-the brand. Outcome does not get its own visual identity; it inherits Polaris's.
-Any future change that starts by inventing a world has already gone wrong.
+**What this replaced.** Four visual directions preceded this one and each was
+rejected: a near-black console with an emerald accent, a struck-metal assay
+office, a ticker-tape world in violet on newsprint, and a dark Polaris port. The
+lesson across all four is that this project does not want an invented world; it
+wants a specified one, executed exactly. This theme was given as a spec and is
+followed as a spec.
 
 ## Colors
 
-Strategy: **Polaris's own, dark-first.** Polaris runs a dark shell with light
-dashboard panels inside it. Outcome is all shell — there is no dashboard here,
-only argument and evidence — so the light panels went and the navy carries the
-whole product. Brand blue for anything interactive, and the lime spent once per
-view on the single action that matters.
-
-Three levels of navy give sections rhythm without a white slab between them:
-`--deep #070a11` for hero and closing bands, `--page #0d121c` for the run of the
-page, `--surface #121926` for cards and raised bands.
-
 ### Primary
 
-`--brand: #1c6fd0` — Polaris blue. Links, active nav, primary buttons, and the
-*proven* verdict. `--brand-ink: #4b95e8` for hover; `--brand-lit: #7db4f2` for links and
-small text; `--brand-wash` is a translucent blue for tinted backgrounds.
+`--brand: #ef4d23` — the orange. Section labels, active nav, the eyebrow dot,
+link accents, and the one action per view that should be pressed.
+`--brand-ink: #d13d16` for hover, `--brand-wash: #fdefe9` for tinted fills.
 
 ### Action
 
-`--lime: #a6f24a` on `--lime-ink: #05080f`. Polaris puts this in a pill, on
-dark, on the one thing it wants pressed. **Once per view.** It is not a
-success colour, not a status, and never a border.
+`--dark: #0b0f1a` — the near-black pill. This is the *primary* action; the
+orange is the *marketing* action. On a working page the dark pill submits and
+the orange pill navigates.
 
 ### Surfaces
 
-- `--deep: #070a11` · `--page: #0d121c` · `--surface: #121926` · `--panel: #161e2c`
-- Lines: `--line: #202939`, `--line-2: #2a3446`
+- `--page: #ededed` — the mat every frame sits on
+- `--hero: #d9d9d9` — the frame's own ground, behind the video
+- `--tray: #f5f2ee` — the warm tray the dashboard cards sit in
+- `--card: #ffffff` — cards, fields, the navbar pill
 
 ### Text ramp
 
-`--ink: #ffffff` · `--ink-2: #ccd3de` · `--ink-3: #98a2b3` · `--ink-4: #6b7482`.
-
-**Blue at full saturation is unreadable as text on navy.** `--brand #1c6fd0` is
-for fills only; `--brand-lit #7db4f2` carries links and small type.
+`--ink: #0b0f1a` · `--ink-2: #404040` · `--ink-3: #737373` · `--ink-4: #a3a3a3`.
+Lines: `--line: #e5e5e5`, `--line-2: #d4d4d4`.
 
 ### Verdicts
 
-`--proven: #7db4f2` on a translucent blue wash, and `--refused: #fda29b` on a
-translucent red one. Both washes are `rgba` so a settlement card tints the
-surface beneath it rather than punching a flat block into the page.
+`--proven: #0b7a55` on `--proven-wash: #e9f6f0`, and `--refused: #c0362a` on
+`--refused-wash: #fdefed`.
 
-**Proven deliberately borrows the brand blue rather than inventing a green.** A
-proof is not a success message. Green would make "proven" read as congratulation
-when it is a finding, and it would collide with the lime, which is an action.
-
-### Named Rules
-
-- **Lime is an action, never a state.** If it is not a button the visitor should
-  press, it is not lime.
-- **Blue means both interactive and proven**, and that is intentional: in this
-  product the thing you click and the thing that was verified are the same
-  colour family because they are the same argument.
-- **Red means refused, never "error".** A refund is the system working
-  correctly. Copy around red must not apologise.
+**Refused cannot be the brand orange**, which is why it takes a red the
+interface uses nowhere else — an orange that means both "press me" and "this
+payment failed" means neither. And proven takes a restrained green rather than a
+celebration: a proof is a finding, not congratulation.
 
 ## Typography
 
-**Poppins** (400/500/600/700) — Polaris's face, via `--font-poppins`. Headings
-are 700 with `-0.03em` tracking, which is how Polaris sets its own.
+**Inter** (400/500/600/700) carries the whole interface.
+
+**Instrument Serif italic** on exactly one accent word per headline. It is a
+counterpoint to Inter, not a second voice — used twice on a page it stops being
+an accent and becomes a typeface choice nobody made. Available as `.serif`.
 
 **Geist Mono** for every hash, address, amount and timestamp, via `.figure`.
-`tabular-nums` is on at `body`: a digit that reflows mid-read is a digit the
-reader cannot trust.
+`tabular-nums` is on at `body`.
 
 ### Hierarchy
 
-- **Hero** — Poppins 700, `-0.035em`, `clamp(2.25rem, 1.5rem + 2.6vw, 3.75rem)`.
-- **Page title** — Poppins 700, `-0.03em`, `clamp(1.75rem, 1.2rem + 2vw, 2.75rem)`.
-- **Section** — Poppins 700, `-0.025em`, 1.5–1.875rem.
-- **Body** — Poppins 400, 15–17px, measure capped around 68ch.
-- **Eyebrow** (`.eyebrow`) — Poppins 600, 12px, with a lime dot. One per page,
-  above the title. Never repeated over every section.
+- **Hero** — `clamp(36px, 8vw, 72px)`, weight 500, `-0.02em`, line-height 1.05.
+- **Page title** — `clamp(28px, 5.5vw, 52px)`, weight 500, `-0.02em`.
+- **Section** — `clamp(26px, 4vw, 40px)`, weight 500, `-0.02em`.
+- **Body** — `clamp(13px, 3.5vw, 16px)`, measure capped around 60ch.
+- **Eyebrow** (`.eyebrow`) — a white pill, 13px, with an orange dot. One per
+  page, above the title.
 
 ## Layout
 
-`.shell` — `max-width: 76rem`, 1.25rem gutter rising to 2rem at 768px. Every
-route uses it, so every surface shares one left edge.
+`.shell` — `max-width: 76rem`, 1rem gutter rising to 1.5rem at 640px.
 
-`.on-navy` drops a section to `--deep` — it no longer flips colour, it drops a
-step, which is what still makes a hero or a closing band read as separate.
-`.dotfield` is Polaris's dotted texture, dimmed for the dark ground, for a
-section that needs to sit apart without a border.
+`.frame` — the clipped rounded panel: `overflow: hidden`, 1rem radius rising to
+1.5rem at 640px, on `--hero`. The home page's frame is
+`h-[calc(100vh-24px)]` / `sm:h-[calc(100vh-32px)]`; interior frames are
+content-height. The page mat is the `p-3 sm:p-4` on `<body>`.
 
-Radii: 10px fields, 14px cards, `999px` buttons.
+The navbar lives **inside** the frame, not in the layout, because it floats over
+the hero video and is clipped by the same corners.
 
 ## Elevation & Depth
 
-On a dark ground a cast shadow does nothing — separation comes from a lighter
-top edge instead.
+Shadows are nearly invisible and separate rather than lift.
 
-- `--shadow-sm: inset 0 1px 0 rgba(255,255,255,0.04)` — cards, buttons, fields.
-- `--shadow-md`, `--shadow-lg` are real cast shadows, for the rare floating panel.
-
-Buttons and links rise `translateY(-1px)` on hover. That 1px is Polaris's whole
-interaction signature; do not replace it with a scale or a glow.
+- `--shadow-sm: 0 1px 2px rgba(11,15,26,0.05)` — cards, the navbar pill, fields.
+- `--shadow-md` / `--shadow-lg` for the rare floating panel.
 
 ## Components
 
 ### Buttons (`.btn`)
 
-Pills. `--brand` for ordinary primary actions, `--lime` for the one action per
-view, `--outline` for a raised secondary, `--ghost-navy` for a translucent one.
+Pills. `--dark` is the primary and carries a trailing `.btn__dot` circle at
+`white/15` with a chevron in it — the asymmetric right padding that makes that
+circle sit tight to the edge is the button's signature. `--brand` is the same
+shape in orange at `white/20`. `--outline` is white with a hairline.
+
+### Navbar
+
+A white pill, `max-w-[760px]`, floating inside the frame. Four links; under
+`md` they collapse into a hamburger and a dropdown panel. Everything else the
+project built is in the footer.
 
 ### Cards (`.card-p`)
 
-`--surface`, 1px `--line`, 14px radius, `--shadow-sm`. `--flat` drops to
-`--panel` with no edge highlight.
+White, 1rem radius, `--shadow-sm`, optional hairline via `--bordered`.
 
 ### Fields (`.field`)
 
-`--surface`, 1px `--line-2`, 10px radius. Focus lifts the background to
-`--panel`, borders in `--brand-lit`, and adds a 4px `--brand-wash` ring. Invalid
-swaps both to red.
+White, 1px `--line-2`, 8px radius. Focus is an orange border plus a 3px
+`--brand-wash` ring. Invalid swaps both to red.
+
+### Gauge (`components/gauge.tsx`)
+
+Forty ticks across a 180° sweep, `value`% of them lit. Reading a proportion off
+counted ticks shows the resolution the number is actually reported at, which a
+filled bar hides. Coordinates are rounded to 2dp — unrounded `cos`/`sin` lands
+on values like `20.000000000000004` and fails hydration on every tick.
 
 ### Verdict (`.verdict`)
 
@@ -144,35 +136,33 @@ filled disc for proven, a struck ring for refused, an open ring for awaiting.
 
 ### Settlement (`.settlement`)
 
-The signature component. One settlement rendered as a statement line, with the
-two facts that matter side by side and never moving: **what the facilitator
-claimed** and **what the chain actually moved**. Putting them in one row is the
-argument — the reader does not have to hold two numbers across a scroll to
-notice they disagree.
+The signature component. Two facts side by side that never move: **what the
+facilitator claimed** and **what the chain actually moved**. Putting them in one
+row is the argument — the reader does not have to hold two numbers across a
+scroll to notice they disagree.
 
 ### The mark
 
-A ring in Polaris blue with a gap at the top right, and a check in the lime
+A ring in the brand orange with a gap at the top right, and a check in `--dark`
 entering *through* that gap. The claim is the circle; the proof comes from
-outside it. Drawn as inline SVG (`components/logo.tsx`), also at
-`public/outcome-mark.svg`.
+outside it. Inline SVG in `components/logo.tsx`, also `public/outcome-mark.svg`.
 
 ## Do's and Don'ts
 
 ### Do:
 
+- Open every route with a frame, and let content bleed past its bottom edge.
 - Put a claim and its proof in the same viewport.
-- Spend the lime once per view, on the thing you want pressed.
+- Spend the serif italic once per page.
 - Keep hashes exact and copyable; abbreviate for the eye only.
 - Render "not known yet" as an em dash, distinct from zero.
 
 ### Don't:
 
-- Invent a visual world for Outcome. It is a Polaris product.
-- Introduce a white or near-white surface. The product is dark-first; a light
-  slab between navy sections is the thing this revision removed.
-- Use green for proven, or lime for anything that is not an action.
-- Add a fifth item to the header nav. Four is the demo path; the rest is footer.
+- Use the brand orange for a failure state, or the dark pill for navigation.
+- Add a fifth item to the navbar. Four is the demo path; the rest is footer.
+- Put the navbar in the layout. It belongs inside the frame.
 - Gradients as decoration, glassmorphism, glowing edges, pulsing dots.
 - Nested cards, or a coloured `border-left` on a callout.
 - The hero-metric template: four cards of big-number-over-small-label.
+- Ship an SVG with unrounded computed coordinates.

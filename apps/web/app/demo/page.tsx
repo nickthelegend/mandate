@@ -77,12 +77,12 @@ export default function DemoPage() {
         rubric="Every run is a real Sepolia transaction"
         title={<>Buy an article twice. Once you get it, once you don&rsquo;t.</>}
       >
-        Same protocol, same client, same <code className="font-mono text-[var(--on-navy)]">success: true</code>{" "}
+        Same protocol, same client, same <code className="font-mono text-[var(--ink)]">success: true</code>{" "}
         from the facilitator. The only difference is that one of the two settlements actually moved
         money — and only one of them gets the article.
       </PageHead>
 
-      <div className="shell py-12">
+      <div className="shell py-10 sm:py-14">
       <div className="max-w-3xl">
       <div className="grid gap-3 sm:grid-cols-2">
         <Button size="lg" className="gap-2" disabled={running !== null} onClick={() => run("honest")}>

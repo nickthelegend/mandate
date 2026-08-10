@@ -22,17 +22,15 @@ const MORE = [
 
 export function SiteFooter() {
   return (
-    <footer className="mt-20 border-t border-[var(--line)] bg-[var(--deep)]">
-      <div className="shell py-14">
+    <footer className="frame mt-3 bg-white px-4 py-12 sm:mt-4 sm:px-8 sm:py-14">
+      <div className="shell">
         <div className="grid gap-10 md:grid-cols-[1.2fr_1fr]">
           <div>
             <span className="flex items-center gap-2">
-              <OutcomeMark size={24} />
-              <span className="text-[17px] font-bold tracking-[-0.03em] text-[var(--ink)]">
-                Outcome
-              </span>
+              <OutcomeMark size={26} />
+              <span className="text-[17px] font-semibold tracking-[-0.02em]">Outcome</span>
             </span>
-            <p className="mt-3 max-w-sm text-sm leading-relaxed text-[var(--ink-3)]">
+            <p className="mt-3 max-w-sm text-[14px] leading-relaxed text-neutral-600">
               Payment that follows a verified result. Every number on this site is read from{" "}
               {DEPLOYMENT.chainName} in your browser — there is no backend to trust.
             </p>
@@ -40,22 +38,22 @@ export function SiteFooter() {
               href={source(DEPLOYMENT.escrow)}
               target="_blank"
               rel="noopener"
-              className="figure mt-4 inline-block text-xs text-[var(--ink-3)] underline-offset-4 hover:text-[var(--brand-lit)] hover:underline"
+              className="figure mt-4 inline-block text-[11px] text-neutral-500 underline-offset-4 hover:text-[var(--brand)] hover:underline"
             >
               OutcomeEscrow · {DEPLOYMENT.escrow.slice(0, 18)}… · verified
             </a>
           </div>
 
           <div>
-            <p className="text-xs font-semibold text-[var(--ink)]">Everything else</p>
+            <p className="text-[12px] font-semibold">Everything else</p>
             <ul className="mt-4 grid gap-3 sm:grid-cols-2">
               {MORE.map((m) => (
                 <li key={m.href}>
                   <Link href={m.href} className="group block">
-                    <span className="text-sm font-medium text-[var(--ink-2)] group-hover:text-[var(--brand-lit)]">
+                    <span className="text-[14px] text-neutral-700 group-hover:text-[var(--brand)]">
                       {m.label}
                     </span>
-                    <span className="block text-xs text-[var(--ink-4)]">{m.note}</span>
+                    <span className="block text-[12px] text-neutral-400">{m.note}</span>
                   </Link>
                 </li>
               ))}

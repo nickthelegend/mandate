@@ -81,7 +81,7 @@ export default function AgentPage() {
         it can lose: unproven work refunds the payer and the agent earns nothing.
       </PageHead>
 
-      <div className="shell py-12">
+      <div className="shell py-10 sm:py-14">
       <div className="max-w-3xl">
       <Button size="lg" className="gap-2" disabled={running} onClick={() => void run()}>
         {running ? <Loader2 className="size-4 animate-spin" /> : <Bot className="size-4" />}

@@ -41,7 +41,7 @@ export default function ExplorerPage() {
         or served from a database — each row is an event this contract emitted.
       </PageHead>
 
-      <div className="shell py-12">
+      <div className="shell py-10 sm:py-14">
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Stat label="Intents" value={rows ? String(rows.length) : "—"} />

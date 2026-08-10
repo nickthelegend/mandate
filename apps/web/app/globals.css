@@ -2,95 +2,76 @@
 @import "tw-animate-css";
 
 /*
- * Outcome runs on the Polaris design system.
+ * Outcome, on the Convix visual language.
  *
- * Not a new world invented for this repo: these are Polaris's own tokens --
- * brand blue #1c6fd0, the lime action colour #a6f24a, the near-black navy
- * surfaces, the Untitled-UI grey ramp, Poppins, generous radii and the soft
- * low-opacity shadow. Outcome is a Polaris product and reads like one.
+ * A light product surface -- #ededed page, white cards, a warm #f5f2ee tray --
+ * with one orange doing all the work and a near-black pill for the primary
+ * action. Inter throughout, with Instrument Serif italic reserved for a single
+ * accent word in a headline.
  *
- * The only thing Outcome adds is a verdict pair, because this product has one
- * state no payments UI ships with: a settlement that succeeded and still paid
- * nobody. That is `--proven` and `--refused` below, and nothing else here is
- * ours to reinvent.
+ * The one thing Outcome adds is a verdict pair, because no marketing surface
+ * ships with the state this product exists to render: a settlement that
+ * succeeded and still paid nobody.
  */
 
 :root {
-  /* ── Polaris brand ─────────────────────────────────────────── */
-  --brand: #1c6fd0;
-  --brand-ink: #4b95e8;
-  /* Blue at full saturation is too dark to read as text on navy. */
-  --brand-lit: #7db4f2;
-  --brand-wash: rgba(28, 111, 208, 0.16);
-  /* The action colour. Polaris puts it on dark, in a pill, and nowhere else. */
-  --lime: #a6f24a;
-  --lime-ink: #05080f;
+  /* ── Convix core ───────────────────────────────────────────── */
+  --brand: #ef4d23;
+  --brand-ink: #d13d16;
+  --brand-wash: #fdefe9;
+  --dark: #0b0f1a;
 
-  /*
-   * Dark-first, on Polaris's own navy.
-   *
-   * Polaris runs a dark shell with light dashboard panels inside it. Outcome is
-   * all shell -- there is no dashboard here, only argument and evidence -- so
-   * the light panels went and the navy carries the whole product. Three levels
-   * so sections still have rhythm without a white slab between them.
-   */
-  --page: #0d121c;
-  --deep: #070a11;
-  --surface: #121926;
-  --panel: #161e2c;
-  --navy: #070a11;
-  --navy-raised: #121926;
-  --navy-line: #202939;
+  /* ── Surfaces ──────────────────────────────────────────────── */
+  --page: #ededed;
+  --hero: #d9d9d9;
+  --tray: #f5f2ee;
+  --card: #ffffff;
+  --surface: #ffffff;
+  --panel: #fafafa;
 
-  /* ── Text ramp, inverted ───────────────────────────────────── */
-  --ink: #ffffff;
-  --ink-2: #ccd3de;
-  --ink-3: #98a2b3;
-  --ink-4: #6b7482;
-  --on-navy: #ffffff;
-  --on-navy-2: #ccd3de;
-  --on-navy-3: #98a2b3;
+  /* ── Text ramp (neutral) ───────────────────────────────────── */
+  --ink: #0b0f1a;
+  --ink-2: #404040;
+  --ink-3: #737373;
+  --ink-4: #a3a3a3;
 
   /* ── Lines and depth ───────────────────────────────────────── */
-  --line: #202939;
-  --line-2: #2a3446;
-  /* On dark, separation is a lighter edge rather than a cast shadow. */
-  --shadow-sm: inset 0 1px 0 rgba(255, 255, 255, 0.04);
-  --shadow-md: 0 4px 16px -6px rgba(0, 0, 0, 0.6);
-  --shadow-lg: 0 18px 40px -18px rgba(0, 0, 0, 0.75);
+  --line: #e5e5e5;
+  --line-2: #d4d4d4;
+  --shadow-sm: 0 1px 2px rgba(11, 15, 26, 0.05);
+  --shadow-md: 0 4px 14px -4px rgba(11, 15, 26, 0.1);
+  --shadow-lg: 0 18px 40px -18px rgba(11, 15, 26, 0.22);
 
   /*
-   * The verdict pair. The one thing Polaris has no token for, because no
-   * payments system before this one had to render "it succeeded and moved
-   * nothing". Proven borrows the brand blue rather than inventing a green:
-   * a proof is not a success message.
+   * Verdicts. The orange is the brand and cannot also mean "refused", so a
+   * refusal takes the red the interface uses nowhere else, and proven takes a
+   * neutral-positive rather than a celebration -- a proof is a finding.
    */
-  --proven: #7db4f2;
-  --proven-wash: rgba(28, 111, 208, 0.14);
-  --proven-line: rgba(28, 111, 208, 0.45);
-  --refused: #fda29b;
-  --refused-wash: rgba(217, 45, 32, 0.12);
-  --refused-line: rgba(217, 45, 32, 0.45);
+  --proven: #0b7a55;
+  --proven-wash: #e9f6f0;
+  --proven-line: #a7ddc7;
+  --refused: #c0362a;
+  --refused-wash: #fdefed;
+  --refused-line: #f2c0ba;
 
-  --radius: 12px;
+  --radius: 16px;
 }
 
-/* shadcn primitives read these; they are aliases onto Polaris above. */
+/* shadcn primitives read these; they are aliases onto the tokens above. */
 :root {
   --background: var(--page);
   --foreground: var(--ink);
-  --card: var(--page);
   --card-foreground: var(--ink);
-  --popover: var(--page);
+  --popover: var(--card);
   --popover-foreground: var(--ink);
-  --primary: var(--brand);
+  --primary: var(--dark);
   --primary-foreground: #ffffff;
-  --secondary: var(--surface);
+  --secondary: var(--panel);
   --secondary-foreground: var(--ink);
-  --muted: var(--surface);
+  --muted: var(--panel);
   --muted-foreground: var(--ink-3);
   --accent: var(--brand-wash);
-  --accent-foreground: var(--brand-lit);
+  --accent-foreground: var(--brand-ink);
   --destructive: var(--refused);
   --destructive-foreground: #ffffff;
   --border: var(--line);
@@ -99,8 +80,8 @@
 }
 
 @theme inline {
-  --font-sans: var(--font-poppins), ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-poppins), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-instrument), ui-serif, Georgia, serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -122,10 +103,9 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
   --radius-sm: 8px;
-  --radius-md: 10px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
-  --radius-2xl: 20px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
 }
 
 @layer base {
@@ -149,94 +129,80 @@
     outline-offset: 2px;
   }
 
-  .on-navy :focus-visible {
-    outline-color: var(--lime);
-  }
-
   ::selection {
     background: var(--brand);
     color: #fff;
   }
 }
 
-/* --------------------------------------------------------------------------
- * Polaris components, as this product needs them.
- * ----------------------------------------------------------------------- */
-
 @layer components {
+  /* The accent word in a headline. Used once per page, never for emphasis. */
+  .serif {
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-weight: 400;
+  }
+
   .shell {
     width: 100%;
     max-width: 76rem;
     margin-inline: auto;
-    padding-inline: 1.25rem;
+    padding-inline: 1rem;
   }
 
-  @media (min-width: 768px) {
+  @media (min-width: 640px) {
     .shell {
-      padding-inline: 2rem;
+      padding-inline: 1.5rem;
     }
   }
 
   /*
-   * The deepest band. Everything is navy now, so this no longer flips colour --
-   * it drops a step, which is what still makes a hero or a closing section read
-   * as separate from the run of the page.
+   * The clipped frame. Every page opens with one: a rounded panel inset from
+   * the page edge that everything inside is cut off by, so content bleeding
+   * past the bottom edge reads as deliberate rather than broken.
    */
-  .on-navy {
-    background: var(--deep);
-    color: var(--ink);
+  .frame {
+    position: relative;
+    overflow: hidden;
+    background: var(--hero);
+    border-radius: 1rem;
   }
 
-  .on-navy-raised {
-    background: var(--surface);
+  @media (min-width: 640px) {
+    .frame {
+      border-radius: 1.5rem;
+    }
   }
 
-  /*
-   * The dotted field Polaris puts behind light sections. Subtle enough to read
-   * as paper texture rather than a pattern competing with content.
-   */
-  .dotfield {
-    background:
-      radial-gradient(circle at 1px 1px, rgba(148, 163, 184, 0.11) 1px, transparent 1.35px),
-      linear-gradient(180deg, var(--panel) 0%, var(--page) 100%);
-    background-size: 14px 14px, 100% 100%;
+  /* The warm tray the dashboard cards sit in. */
+  .tray {
+    background: var(--tray);
+    border-radius: 1.5rem;
   }
 
-  /* A Polaris card: white, hairline, generous radius, shadow that barely lifts. */
   .card-p {
-    background: var(--surface);
-    border: 1px solid var(--line);
-    border-radius: 14px;
+    background: var(--card);
+    border-radius: 1rem;
     box-shadow: var(--shadow-sm);
   }
 
-  .card-p--flat {
-    background: var(--panel);
-    box-shadow: none;
+  .card-p--bordered {
+    border: 1px solid var(--line);
   }
 
-  .card-p--navy {
-    background: var(--navy-raised);
-    border-color: var(--navy-line);
-    box-shadow: none;
-  }
-
-  /* The eyebrow Polaris runs above a section title. */
   .eyebrow {
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    font-size: 0.75rem;
-    font-weight: 600;
-    letter-spacing: -0.01em;
-    color: var(--ink-3);
+    background: #fff;
+    border-radius: 999px;
+    padding: 0.375rem 1rem;
+    box-shadow: var(--shadow-sm);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink);
   }
 
-  .on-navy .eyebrow {
-    color: var(--on-navy-3);
-  }
-
-  /* Every hash, address and amount. */
   .figure {
     font-family: var(--font-mono);
     font-variant-numeric: tabular-nums;
@@ -249,83 +215,119 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 0.5rem;
+    gap: 0.625rem;
     border-radius: 999px;
-    padding: 0.6875rem 1.375rem;
-    font-size: 0.875rem;
-    font-weight: 600;
-    letter-spacing: -0.01em;
+    font-size: 14px;
+    font-weight: 500;
     white-space: nowrap;
     transition:
-      transform 180ms ease,
       background 180ms ease,
-      box-shadow 180ms ease,
-      border-color 180ms ease;
-  }
-
-  .btn:hover:not(:disabled) {
-    transform: translateY(-1px);
+      color 180ms ease,
+      border-color 180ms ease,
+      box-shadow 180ms ease;
   }
 
   .btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
-    transform: none;
   }
 
-  /* The action colour, used once per view the way Polaris uses it. */
-  .btn--lime {
-    background: var(--lime);
-    color: var(--lime-ink);
-    box-shadow: var(--shadow-sm);
+  /*
+   * The dark pill. Padding is asymmetric because the trailing circle sits
+   * tight to the edge -- that offset is the signature of this button.
+   */
+  .btn--dark {
+    background: var(--dark);
+    color: #fff;
+    padding: 0.5rem 0.5rem 0.5rem 1.5rem;
   }
 
-  .btn--lime:hover:not(:disabled) {
-    box-shadow: 0 6px 18px -6px rgba(166, 242, 74, 0.5);
+  .btn--dark:hover:not(:disabled) {
+    background: #161d2e;
+  }
+
+  .btn--dark .btn__dot {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.15);
+  }
+
+  @media (min-width: 640px) {
+    .btn--dark {
+      padding: 0.625rem 0.5rem 0.625rem 1.75rem;
+    }
+
+    .btn--dark .btn__dot {
+      width: 1.75rem;
+      height: 1.75rem;
+    }
   }
 
   .btn--brand {
     background: var(--brand);
     color: #fff;
-    box-shadow: var(--shadow-sm);
+    padding: 0.5rem 0.5rem 0.5rem 1.125rem;
   }
 
   .btn--brand:hover:not(:disabled) {
     background: var(--brand-ink);
   }
 
+  .btn--brand .btn__dot {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  .btn--plain {
+    background: var(--brand);
+    color: #fff;
+    padding: 0.5rem 1.25rem;
+  }
+
+  .btn--plain:hover:not(:disabled) {
+    background: var(--brand-ink);
+  }
+
   .btn--outline {
-    background: var(--surface);
+    background: #fff;
     color: var(--ink);
     border: 1px solid var(--line-2);
-    box-shadow: var(--shadow-sm);
+    padding: 0.5rem 1.25rem;
   }
 
   .btn--outline:hover:not(:disabled) {
-    background: var(--panel);
     border-color: var(--ink-4);
   }
 
-  .btn--ghost-navy {
-    background: rgba(255, 255, 255, 0.06);
-    color: #fff;
-    border: 1px solid rgba(255, 255, 255, 0.14);
+  .btn--ghost {
+    background: transparent;
+    color: var(--ink-2);
+    padding: 0.5rem 1rem;
   }
 
-  .btn--ghost-navy:hover:not(:disabled) {
-    background: rgba(255, 255, 255, 0.1);
+  .btn--ghost:hover:not(:disabled) {
+    color: var(--ink);
   }
 
   /* ── Fields ───────────────────────────────────────────────── */
 
   .field {
     width: 100%;
-    background: var(--surface);
+    background: #fff;
     color: var(--ink);
     border: 1px solid var(--line-2);
-    border-radius: 10px;
-    padding: 0.625rem 0.875rem;
-    box-shadow: var(--shadow-sm);
+    border-radius: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    font-size: 14px;
     transition:
       border-color 160ms ease,
       box-shadow 160ms ease;
@@ -341,41 +343,34 @@
 
   .field:focus {
     outline: none;
-    background: var(--panel);
-    border-color: var(--brand-lit);
-    box-shadow: 0 0 0 4px var(--brand-wash);
+    border-color: var(--brand);
+    box-shadow: 0 0 0 3px var(--brand-wash);
   }
 
   .field[aria-invalid="true"] {
-    border-color: var(--refused-line);
+    border-color: var(--refused);
   }
 
   .field[aria-invalid="true"]:focus {
-    box-shadow: 0 0 0 4px var(--refused-wash);
+    box-shadow: 0 0 0 3px var(--refused-wash);
   }
 
   /* ── Verdicts ─────────────────────────────────────────────── */
 
-  /*
-   * The one component Polaris does not already own. A verdict is a pill with a
-   * mark, and the mark carries the state so it survives greyscale: a filled
-   * disc for proven, a struck ring for refused, an open ring for unread.
-   */
   .verdict {
     display: inline-flex;
     align-items: center;
-    gap: 0.4375rem;
+    gap: 0.375rem;
     border-radius: 999px;
-    padding: 0.25rem 0.625rem 0.25rem 0.5rem;
-    font-size: 0.75rem;
-    font-weight: 600;
-    letter-spacing: -0.01em;
+    padding: 0.125rem 0.5rem 0.125rem 0.375rem;
+    font-size: 11px;
+    font-weight: 500;
     white-space: nowrap;
   }
 
   .verdict svg {
-    width: 13px;
-    height: 13px;
+    width: 12px;
+    height: 12px;
     flex: none;
   }
 
@@ -401,7 +396,7 @@
   }
 
   .verdict--awaiting {
-    background: var(--surface);
+    background: #f5f5f5;
     color: var(--ink-3);
   }
 
@@ -411,59 +406,24 @@
     stroke-width: 2;
   }
 
-
   /*
-   * The settlement panel. Left-hand rule is deliberate and is the one place it
-   * appears: this is a bank statement line, where a flagged row has always
-   * carried a rule in the margin.
+   * The settlement card. Two facts side by side that never move: what the
+   * facilitator claimed, and what the chain actually moved.
    */
   .settlement {
+    background: #fff;
     border: 1px solid var(--line);
-    border-radius: 14px;
-    background: var(--surface);
+    border-radius: 1rem;
     box-shadow: var(--shadow-sm);
-    padding: 1.25rem 1.375rem;
+    padding: 1.25rem;
   }
 
   .settlement--refused {
     border-color: var(--refused-line);
-    background: linear-gradient(180deg, var(--refused-wash), transparent 60%), var(--surface);
   }
 
   .settlement--proven {
     border-color: var(--proven-line);
-    background: linear-gradient(180deg, var(--proven-wash), transparent 60%), var(--surface);
-  }
-
-  /* A row of key/value facts, the way Polaris sets a summary. */
-  .facts {
-    display: grid;
-    gap: 0.5rem 1.5rem;
-  }
-
-  @media (min-width: 640px) {
-    .facts {
-      grid-template-columns: 180px minmax(0, 1fr);
-    }
-  }
-
-  .facts dt {
-    font-size: 0.8125rem;
-    color: var(--ink-3);
-  }
-
-  .facts dd {
-    font-size: 0.8125rem;
-    color: var(--ink);
-    word-break: break-all;
-  }
-
-  .on-navy .facts dt {
-    color: var(--on-navy-3);
-  }
-
-  .on-navy .facts dd {
-    color: var(--on-navy);
   }
 }
 

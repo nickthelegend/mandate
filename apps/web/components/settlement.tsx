@@ -57,7 +57,7 @@ export function Settlement({
           href={href}
           target="_blank"
           rel="noopener"
-          className="figure text-xs text-[var(--ink-3)] underline-offset-4 hover:text-[var(--brand-lit)] hover:underline"
+          className="figure text-xs text-[var(--ink-3)] underline-offset-4 hover:text-[var(--brand)] hover:underline"
         >
           open on Etherscan →
         </a>

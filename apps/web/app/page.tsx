@@ -1,32 +1,34 @@
 import Link from "next/link";
+import { ChevronRight } from "lucide-react";
 
-import { LiveStats } from "@/components/live-stats";
-import { CodeTabs } from "@/components/code-tabs";
+import { Navbar } from "@/components/navbar";
+import { DashboardPreview } from "@/components/dashboard-preview";
 import { Settlement } from "@/components/settlement";
+import { CodeTabs } from "@/components/code-tabs";
 import { DEPLOYMENT, tx } from "@/lib/outcome";
 
 /*
  * Built for a judge with ninety seconds.
  *
- * One claim, one proof, one action. The page states the gap in a sentence,
- * shows the same payment settled twice with opposite results, and sends them to
- * the live demo. Everything else the project built is below the fold or in the
- * footer, because a first viewport that offers ten destinations offers none.
+ * One sentence, one action, and the evidence immediately under it. The hero is
+ * a single clipped frame -- video, navbar, headline and dashboard are cut off
+ * together by the same rounded corners, so the tray bleeding past the bottom
+ * edge reads as deliberate rather than as a layout that ran out of room.
  */
 
 const DEAD = "0x000000000000000000000000000000000000dEaD";
 
-/*
- * One demand, settled twice. Both verified against Sepolia from this repo
- * before being written down: same token, same recipient, same amount, and the
- * only difference is whether the money actually moved.
- */
 const DEMAND = {
   amount: "1000000",
   token: "0x0d864A625c280F7f9B9AD024d12F94f5D6DCCF13",
   recipient: DEAD,
 };
 
+/*
+ * One demand, settled twice. Both verified against Sepolia from this repo
+ * before being written down: same token, same recipient, same amount, and the
+ * only difference is whether the money actually moved.
+ */
 const SETTLEMENTS = [
   {
     label: "A lying facilitator",
@@ -69,73 +71,106 @@ const PROOF = [
 export default function Home() {
   return (
     <>
-      {/* One sentence, one proof, one action. */}
-      <section className="on-navy">
-        <div className="shell py-16 sm:py-24">
-          <p className="eyebrow">
-            <span className="inline-block size-1.5 rounded-full bg-[var(--lime)]" />
-            {DEPLOYMENT.chainName} · settled through KeeperHub
-          </p>
+      <section className="frame h-[calc(100vh-24px)] w-full sm:h-[calc(100vh-32px)]">
+        {/*
+          * Ambient only: muted, looping, and not interactive, with a poster so
+          * the frame is never a grey rectangle while the file loads.
+          */}
+        <video
+          className="pointer-events-none absolute inset-0 h-full w-full object-cover"
+          autoPlay
+          loop
+          muted
+          playsInline
+          preload="auto"
+          disableRemotePlayback
+          poster="https://images.unsplash.com/photo-1557683316-973673baf926?w=1600&q=60"
+        >
+          <source
+            src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260424_064411_9e9d7f84-9277-41f4-ab10-59172d89e6be.mp4"
+            type="video/mp4"
+          />
+        </video>
+        <div className="absolute inset-0 bg-white/10" />
 
-          <h1 className="mt-6 max-w-3xl text-[clamp(2.25rem,1.5rem+2.6vw,3.75rem)] font-bold leading-[1.08] tracking-[-0.035em] text-balance">
-            x402 pays on a promise. Outcome pays on a receipt.
-          </h1>
+        <div className="relative z-10 flex h-full flex-col">
+          <Navbar />
 
-          <p className="mt-6 max-w-xl text-[17px] leading-relaxed text-[var(--on-navy-2)]">
-            A facilitator reports <code className="text-white">success: true</code> and every x402
-            server hands over the goods. Nobody reads the transaction. Outcome does — and refuses to
-            release the money when the chain disagrees.
-          </p>
+          <div className="flex flex-col items-center px-4 pb-8 pt-10 text-center sm:pb-12 sm:pt-16">
+            <p className="eyebrow">
+              <span className="inline-block size-1.5 rounded-full bg-[var(--brand)]" />
+              {DEPLOYMENT.chainName} · settled through KeeperHub
+            </p>
 
-          <div className="mt-9 flex flex-wrap gap-3">
-            <Link href="/demo" className="btn btn--lime">
+            <h1
+              className="mt-5 max-w-4xl sm:mt-6"
+              style={{
+                fontSize: "clamp(36px, 8vw, 72px)",
+                lineHeight: 1.05,
+                fontWeight: 500,
+                letterSpacing: "-0.02em",
+              }}
+            >
+              Pay agents for <span className="serif">proven</span>
+              <br />
+              work, not promises
+            </h1>
+
+            <p
+              className="mt-4 px-2 text-neutral-700 sm:mt-6"
+              style={{ fontSize: "clamp(13px, 3.5vw, 16px)" }}
+            >
+              x402 pays on a facilitator&rsquo;s word. Outcome reads the receipt.
+            </p>
+
+            <Link href="/demo" className="btn btn--dark mt-6 sm:mt-8">
               Run the live demo
-            </Link>
-            <Link href="/verify" className="btn btn--ghost-navy">
-              Verify any payment
+              <span className="btn__dot">
+                <ChevronRight className="size-4" />
+              </span>
             </Link>
           </div>
 
-          <p className="figure mt-10 text-xs text-[var(--on-navy-3)]">
-            npm i outcome-sdk · npx outcome-mcp · 88 tests · two verified contracts
-          </p>
+          <div className="px-3 sm:px-4">
+            <DashboardPreview />
+          </div>
         </div>
       </section>
 
       {/* The proof, immediately. Same demand, opposite outcomes. */}
-      <section className="dotfield border-b border-[var(--line)]">
-        <div className="shell py-16">
-          <h2 className="max-w-2xl text-2xl font-bold tracking-[-0.025em] text-balance sm:text-3xl">
-            The same payment, settled twice.
-          </h2>
-          <p className="mt-3 max-w-2xl text-[15px] leading-relaxed text-[var(--ink-3)]">
-            Both facilitators reported success. One moved the money and one did not. Both
-            transactions are live and open to inspection.
+      <section className="shell py-16 sm:py-20">
+        <h2
+          className="max-w-2xl"
+          style={{ fontSize: "clamp(26px, 4vw, 40px)", lineHeight: 1.1, fontWeight: 500, letterSpacing: "-0.02em" }}
+        >
+          The same payment, settled <span className="serif">twice</span>.
+        </h2>
+        <p className="mt-3 max-w-2xl text-[15px] leading-relaxed text-neutral-700">
+          Both facilitators reported success. One moved the money and one did not. Both transactions
+          are live and open to inspection.
+        </p>
+
+        <div className="card-p card-p--bordered mt-8 p-5">
+          <p className="text-[12px] font-medium text-neutral-500">What was demanded, both times</p>
+          <p className="figure mt-1.5 break-all text-[13px]">
+            {DEMAND.amount} of {DEMAND.token} to {DEMAND.recipient}
           </p>
+        </div>
 
-          <div className="card-p mt-8 p-5">
-            <p className="text-xs font-semibold text-[var(--ink-3)]">What was demanded, both times</p>
-            <p className="figure mt-1.5 text-[13px] break-all text-[var(--ink)]">
-              {DEMAND.amount} of {DEMAND.token} to {DEMAND.recipient}
-            </p>
-          </div>
-
-          <div className="mt-5 grid gap-5 lg:grid-cols-2">
-            {SETTLEMENTS.map((s) => (
-              <Settlement key={s.hash} {...s} href={tx(s.hash)} />
-            ))}
-          </div>
+        <div className="mt-5 grid gap-5 lg:grid-cols-2">
+          {SETTLEMENTS.map((s) => (
+            <Settlement key={s.hash} {...s} href={tx(s.hash)} />
+          ))}
         </div>
       </section>
 
-      <section className="shell py-14">
-        <LiveStats />
-      </section>
-
       {/* Three claims a neighbouring project cannot copy. */}
-      <section className="border-y border-[var(--line)] bg-[var(--surface)]">
-        <div className="shell py-16">
-          <h2 className="max-w-2xl text-2xl font-bold tracking-[-0.025em] text-balance sm:text-3xl">
+      <section className="frame bg-[var(--tray)] px-4 py-16 sm:px-8 sm:py-20">
+        <div className="shell">
+          <h2
+            className="max-w-2xl"
+            style={{ fontSize: "clamp(26px, 4vw, 40px)", lineHeight: 1.1, fontWeight: 500, letterSpacing: "-0.02em" }}
+          >
             Three things you can check on chain right now.
           </h2>
 
@@ -145,12 +180,12 @@ export default function Home() {
                 <h3 className="text-[15px] font-semibold leading-snug tracking-[-0.01em]">
                   {c.title}
                 </h3>
-                <p className="mt-2 flex-1 text-sm leading-relaxed text-[var(--ink-3)]">{c.body}</p>
+                <p className="mt-2 flex-1 text-[13px] leading-relaxed text-neutral-600">{c.body}</p>
                 <a
                   href={tx(c.hash)}
                   target="_blank"
                   rel="noopener"
-                  className="figure mt-4 text-xs text-[var(--brand-lit)] underline-offset-4 hover:underline"
+                  className="figure mt-4 text-[11px] text-[var(--brand)] underline-offset-4 hover:underline"
                 >
                   {c.hash.slice(0, 16)}… on Etherscan →
                 </a>
@@ -161,41 +196,53 @@ export default function Home() {
       </section>
 
       {/* What you install. */}
-      <section className="shell py-16">
+      <section className="shell py-16 sm:py-20">
         <div className="grid gap-10 lg:grid-cols-[1fr_1.15fr] lg:items-start">
           <div>
-            <h2 className="text-2xl font-bold tracking-[-0.025em] text-balance sm:text-3xl">
+            <h2
+              style={{ fontSize: "clamp(26px, 4vw, 40px)", lineHeight: 1.1, fontWeight: 500, letterSpacing: "-0.02em" }}
+            >
               One call closes the gap.
             </h2>
-            <p className="mt-4 text-[15px] leading-relaxed text-[var(--ink-3)]">
+            <p className="mt-4 text-[15px] leading-relaxed text-neutral-700">
               The SDK runs anywhere — browser, edge, or an agent runtime. The MCP server needs no
               configuration: the defaults point at the live deployment, and every read-only tool
               works without a credential.
             </p>
-            <p className="mt-4 text-[15px] leading-relaxed text-[var(--ink-3)]">
+            <p className="mt-4 text-[15px] leading-relaxed text-neutral-700">
               The party being asked to trust a payment is the one who most needs to check it, so
               checking must not require a server or a key. This site is built on the published
               package, not a private copy of the logic.
             </p>
-            <Link href="/docs" className="btn btn--brand mt-7">
+            <Link href="/docs" className="btn btn--dark mt-7">
               Read the quickstart
+              <span className="btn__dot">
+                <ChevronRight className="size-4" />
+              </span>
             </Link>
           </div>
           <CodeTabs />
         </div>
       </section>
 
-      <section className="on-navy">
-        <div className="shell py-16">
-          <h2 className="max-w-2xl text-2xl font-bold tracking-[-0.025em] text-balance sm:text-3xl">
-            No model in the money path.
+      {/* The close. */}
+      <section className="frame bg-[var(--dark)] px-4 py-16 text-white sm:px-8 sm:py-20">
+        <div className="shell">
+          <h2
+            className="max-w-2xl"
+            style={{ fontSize: "clamp(26px, 4vw, 40px)", lineHeight: 1.1, fontWeight: 500, letterSpacing: "-0.02em" }}
+          >
+            No model in the <span className="serif">money path</span>.
           </h2>
-          <p className="mt-4 max-w-2xl text-[15px] leading-relaxed text-[var(--on-navy-2)]">
+          <p className="mt-4 max-w-2xl text-[15px] leading-relaxed text-white/70">
             Every comparable project resolves payment disputes with an LLM judge. When the chain
             already knows whether value moved, adjudication is a lookup, not an opinion.
           </p>
-          <Link href="/demo" className="btn btn--lime mt-8">
+          <Link href="/demo" className="btn btn--brand mt-8">
             See it refuse a payment
+            <span className="btn__dot">
+              <ChevronRight className="size-4" />
+            </span>
           </Link>
         </div>
       </section>

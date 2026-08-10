@@ -46,7 +46,7 @@ export function OutcomeMark({
        */}
       <path
         d="M10.4 16.6l4.3 4.3L28.8 6.9"
-        stroke="var(--lime)"
+        stroke="var(--dark)"
         strokeWidth="3.4"
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -56,16 +56,3 @@ export function OutcomeMark({
 }
 
 /** Mark plus wordmark, set the way Polaris sets its own. */
-export function Logo() {
-  return (
-    <span className="flex items-center gap-2">
-      <OutcomeMark />
-      <span
-        className="text-[19px] font-bold tracking-[-0.03em]"
-        style={{ color: "var(--ink)" }}
-      >
-        Outcome
-      </span>
-    </span>
-  );
-}

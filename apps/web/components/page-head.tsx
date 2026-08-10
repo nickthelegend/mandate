@@ -1,9 +1,12 @@
+import { Navbar } from "@/components/navbar";
+
 /**
- * The page header.
+ * An interior page's opening frame.
  *
- * A navy band naming the surface, with the work below on white. One band, one
- * eyebrow, one title -- the same opening on every route, so nine surfaces read
- * as one product.
+ * The same clipped, rounded panel the home page uses, carrying the same
+ * floating navbar — just short instead of full-viewport. That repetition is
+ * what makes nine routes read as one product; the work itself happens below the
+ * frame, on the page mat, where it has room.
  */
 
 export function PageHead({
@@ -16,14 +19,32 @@ export function PageHead({
   children?: React.ReactNode;
 }) {
   return (
-    <section className="on-navy">
-      <div className="shell py-12 sm:py-16">
-        <p className="eyebrow"><span className="inline-block size-1.5 rounded-full bg-[var(--lime)]" />{rubric}</p>
-        <h1 className="mt-5 max-w-3xl text-[clamp(1.75rem,1.2rem+2vw,2.75rem)] font-bold leading-[1.1] tracking-[-0.03em] text-balance">
+    <section className="frame">
+      <Navbar />
+
+      <div className="flex flex-col items-center px-4 pb-12 pt-8 text-center sm:pb-16 sm:pt-12">
+        <p className="eyebrow">
+          <span className="inline-block size-1.5 rounded-full bg-[var(--brand)]" />
+          {rubric}
+        </p>
+
+        <h1
+          className="mt-5 max-w-3xl"
+          style={{
+            fontSize: "clamp(28px, 5.5vw, 52px)",
+            lineHeight: 1.06,
+            fontWeight: 500,
+            letterSpacing: "-0.02em",
+          }}
+        >
           {title}
         </h1>
+
         {children && (
-          <p className="mt-4 max-w-[62ch] text-[15px] leading-relaxed text-[var(--on-navy-2)]">
+          <p
+            className="mt-4 max-w-[60ch] text-neutral-700"
+            style={{ fontSize: "clamp(13px, 3.5vw, 16px)" }}
+          >
             {children}
           </p>
         )}

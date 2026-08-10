@@ -39,7 +39,7 @@ export default function X402Page() {
         title="x402 never checks the transaction it was handed."
       />
 
-      <div className="shell py-12">
+      <div className="shell py-10 sm:py-14">
       <div className="max-w-3xl">
 
       <div className="space-y-4 leading-relaxed text-[var(--ink-3)]">
