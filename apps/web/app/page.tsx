@@ -6,7 +6,6 @@ import { DashboardPreview } from "@/components/dashboard-preview";
 import { DecisionDemo } from "@/components/decision-demo";
 import { CodeTabs } from "@/components/code-tabs";
 import { DEPLOYMENT, tx, address } from "@/lib/outcome";
-import { HeroChain } from "@/components/hero-chain";
 
 /*
  * Built for a judge with ninety seconds.
@@ -16,6 +15,13 @@ import { HeroChain } from "@/components/hero-chain";
  * the decision engine runs client-side below the fold, and every on-chain step
  * of the same story links a transaction KeeperHub's relayer sent.
  */
+
+/**
+ * Static export puts the site under /outcome on Pages, and a raw `src` is not
+ * rewritten for that the way `next/link` and `next/image` are — so a plain
+ * "/hero/hero.mp4" 404s in production while working perfectly in dev.
+ */
+const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
 const REGISTRY = DEPLOYMENT.registry;
 const RELAYER = "0xA17cb6adb58277E5b4A44B8c1ECB449BB6614E87";
@@ -89,10 +95,29 @@ export default function Home() {
         {/* Ambient only: muted, looping, not interactive, with a poster so the
             frame is never a grey rectangle while the file loads. */}
         {/*
-          * The backdrop is the fifteen-rule chain, running -- not a stock
-          * video. See components/hero-chain.tsx for why that mattered.
+          * The hero clip, self-hosted.
+          *
+          * It used to be a 33 MB fetch from a third-party CDN with an Unsplash
+          * poster, which meant the first thing anyone saw depended on two hosts
+          * this project does not control, and cost a judge on conference wifi
+          * half a minute. Same footage, cropped to the strip `object-cover`
+          * actually shows rather than shipping 3328x2492 for CSS to throw away,
+          * and re-encoded: 33 MB to 1.1 MB. The poster is a frame of the video
+          * itself, so the still and the motion cannot disagree.
           */}
-        <HeroChain />
+        <video
+          className="pointer-events-none absolute inset-0 h-full w-full object-cover"
+          autoPlay
+          loop
+          muted
+          playsInline
+          preload="auto"
+          disableRemotePlayback
+          poster={`${BASE_PATH}/hero/hero.jpg`}
+        >
+          <source src={`${BASE_PATH}/hero/hero.mp4`} type="video/mp4" />
+        </video>
+        <div className="absolute inset-0 bg-white/10" />
 
         <div className="relative z-10 flex h-full flex-col">
           <Navbar />
