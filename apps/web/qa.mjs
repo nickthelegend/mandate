@@ -17,6 +17,7 @@
 import { chromium } from "playwright";
 
 const BASE = (process.argv[2] ?? "https://nickthelegend.github.io/outcome").replace(/\/$/, "");
+const GATEWAY = process.env.GATEWAY_URL ?? "https://gateway-production-944e.up.railway.app";
 
 /** Noise that is genuinely not the app's fault. Kept tight on purpose. */
 const IGNORE = [
@@ -89,6 +90,7 @@ console.log(`\nQA sweep against ${BASE}\n`);
 
 // ── every route renders with real content ───────────────────────────────────
 console.log("ROUTES");
+let heroNote = "";
 for (const [path, re] of [
   ["/", /budget\s+it\s+cannot\s+exceed/i],
   ["/authority/", /Spend it down/i],
@@ -104,12 +106,36 @@ for (const [path, re] of [
 ]) {
   await check(`renders ${path}`, async () => {
     await go(path);
+    if (path === "/") {
+      // 4.1: the hero is the first thing anyone sees. A <video> element that
+      // never decodes a frame is a grey box, and the page looks broken.
+      const v = await page.evaluate(() => {
+        const el = document.querySelector("video");
+        if (!el) return { missing: true };
+        return {
+          ready: el.readyState,
+          paused: el.paused,
+          w: el.videoWidth,
+          err: el.error?.message ?? null,
+          thirdParty: /^https?:/.test(el.querySelector("source")?.getAttribute("src") ?? ""),
+        };
+      });
+      if (v.missing) fail("no hero video", "the video element is absent");
+      else {
+        if (v.err) fail("hero video error", v.err);
+        if (v.ready < 3) fail("hero video not playable", `readyState ${v.ready}`);
+        if (v.paused) fail("hero video paused", "autoplay did not start");
+        if (!v.w) fail("hero video has no frame", "videoWidth is 0");
+        if (v.thirdParty) fail("hero from a third party", "the source is an absolute URL");
+        heroNote = `video ${v.w}px, readyState ${v.ready}, playing`;
+      }
+    }
     if (!(await has(re))) fail("missing content", `${path} did not contain ${re}`);
     const overflow = await page.evaluate(
       () => document.documentElement.scrollWidth > window.innerWidth + 1
     );
     if (overflow) fail("horizontal overflow", path);
-    return "";
+    return heroNote;
   });
 }
 
@@ -323,6 +349,43 @@ await check("browser back then forward leaves the page working", async () => {
   const t = await page.evaluate(() => document.body.innerText);
   if (!/Spend it down/.test(t)) fail("page broken after back/forward", t.slice(0, 100));
   return "";
+});
+
+await check("a paced route shows a countdown, not a stale number", async () => {
+  await go("/demo/");
+  // The 429 IS the result under test here, so it is not a defect for this one
+  // item. Everything it produces on screen is still asserted below.
+  page.__expectBadRequest = true;
+  /*
+   * Consume the pace first, from the page's own origin.
+   *
+   * Clicking twice cannot trigger it -- the UI correctly disables both buttons
+   * while a run is in flight, so the second click never becomes a request.
+   * This is what a second visitor arriving inside the window looks like, which
+   * is the case the countdown exists for.
+   */
+  // Fire and do NOT await: the pace is consumed when the request starts, but
+  // awaiting it means waiting out a full 14s purchase, by which point the 15s
+  // window has almost expired and the click races it.
+  await page.evaluate((g) => {
+    void fetch(`${g}/demo?facilitator=lying`).catch(() => {});
+  }, GATEWAY);
+  await page.waitForTimeout(700);
+  await page.evaluate(() =>
+    [...document.querySelectorAll("button")].find((b) => /honestly/i.test(b.textContent))?.click()
+  );
+  await page.waitForTimeout(3500);
+  const first = await page.evaluate(() => document.body.innerText.match(/Ready again in (\d+)s/)?.[1]);
+  if (!first) return fail("no countdown", "a paced refusal did not surface a countdown");
+  const disabled = await page.evaluate(
+    () => [...document.querySelectorAll("button")].filter((b) => /Pay /.test(b.textContent)).every((b) => b.disabled)
+  );
+  if (!disabled) fail("clickable during the pace", "a button that will refuse is still enabled");
+  await page.waitForTimeout(3000);
+  const second = await page.evaluate(() => document.body.innerText.match(/Ready again in (\d+)s/)?.[1]);
+  if (second && Number(second) >= Number(first)) fail("countdown is stale", `${first}s then ${second}s`);
+  page.__expectBadRequest = false;
+  return `counted ${first}s → ${second ?? "0"}s, buttons disabled`;
 });
 
 // ── responsive ──────────────────────────────────────────────────────────────
