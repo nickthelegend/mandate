@@ -1,5 +1,13 @@
 /**
- * Whether an autonomous purchase is allowed to happen.
+ * Whether an autonomous marketplace purchase is allowed to happen.
+ *
+ * NOT a duplicate of `outcome-policy`, though they overlap and it is fair to
+ * ask. That engine is the spend *authority*: fifteen rules, anchored on chain,
+ * governing what an agent may do with its budget. This is the narrower guard on
+ * one specific outbound act -- paying an x402 challenge on KeeperHub's
+ * marketplace -- and it exists for a gate the authority has no concept of:
+ * PRICE_MISMATCH, comparing what a listing advertised against what its 402
+ * actually demands. The authority judges the agent; this judges the seller.
  *
  * Ported from ChronicleAI's desk policy engine (`apps/api/src/desk/`), which
  * gates every onchain action behind a pure `evaluate()` that does no I/O and

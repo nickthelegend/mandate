@@ -1,377 +1,166 @@
 # Outcome
 
-**KeeperHub executes. Outcome is what checks the execution did what it claimed.**
+**An agent spending authority. The limit is not advisory — the agent has no key to break it with.**
 
-An SDK and an MCP server your agent installs. Agents Onchain 2026 · Sepolia.
-
-```bash
-npm i outcome-sdk      # https://npmjs.com/package/outcome-sdk
-npx outcome-mcp        # https://npmjs.com/package/outcome-mcp
-```
-
-**[Run the demo in your browser](https://nickthelegend.github.io/outcome/demo/)** — buy the same
-article twice, from an honest facilitator and a lying one. Both return
-`success: true`. Only one of them pays. Every click is a real Sepolia
-transaction.
+Agents Onchain 2026 · Sepolia · every write executed through KeeperHub.
 
 ---
 
-## Three things nobody else has
-
-| | |
-|---|---|
-| **An agent with no private key and no ETH** | It signs nothing. KeeperHub owns the only signer, and the wallet holding the funds has `0.0 ETH` — gas is sponsored end to end. |
-| **A merchant accepting x402 with no gas** | Settlement runs through KeeperHub's execute API, so accepting agent payments costs no ETH and needs no top-ups. |
-| **A payment rail that can prove it was paid** | Release requires a receipt read, not a status byte. And since the admin's verifier role was revoked, KeeperHub is the **only** address that can move escrowed funds. |
-
 ## The problem
 
-**Execution is not settlement, and almost nothing checks the difference.**
+Teams are handing autonomous agents private keys and hoping. That is an
+unbounded liability with a chat interface. There is no corporate card for an
+agent, no expense policy, no approval chain, and no statement anyone could hand
+an auditor.
 
-KeeperHub's own `workflow_payments` table has no transaction-hash column at all,
-and its MPP path verifies an HMAC locally and executes without touching the
-chain. x402 releases funds when a facilitator returns success and the buyer is
-expected to trust it. ERC-8004's `proofOfPayment` field is optional and
-unenforced. In every case the evidence for "you were paid" is somebody's word.
+The usual answer is a spend limit inside the agent's own code, which is a
+suggestion: the agent holds the key, so anything it decides to sign, it signs.
 
-That is not a criticism from outside. Working on this produced merged fixes to
-KeeperHub's own idempotency semantics and API docs, and the gap this fills is
-the one that reading their execution layer closely made obvious.
+## What this does
 
-**A status byte is not evidence.** `status: 0x1` means the EVM did not revert.
-It says nothing about whether value moved. A call to an address with no code
-mines successfully and does nothing — which is not hypothetical: I found exactly
-that in production last week, where a settlement reported success while the
-recipient's balance was byte-identical either side of the block.
+Outcome puts a **deterministic authority** between an agent and its money, and
+makes it binding by removing the key.
 
-Across roughly 900 submissions to eight x402 hackathons, receipts are everywhere
-and verification is nowhere.
+- The agent holds **no private key**. KeeperHub owns the signer.
+- `executeIfAuthorised` is the **only** path from a decision to a transfer.
+- So a refusal cannot be routed around. There is nothing to route around it
+  with.
 
-## Three guarantees
+That is the difference between a spend limit and a spend *authority*. A limit
+asks the agent nicely. An authority is a gate the money has to pass through.
 
-| | Guarantee | Mechanism |
-|---|---|---|
-| **01** | An agent can't double-pay | The intent id is derived from the work, so two agents told to do the same job collide on chain instead of both paying. This is the half of an idempotency key a header cannot provide — a header can be rotated, a mapping cannot. |
-| **02** | An agent can't be lied to | Payment settles on a receipt read. No real `Transfer` to the recipient, no release. Unreadable evidence is *not proven*, never *proven*: a false negative costs a retry, a false positive pays for nothing. |
-| **03** | An agent can't get stuck | Failures are diagnosed before they're retried. An unknown outcome is classified as in-flight and never resent, because the first attempt may still land. Funds sit in escrow until a verdict, and the payer can always reclaim. |
+## How a spend is judged
 
-**No AI adjudicator.** Every comparable project — Clawback, internet-court,
-x402r — resolves disputes with an LLM judge. When the chain already knows
-whether value moved, adjudication is a lookup, not an opinion. There is no model
-in the money path.
-
-## Try it in one line
-
-```bash
-npx -y outcome-mcp
-```
-
-No configuration. The defaults point at the live deployment, and every read-only
-tool works without a credential — only settlement moves money, and only
-settlement needs a key. Then ask it:
+Fifteen rules, in a fixed order, each naming itself when it fires:
 
 ```
-outcome_verify
-  transactionHash  0xf2c4055d08d9b52ca5f4f89fe2cd6c670e2204c2458e4731fd3c0ae0eda5073c
-  recipient        0x000000000000000000000000000000000000dEaD
-  minAmount        2000000
+policy.active → duplicate → cooldown → replay.contextBinding → recipient
+→ agent.worker → category → vendor.lcbFloor → intent.maxAmountBound
+→ hardCap → perCall.cap → budget.daily → rate.limit → proof.tierRequired
+→ escalate.aboveThreshold
 ```
 
-> `proven: false` — *no Transfer of 0x49C86277… to 0x…dEaD in 1 log(s)*
-
-That transaction mined with `status: 0x1` on Sepolia and paid nobody.
-
-Into a client — `.mcp.json`, or `claude_desktop_config.json`:
-
-```json
-{ "mcpServers": { "outcome": { "command": "npx", "args": ["-y", "outcome-mcp"] } } }
-```
-
-## Or in code
+A decision returns `APPROVED`, a `BLOCKED_*`, or an `ESCALATED_*`, together with
+the trace of every rule evaluated and which one refused.
 
 ```ts
-import { OutcomeClient } from "outcome-sdk";
+const decision = evaluateIntent(intent, policy, ledger);
+// { decision: "BLOCKED_BUDGET", rules: [... { rule: "budget.daily", result: "FAIL" }] }
 
-const outcome = new OutcomeClient({
-  provider: "https://ethereum-sepolia-rpc.publicnode.com",
-  escrow: "0x0ED9d1235cB9FD080D687FD978a38d972a34dC3B",
-  token: "0x49C86277a91002c4943837bf20F6ED41976Db09F",
-});
-
-const id = outcome.intentId("deliver 1 tUSDC to treasury", agent);
-if (await outcome.isClaimed(id)) return;          // someone is already on it
-
-const { proven, reason } = await outcome.verify({ // did it actually pay?
-  transactionHash, recipient, minAmount: 1_000_000n,
-});
+await executeIfAuthorised(kh, decision, { chainId: 11155111, to, amount });
+// refused → returns before any network call exists. No execution record.
+// approved → KeeperHub executes, keyed on the intent hash for idempotency.
 ```
 
-Four entry points, and the split is the position rather than packaging
-convenience — the party being asked to trust a payment is the one who most needs
-to check it, so checking must not require a server or a key:
+## The policy lives on chain
 
-| Import | Runs in | Holds |
+A policy in a config file is one the operator can edit afterwards, which makes
+every decision citing it unfalsifiable. The canonical hash is anchored in
+`PolicyRegistry` on Sepolia, and **the anchor is written through KeeperHub**, so
+the registry records KeeperHub's wallet as owner. The rules cannot be rewritten
+from anyone's `.env`.
+
+Before any spend is judged, two things must hold:
+
+1. The policy document hashes to exactly what the registry stores. An edited
+   file produces a different hash and is refused (`PolicyAnchorMismatch`).
+2. The registry still reports the policy usable. Paused or expired means no
+   spend is judged at all (`PolicyNotUsable`).
+
+### The kill switch
+
+`pauseAnchoredPolicy` is a transaction KeeperHub signs. From the block it lands
+in, every agent reading that registry stops spending. It is not a flag in one
+process's memory, and the agent cannot ignore it, because the agent is not the
+thing consulting it.
+
+Proven end to end on Sepolia:
+
+| Step | Result | Transaction |
 |---|---|---|
-| `outcome-sdk` | anywhere | read and verify. No `node:` builtins, no React, no credential. |
-| `outcome-sdk/react` | React 18+ | `OutcomeProvider`, `useIntents`, `useIntent`, `useEscrowed`, `useVerify` |
-| `outcome-sdk/x402` | anywhere | the x402 wire format, plus the settlement check the protocol lacks |
-| `outcome-sdk/node` | Node | settlement through KeeperHub, the worker agent, the audit trail |
+| Anchor policy via KeeperHub | owner = KeeperHub wallet | [`0x6f023b48`](https://sepolia.etherscan.io/tx/0x6f023b48e20fb70939a18f8051f800474eae0e0c0f5a89db15dec3ad93a5aad0) |
+| Spend under live policy | `APPROVED` | [`0xe9f84233`](https://sepolia.etherscan.io/tx/0xe9f84233c0e06f5eee5f2c709413c86de4b0e733d75b6bf65b99f60a3d3d801d) |
+| Tamper the document | `PolicyAnchorMismatch` | — |
+| Pause on chain via KeeperHub | `PAUSED`, `usable: false` | [`0x76478512`](https://sepolia.etherscan.io/tx/0x76478512c7a87cd2e5df233e280b897bd6b8eb9990b7cc9f9955fbf9611f70ab) |
+| Same spend, after pause | `PolicyNotUsable` | — |
 
-A build step walks the emitted modules and fails if `node:` or React ever
-reaches the main entry — a bug I shipped once before, which does not surface
-until somebody else's bundler breaks.
+Every one of those writes was sent by KeeperHub's relayer `0xA17cb6ad…`, not by
+a local key.
 
-
-## x402, with the step it is missing
-
-x402's flow is: a server answers `402` with what it wants paid, the client signs
-an EIP-3009 authorisation into an `X-PAYMENT` header, and a facilitator submits
-it and reports back with `success: true` and a transaction hash.
-
-**Nothing in x402 checks that transaction.** The resource server reads
-`success`, believes it, and serves the resource — a field produced by the one
-party with an incentive to say yes, next to a hash nobody follows.
-
-`apps/gateway` is a standards-compliant x402 resource server that adds one call
-between settling and serving. It ships two facilitators. The honest one submits
-the authorisation. The **lying** one submits an `approve` — mines, emits a log,
-moves nothing, costs it nothing — and returns `success: true` with that hash. It
-is a legal x402 settlement response, and a stock server hands over the article.
-
-```bash
-npm start --prefix apps/gateway            # the resource server
-npm run pay --prefix apps/gateway          # honest facilitator
-npm run pay:lying --prefix apps/gateway    # the same flow, paying nobody
-```
-
-Both runs are live on Sepolia:
-
-| Facilitator | Reports | Chain says | Result |
-|---|---|---|---|
-| honest | `success: true` | `1000000` reached the merchant | **HTTP 200**, article served — [`0x3aac3134`](https://sepolia.etherscan.io/tx/0x3aac3134ba7c4ce4e12c04e206ad7ce468318607fdb7a8e7ad85e91a70fe72ee) |
-| lying | `success: true` | **`0`** reached the merchant | **HTTP 402**, withheld — [`0x6db7218d`](https://sepolia.etherscan.io/tx/0x6db7218d717f5be3c3b37f386593bf0bdf3760b0407ac1145c617ac172136603) |
-
-```ts
-import { verifySettlement } from "outcome-sdk/x402";
-
-const verdict = await verifySettlement(outcome, { requirements, settlement });
-if (!verdict.proven) return respond402(verdict.reason);
-return serve(resource);
-```
-
-A facilitator reporting *failure* is taken at its word — claiming failure is
-against its interest and there is nothing to check. A facilitator reporting
-success is not. That asymmetry is the whole of it.
-
-`USDCx` ([`0x0d864A62`](https://sepolia.etherscan.io/address/0x0d864A625c280F7f9B9AD024d12F94f5D6DCCF13))
-exists because the `exact` scheme needs EIP-3009 and `TestUSDC` is a plain
-ERC-20 — demonstrating x402 against it would have meant inventing a scheme,
-which demonstrates nothing.
-
-## The decision record, in public
-
-Every verdict is written down — what was checked, what was decided, why — and
-served to anyone without a credential at
-[`/ledger`](https://nickthelegend.github.io/outcome/ledger/) (`GET /audit` on the
-gateway).
-
-That second part is the point. KeeperHub keeps an agent-action trail and exposes
-no agent-reachable read: both routes are session-cookie only and no MCP tool
-touches it, so the agent whose payment is being decided cannot see the
-reasoning. A record only the deciding party can read is a private note, not
-accountability.
-
-Append-only, with no update path and no delete path, because a record you can
-edit is not one. Persisted to MongoDB rather than the container's disk — a
-record that empties on redeploy is a debug buffer. If the database is
-unreachable the service degrades to a file and says so on stderr; it does not
-stop settling, because the log must not matter more than the payment.
-
-## What KeeperHub does here
-
-Every settlement runs through KeeperHub's execute API, and since the admin's
-verifier role was revoked ([`0xe5e25335`](https://sepolia.etherscan.io/tx/0xe5e25335aa323c837fa91807058dbd0c5b66b1eb76673fb33648c3b2c0999ae3)),
-KeeperHub's executing address is the **only** address that can move escrowed
-funds. The deployer cannot. That is checkable on chain:
-
-```
-isVerifier(0x7a4FdD120a17e5390D87565e74a3Fbf80dF05FC1)  true   <- KeeperHub
-isVerifier(0x7A2E11B3ECEBaB8Ea46966eDaDD4092583809b67)  false  <- deployer/admin
-```
-
-Calling `release` as the admin now reverts `NotVerifier`. The contract holds the
-money; KeeperHub is the only key that opens it; and what tells KeeperHub to open
-it is a receipt read, not a person.
-
-What that buys, per settlement:
-
-| KeeperHub feature | Where it lands |
-|---|---|
-| **Simulation before send** | `assertWouldSucceed` runs first, so a settlement that would revert never spends gas or burns an attempt |
-| **Idempotency keys** | one per attempt, derived from the intent and the verdict, so a refund can never replay as a release |
-| **Gas sponsorship** | settlements are relayed by `0xA17cb6ad…` through a smart account; the verifier holds no ETH and its nonce never moves |
-| **Execution status** | `executeAndConfirm` polls to a terminal state rather than assuming the send worked |
-
-## The agent holds no key
-
-```bash
-node --experimental-strip-types packages/sdk/examples/run-agent.ts
-```
-
-A payer posts a job and walks away. The agent finds it, does the work, hands the
-verifier a transaction hash — never a verdict — and gets paid.
-
-It signs nothing. Work transaction
-[`0xef3a8f88`](https://sepolia.etherscan.io/tx/0xef3a8f8806cce8f4cc98a286a37063ca68386862dd70c3953b77bfb92123409a)
-was submitted by KeeperHub's relayer, and the executor holding the tokens has
-`0.0 ETH`. An unattended process that must guard a private key needs somewhere
-safe to keep it, and an unattended process does not have somewhere safe.
-
-It can also lose. If the work does not land the payer is refunded and the agent
-earns nothing — the intended branch, not an error path.
-
-## The loop
-
-```
-claim intent  ->  escrow  ->  do the work  ->  verify  ->  release / refund / retry
-```
-
-An autonomous agent runs it unattended: it watches for intents naming it as
-payee, reads the job the intent commits to, does the work on chain, and hands
-the verifier a transaction hash — never a verdict. It can lose. If the work does
-not land the payer is refunded and the agent earns nothing, which is the
-intended branch rather than an error path.
-
-```bash
-node --experimental-strip-types packages/sdk/examples/run-agent.ts
-```
-
-## Live on Sepolia
-
-| Contract | Address | Source |
-|---|---|---|
-| `OutcomeEscrow` | [`0x0ED9d123…dC3B`](https://sepolia.etherscan.io/address/0x0ED9d1235cB9FD080D687FD978a38d972a34dC3B) | [Etherscan](https://sepolia.etherscan.io/address/0x0ED9d1235cB9FD080D687FD978a38d972a34dC3B#code) · [Sourcify](https://repo.sourcify.dev/11155111/0x0ED9d1235cB9FD080D687FD978a38d972a34dC3B) |
-| `USDCx` (EIP-3009) | [`0x0d864A62…CF13`](https://sepolia.etherscan.io/address/0x0d864A625c280F7f9B9AD024d12F94f5D6DCCF13) | [Etherscan](https://sepolia.etherscan.io/address/0x0d864A625c280F7f9B9AD024d12F94f5D6DCCF13#code) · [Sourcify](https://repo.sourcify.dev/11155111/0x0d864A625c280F7f9B9AD024d12F94f5D6DCCF13) |
-
-Verified on both, and `exact_match` on Sourcify — runtime *and* creation
-bytecode. Re-check either with `npx hardhat verify` or, with no API key at all,
-`node contracts/scripts/verify-sourcify.mjs`.
-
-| What was proven | Transaction |
-|---|---|
-| Deploy | [`0x81534a1e`](https://sepolia.etherscan.io/tx/0x81534a1e9c623a4f7d33e679df3c65990f12c2ddd796d8cb5b0182e1f7c1630b) |
-| Claim — money into escrow, payee unpaid | [`0x9117b580`](https://sepolia.etherscan.io/tx/0x9117b5804879c0aaed2978cb769c90ecede443d9329a9de0654d0adc4ad1c865) |
-| Work that mined and moved nothing → refunded | [`0xf2c4055d`](https://sepolia.etherscan.io/tx/0xf2c4055d08d9b52ca5f4f89fe2cd6c670e2204c2458e4731fd3c0ae0eda5073c) |
-| Agent did the work, unprompted | [`0x749a8459`](https://sepolia.etherscan.io/tx/0x749a8459508963b5a85533767b934c20bc3c38656984d711380046cd5346665a) |
-| Agent proved it and got itself paid | [`0x6cf46523`](https://sepolia.etherscan.io/tx/0x6cf465234f8a08b01b74719e707b4c0a1ab005a5ab36de8c79b0e15cb22c9fe2) |
-
-Release and refund execute **through KeeperHub's execute API** — simulated
-before sending, idempotent per attempt, gas sponsored.
-
-## The console
-
-Nine routes, all reading Sepolia in your browser with no backend:
+## Deployments
 
 | | |
 |---|---|
-| [`/demo`](https://nickthelegend.github.io/outcome/demo/) | buy the article twice, honest and lying, live |
-| [`/agent`](https://nickthelegend.github.io/outcome/agent/) | run a full agent cycle — it holds no key and no ETH |
-| [`/inspect`](https://nickthelegend.github.io/outcome/inspect/) | open KeeperHub's own execution record: simulated, sent, sponsored, confirmed |
-| [`/claim`](https://nickthelegend.github.io/outcome/claim/) | post a job with your own wallet |
-| [`/verify`](https://nickthelegend.github.io/outcome/verify/) | paste any transaction and read its receipt |
-| [`/explorer`](https://nickthelegend.github.io/outcome/explorer/) | every intent the escrow has seen |
+| `PolicyRegistry` | [`0x13452fcA…C5E304`](https://sepolia.etherscan.io/address/0x13452fcA19819d37Fa4b01a0e64C8Fce60C5E304) |
+| `OutcomeEscrow` | [`0x0ED9d123…dC3B`](https://sepolia.etherscan.io/address/0x0ED9d1235cB9FD080D687FD978a38d972a34dC3B) |
+| `USDCx` (EIP-3009) | [`0x0d864A62…CF13`](https://sepolia.etherscan.io/address/0x0d864A625c280F7f9B9AD024d12F94f5D6DCCF13) |
 
-### The old console note
+## KeeperHub surfaces used
 
-**[nickthelegend.github.io/outcome](https://nickthelegend.github.io/outcome/)** —
-a Next.js static export built on the published SDK, not around it. `listIntents`,
-`useIntents`, `useEscrowed` and `useVerify` all had to exist for it to render,
-which is the point: if the package could not drive the site, it would not be
-worth publishing.
+| Surface | Where |
+|---|---|
+| **Execute API** | every policy anchor, every authorised transfer |
+| **MCP server** | KeeperHub's, to create and publish a workflow; plus `outcome-mcp`, six tools of our own |
+| **x402** | spec-exact adapter, a resource server that verifies settlement, and an autonomous payer |
+| **Workflow builder** | [`outcome-escrow-intent-status`](https://app.keeperhub.com), listed at $0.02/call |
+| **Audit trail** | KeeperHub's execution record read back; our own decision ledger persisted to MongoDB |
+| **CLI** | `kh execute contract-call` anchors a policy — [`0xfecbcf8f`](https://sepolia.etherscan.io/tx/0xfecbcf8f777dcc08b579aa6d176270ab3af4389f536c1a9479625fe106a7c478) |
+| **MPP** | **not used** — see Known gaps |
 
-`/verify` is the page that matters. Paste any transaction, name who was supposed
-to be paid, and the verdict is computed in your browser from the receipt. A
-claim about trust you have to take on faith is not worth making, so there is no
-backend here to take it on faith from.
+## Buying from the marketplace, autonomously
 
-## Two boundaries worth reviewing
+KeeperHub lists workflows other agents publish, priced per call. Its own tool
+says: *"this tool DOES NOT auto-pay. A paid listing returns HTTP 402 … pay it
+with paymentSigner, agentcash, or the marketplace UI, then retry."*
 
-**`outcome_settle` takes a transaction hash, never a verdict.** An agent that
-could assert "the work is done" and have money move on its word would be exactly
-what this replaces. A test asserts the tool's schema still accepts nothing but
-an intent id and a hash, because that boundary *is* the product and a refactor
-could quietly erode it.
+`marketplace.ts` removes the human: it reads the challenge, signs the EIP-3009
+authorisation, retries with payment attached. Verified against the live
+marketplace — 39 paid listings discovered, a real Base challenge parsed, and a
+valid signature produced that recovers to the signer. It refuses over-cap and
+off-allowlist purchases *before a signature exists*, because a signed
+authorisation is bearer-spendable the moment it leaves the process.
 
-**Verification is against the beneficiary, not the payee.** The payee is who
-gets paid; the beneficiary is who the work had to reach. Checking the payee
-would only ever prove an agent paid itself — which is what the first live agent
-run actually did, before the contract recorded the distinction.
-
-## Tests — 81, all passing
+## Install
 
 ```bash
-npm test                # 60 across both packages (54 SDK, 6 MCP)
-npm run test:contracts  # 21
+npm i outcome-sdk      # the authority, the payer, the KeeperHub client
+npx outcome-mcp        # six MCP tools; every read-only one needs no credential
 ```
 
-Written against the failures the promise model permits, not the happy path:
-double claim, re-claim after settlement, double release, refund after release,
-verdicts from revoked verifiers, reclaim before and after the window, a solvency
-case running three interleaved intents to three endings that must land the
-balance at zero, a mined transaction with zero logs, a worthless token emitting
-a large Transfer, under-delivery, in-flight classification that must never
-resend, and restart survival.
+## Run it
 
-Two suites exist because of bugs this build actually hit:
-
-- **ABI drift.** The ABIs are hand-written strings, and a wrong one does not
-  throw — it decodes. Adding `beneficiary` to `Intent` left three files on the
-  five-field form, so `intents()` read `refundableAt` as `state`, every open
-  intent looked settled, and the agent silently found no work. Nothing errored
-  anywhere. Declarations are now checked against the compiled artifact, never
-  against each other — that would only prove they drifted together.
-- **The MCP transport.** The stdio suite spawns the *built binary* and speaks
-  JSON-RPC to it, because the failures only a transport can produce — a stray
-  `console.log` corrupting the stream, a tool that never registers — surface in
-  a real client as "the server is broken" with nothing else to go on.
-
-## What is not done
-
-- **Sepolia, not Base.** x402's reference deployment is Base mainnet with real
-  USDC. The organiser confirmed testnet is accepted and not marked down. The
-  protocol implementation here is complete and spec-exact; only the chain and
-  the token differ, and `NETWORK_CHAIN_IDS` already maps Base and Base Sepolia.
-- **The gateway's facilitator is its own.** It settles EIP-3009 directly rather
-  than calling CDP's facilitator, which is Base-mainnet-only. Same scheme, same
-  wire format, different submitter.
-- **MPP is untested here.** KeeperHub's agentic wallet hardcodes Tempo testnet
-  as chain `4218`, which does not exist; Moderato is `42431`. A passing test
-  asserts the wrong value, so CI defends it. Written up with a patch in the
-  companion teardown.
-- **The hosted ledger is on the file fallback.** MongoDB Atlas refuses the
-  connection from Railway's egress IP (TLS alert 80 — the Atlas allowlist), so
-  the deployed gateway degrades to disk. Locally it writes to Mongo and the test
-  suite proves persistence across separate connections. Adding Railway's IP, or
-  `0.0.0.0/0`, under Atlas Network Access finishes it; nothing in the code
-  changes.
-- **The audit log was per-instance.** Append-only on disk and restart-safe, but
-  not shared across processes. A single verifier is the deployment this assumes.
-- **Verification covers ERC-20 transfers.** Proving arbitrary off-chain work
-  needs a different oracle and is deliberately out of scope.
-
-## Layout
-
+```bash
+npm install
+npm test                       # 134 tests across sdk, mcp and policy
+npm run build -w outcome-web
 ```
-packages/sdk/     outcome-sdk — the client, the verifier, the agent
-  src/verify.ts     receipt -> verdict. The core claim.
-  src/client.ts     OutcomeClient. Isomorphic, no key, no node builtins.
-  src/diagnose.ts   why it failed, and whether resending can fix it
-  src/settle.ts     verdict -> KeeperHub execute
-  src/agent.ts      a worker agent that finds jobs, does them, and gets paid
-  src/react.ts      hooks over the read path
-  src/x402.ts       the protocol, plus the settlement check it lacks
-packages/mcp/     outcome-mcp — six tools over stdio, zero-config
-apps/gateway/     an x402 resource server that checks it was actually paid
-apps/web/         the console, built on the published SDK
-contracts/        OutcomeEscrow.sol, deploy + proof scripts, 12 tests
-```
+
+Set `KEEPERHUB_API_KEY`, `SEPOLIA_RPC_URL` and `MONGODB_URI` in `.env` (see
+`.env.example`).
+
+## Provenance
+
+The fifteen-rule engine and its canonical hashing are **ported from
+[untch](https://untch.xyz)**, a production authority layer live on X Layer
+mainnet, and moved here onto KeeperHub and Sepolia. The port swaps viem for
+ethers; `hashSpendIntent` is verified byte-identical to the Solidity
+implementation across untch's differential corpus (**15/15**), and untch's own
+engine suite passes against it (**68/68**).
+
+Written here: the KeeperHub anchoring and loader, the authority gate, the
+autonomous x402 marketplace payer, the escrow, the receipt verifier, the MCP
+server and the console.
+
+## Known gaps
+
+Stated rather than hidden.
+
+- **MPP is unused.** Tempo is reachable (chain 4217 / 42431) and the CLI talks
+  to it, but the KeeperHub wallet holds no Tempo balance
+  (`kh wallet balance --chain 42431` → "No balances found"), so an MPP payment
+  cannot settle. Blocked on funding, not on capability — so it is left undone
+  rather than faked.
+- **Sepolia, not mainnet.** x402's own gate is Base-mainnet-only.
+- **The web console still presents the earlier verification product**, not the
+  authority. The backend above is real and tested; the site has not caught up.
+- Verification covers ERC-20 transfers, not arbitrary off-chain work.

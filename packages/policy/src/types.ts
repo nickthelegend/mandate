@@ -358,9 +358,10 @@ export interface LedgerWindowState {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * One rule's trace entry. Shape matches §8.2 exactly for implemented rules — `rule` + `result`
- * plus that rule's own detail fields, and NO `implemented` key. A NOT-YET-IMPLEMENTED stub is the
- * one divergence from §8.2: it carries `implemented: false` (and a `note`) so the trace is
+ * One rule's trace entry. Shape matches §8.2 exactly — `rule` + `result` plus that rule's own
+ * detail fields. All fifteen rules are live, so no entry carries `implemented`; the field is
+ * retained only so a caller reading an archived trace from the partial-slice era can still parse
+ * it, and it carries `implemented: false` (and a `note`) there so the trace is
  * self-describing and the manifest test can enumerate exactly which rules are real.
  *
  * A rule that triggers an ESCALATED_* outcome records `result: "FAIL"` here (its condition was
@@ -370,7 +371,7 @@ export interface LedgerWindowState {
 export interface RuleTraceEntry {
   readonly rule: string;
   readonly result: RuleResult;
-  /** Present and `false` ONLY on stub rules. Absent on real rules (so they match §8.2 exactly). */
+  /** Never set by this engine any more — see above. Kept for archived traces only. */
   readonly implemented?: false;
 
   // §8.2 rule-specific detail fields — each rule fills only the ones §8.2 shows for it.
