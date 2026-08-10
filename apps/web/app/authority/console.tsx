@@ -276,6 +276,41 @@ export function AuthorityConsole() {
         if (body.escalation?.id) {
           setCodes((c) => ({ ...c, [body.escalation.id]: body.escalation.code }));
         }
+        /*
+         * Apply the server's own figures immediately.
+         *
+         * The verdict used to appear while the header still showed the old
+         * budget, because everything except the verdict waited on a refetch --
+         * so for about a second the panel said "budget after this spend $0.40"
+         * directly under a header reading $0.00. The response already carries
+         * the authoritative number; waiting to be told it again is a lag with
+         * nothing to gain. The refetch still runs underneath and reconciles.
+         */
+        setState((prev) =>
+          prev
+            ? {
+                ...prev,
+                spentToday: body.budget.spentAfter,
+                remaining: body.budget.remaining,
+                callsInLastHour: body.callsInLastHour ?? prev.callsInLastHour,
+              }
+            : prev
+        );
+        if (body.escalation?.id) {
+          // Show the held spend the moment it exists, for the same reason.
+          setHeld((h) => [
+            {
+              id: body.escalation.id,
+              status: "PENDING",
+              decision: body.decision,
+              reason: body.reason,
+              amount: body.budget ? SPENDS[i].body.amount : 0,
+              recipient: body.vendor?.payee ?? "",
+              expiresAt: body.escalation.expiresAt,
+            },
+            ...h.filter((x) => x.id !== body.escalation.id),
+          ]);
+        }
       }
       await refresh();
     } catch (e) {
@@ -303,8 +338,21 @@ export function AuthorityConsole() {
         // The ignored outcomes are the interesting ones: the service verified
         // the response and declined to honour it, and says which check refused.
         setError(`${body.outcome}: ${body.detail}`);
-      } else if (body.transactionHash) {
-        setOutcome((o) => (o ? { ...o, transactionHash: body.transactionHash } : o));
+      } else {
+        // Drop the released row and take the new budget straight from the
+        // response, rather than leaving a resolved spend on screen until the
+        // refetch lands.
+        setHeld((h) => h.filter((x) => x.id !== id));
+        if (body.transactionHash) {
+          setOutcome((o) => (o ? { ...o, transactionHash: body.transactionHash } : o));
+        }
+        if (body.budget) {
+          setState((prev) =>
+            prev
+              ? { ...prev, spentToday: body.budget.spentAfter, remaining: body.budget.remaining }
+              : prev
+          );
+        }
       }
       await refresh();
     } catch (e) {
