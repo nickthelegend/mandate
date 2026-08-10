@@ -188,15 +188,23 @@ authorisation is bearer-spendable the moment it leaves the process.
 ## Install
 
 ```bash
-npm i outcome-sdk      # the authority, the payer, the KeeperHub client
-npx outcome-mcp        # six MCP tools; every read-only one needs no credential
+npm i outcome-sdk outcome-policy   # the authority, the payer, the KeeperHub client
+npx outcome-mcp                    # six MCP tools; every read-only one needs no credential
 ```
+
+Two packages, because they answer different questions and only one of them
+needs a connection. `outcome-policy` decides whether a spend is allowed and is
+pure — no I/O, no credential, runs in a browser, which is why the decision demo
+on the site can run the real engine client-side. `outcome-sdk` is everything
+that touches the world: the durable ledger, the anchor reads, the KeeperHub
+client, the x402 payer.
 
 ## Run it
 
 ```bash
 npm install
-npm test                       # 134 tests across sdk, mcp and policy
+npm test                       # 146 tests across policy, sdk and mcp
+npm run test:contracts         # 21 more against the Solidity
 npm run build -w outcome-web
 ```
 
