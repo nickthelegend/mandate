@@ -530,20 +530,30 @@ export function AuthorityConsole() {
                       <Loader2 className="size-4 animate-spin" />
                       <span className="figure">{elapsed}s</span>
                     </span>
-                  ) : (
+                  ) : codes[h.id] ? (
                     <>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        disabled={!codes[h.id]}
-                        onClick={() => void resolve(h.id, "DENY")}
-                      >
+                      <Button size="sm" variant="outline" onClick={() => void resolve(h.id, "DENY")}>
                         Deny
                       </Button>
-                      <Button size="sm" disabled={!codes[h.id]} onClick={() => void resolve(h.id, "APPROVE")}>
+                      <Button size="sm" onClick={() => void resolve(h.id, "APPROVE")}>
                         Release it
                       </Button>
                     </>
+                  ) : (
+                    /*
+                     * A held spend this browser cannot action.
+                     *
+                     * The approval code is returned exactly once, at creation,
+                     * and only its sha256 is stored -- so a spend raised in an
+                     * earlier session is genuinely unreleasable from here. That
+                     * is the correct security property and it used to render as
+                     * two dead buttons with no explanation, which reads as a
+                     * bug. Say what happened instead.
+                     */
+                    <span className="max-w-[220px] text-right text-[11px] leading-snug text-[var(--ink-4)]">
+                      Raised in an earlier session — the single-use code was shown once and is not
+                      held here. It expires on its own.
+                    </span>
                   )}
                 </div>
               </div>

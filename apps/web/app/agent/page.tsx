@@ -20,6 +20,27 @@ import { tx } from "@/lib/outcome";
 import { cn } from "@/lib/utils";
 import { PageHead } from "@/components/page-head";
 
+/**
+ * A live countdown after the gateway asks you to wait.
+ *
+ * These routes run several real transactions, so the gateway rate-limits them
+ * and answers 429 with `retryAfterSeconds`. Showing that number once and then
+ * letting it go stale invites the obvious behaviour -- clicking again, getting
+ * refused again -- so it ticks, and the button stays out of action until it
+ * reaches zero. A control that is going to refuse should say so before it is
+ * pressed, not after.
+ */
+function useCooldown() {
+  const [left, setLeft] = useState(0);
+  useEffect(() => {
+    if (left <= 0) return;
+    const t = setInterval(() => setLeft((s) => Math.max(0, s - 1)), 1000);
+    return () => clearInterval(t);
+  }, [left]);
+  return [left, setLeft] as const;
+}
+
+
 const GATEWAY =
   process.env.NEXT_PUBLIC_GATEWAY_URL ?? "https://gateway-production-944e.up.railway.app";
 
@@ -64,6 +85,7 @@ export default function AgentPage() {
    * the next render, so two clicks in one frame both fire a request -- and on
    * the paid routes the second one is a real duplicate attempt, not just noise.
    */
+  const [cooldown, setCooldown] = useCooldown();
   const inFlight = useRef(false);
 
   async function run() {
@@ -76,11 +98,8 @@ export default function AgentPage() {
       const res = await fetch(`${GATEWAY}/agent`);
       const body = await res.json();
       if (!res.ok) {
-        setError(
-          body.retryAfterSeconds
-            ? `${body.error} Try again in ${body.retryAfterSeconds}s.`
-            : (body.error ?? `gateway returned ${res.status}`)
-        );
+        if (body.retryAfterSeconds) setCooldown(Number(body.retryAfterSeconds));
+        setError(body.error ?? `gateway returned ${res.status}`);
         return;
       }
       setCycle(body as Cycle);
@@ -113,7 +132,7 @@ export default function AgentPage() {
         seconds. The timer runs on the button.
       </p>
 
-      <Button size="lg" className="mt-3 gap-2" disabled={running} onClick={() => void run()}>
+      <Button size="lg" className="mt-3 gap-2" disabled={running || cooldown > 0} onClick={() => void run()}>
         {running ? <Loader2 className="size-4 animate-spin" /> : <Bot className="size-4" />}
         {running ? `Working… ${elapsed}s` : "Post a job and let it run"}
       </Button>
@@ -121,6 +140,13 @@ export default function AgentPage() {
       <p className="mt-3 font-mono text-xs text-[var(--ink-3)]">
         A cycle is four real transactions — approve, claim, deliver, settle — so give it a moment.
       </p>
+
+      {cooldown > 0 && (
+        <p className="mt-4 text-[12px] text-[var(--ink-3)]">
+          Ready again in <span className="figure">{cooldown}s</span> — these runs are several real
+          transactions, so the gateway paces them.
+        </p>
+      )}
 
       {error && (
         <p className="mt-6 rounded-[10px] border border-[var(--line)] bg-[var(--surface)] p-4 font-mono text-sm text-[var(--ink-3)]">

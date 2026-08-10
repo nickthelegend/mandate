@@ -23,6 +23,9 @@ const IGNORE = [
   /Download the React DevTools/i,
   /429|Too Many Requests|rate limit/i,
   /one decision at a time/i,
+  // The documented 15s pace on /demo and /agent. Both pages surface it as a
+  // live countdown and disable the button, which is asserted separately.
+  /\/(demo|agent)(\?|$)/,
 ];
 const ignored = (t) => IGNORE.some((r) => r.test(String(t)));
 
@@ -82,6 +85,9 @@ const waitVerdict = async (timeout = 180000) => {
     await page.waitForTimeout(1000);
   }
 };
+
+/** /demo and /agent share a 15s pace. Give it room rather than fighting it. */
+const waitOutCooldown = () => page.waitForTimeout(20000);
 
 console.log(`\nLive-flow sweep against ${BASE}\n`);
 console.log("AUTHORITY — real money");
@@ -156,7 +162,14 @@ await check("an unknown payee is held, not refused, and nothing moves", async ()
 
 await check("releasing it charges the budget and moves the money", async () => {
   const before = await budget();
-  await press("Release it");
+  // Target a row this browser actually holds the code for. Escalations from an
+  // earlier session are deliberately unreleasable and render an explanation
+  // rather than a button, so `.first()` could otherwise pick a dead one.
+  const releasable = page.locator("button", { hasText: "Release it" });
+  if ((await releasable.count()) === 0) {
+    return fail("no releasable held spend", "the code for the new escalation was not retained");
+  }
+  await releasable.first().click();
   // The release is another real transfer.
   const t0 = Date.now();
   for (;;) {
@@ -203,7 +216,9 @@ await check("/demo lying facilitator: reports success, serves nothing", async ()
 });
 
 await check("/demo honest facilitator: serves the article", async () => {
-  await page.waitForTimeout(16000);
+  // The gateway paces these routes at 15s and the UI now counts down. Wait it
+  // out rather than reporting the gateway doing its job as a defect.
+  await waitOutCooldown();
   const txBefore2 = await page.evaluate(() => document.querySelectorAll('a[href*="/tx/"]').length);
   await press("honest").catch(async () => press("Pay honestly"));
   const t0 = Date.now();
@@ -226,6 +241,7 @@ await check("/demo honest facilitator: serves the article", async () => {
 await check("/agent full cycle completes with a claim and a settlement", async () => {
   await page.goto(`${BASE}/agent/`, { waitUntil: "networkidle", timeout: 90000 });
   await page.waitForTimeout(2500);
+  await waitOutCooldown();
   await press("Post a job");
   const t0 = Date.now();
   for (;;) {

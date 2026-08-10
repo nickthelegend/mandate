@@ -13,13 +13,34 @@
  * is on screen is what the code does.
  */
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CheckCircle2, Loader2, ShieldAlert, XCircle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { tx } from "@/lib/outcome";
 import { cn } from "@/lib/utils";
 import { PageHead } from "@/components/page-head";
+
+/**
+ * A live countdown after the gateway asks you to wait.
+ *
+ * These routes run several real transactions, so the gateway rate-limits them
+ * and answers 429 with `retryAfterSeconds`. Showing that number once and then
+ * letting it go stale invites the obvious behaviour -- clicking again, getting
+ * refused again -- so it ticks, and the button stays out of action until it
+ * reaches zero. A control that is going to refuse should say so before it is
+ * pressed, not after.
+ */
+function useCooldown() {
+  const [left, setLeft] = useState(0);
+  useEffect(() => {
+    if (left <= 0) return;
+    const t = setInterval(() => setLeft((s) => Math.max(0, s - 1)), 1000);
+    return () => clearInterval(t);
+  }, [left]);
+  return [left, setLeft] as const;
+}
+
 
 const GATEWAY =
   process.env.NEXT_PUBLIC_GATEWAY_URL ?? "https://gateway-production-944e.up.railway.app";
@@ -53,6 +74,7 @@ export default function DemoPage() {
    * the next render, so two clicks in one frame both fire a request -- and on
    * the paid routes the second one is a real duplicate attempt, not just noise.
    */
+  const [cooldown, setCooldown] = useCooldown();
   const inFlight = useRef(false);
 
   async function run(facilitator: "honest" | "lying") {
@@ -65,11 +87,8 @@ export default function DemoPage() {
       const res = await fetch(`${GATEWAY}/demo?facilitator=${facilitator}`);
       const body = await res.json();
       if (!res.ok) {
-        setError(
-          body.retryAfterSeconds
-            ? `${body.error} Try again in ${body.retryAfterSeconds}s.`
-            : (body.error ?? `gateway returned ${res.status}`)
-        );
+        if (body.retryAfterSeconds) setCooldown(Number(body.retryAfterSeconds));
+        setError(body.error ?? `gateway returned ${res.status}`);
         return;
       }
       setResult(body as FlowResult);
@@ -95,7 +114,7 @@ export default function DemoPage() {
       <div className="shell py-10 sm:py-14">
       <div className="max-w-3xl">
       <div className="grid gap-3 sm:grid-cols-2">
-        <Button size="lg" className="gap-2" disabled={running !== null} onClick={() => run("honest")}>
+        <Button size="lg" className="gap-2" disabled={running !== null || cooldown > 0} onClick={() => void run("honest")}>
           {running === "honest" ? <Loader2 className="size-4 animate-spin" /> : <CheckCircle2 className="size-4" />}
           {running === "honest" ? "Paying…" : "Pay honestly"}
         </Button>
@@ -103,7 +122,7 @@ export default function DemoPage() {
           size="lg"
           variant="outline"
           className="gap-2 border-[var(--refused)] hover:bg-transparent"
-          disabled={running !== null}
+          disabled={running !== null || cooldown > 0}
           onClick={() => run("lying")}
         >
           {running === "lying" ? <Loader2 className="size-4 animate-spin" /> : <ShieldAlert className="size-4" />}
@@ -114,6 +133,13 @@ export default function DemoPage() {
       <p className="mt-3 font-mono text-xs text-[var(--ink-3)]">
         Each run signs an authorisation and settles on chain, so it takes a few seconds.
       </p>
+
+      {cooldown > 0 && (
+        <p className="mt-4 text-[12px] text-[var(--ink-3)]">
+          Ready again in <span className="figure">{cooldown}s</span> — these runs are several real
+          transactions, so the gateway paces them.
+        </p>
+      )}
 
       {error && (
         <p className="mt-6 rounded-[10px] border border-[var(--line)] bg-[var(--surface)] p-4 font-mono text-sm text-[var(--ink-3)]">
