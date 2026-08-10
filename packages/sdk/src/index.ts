@@ -99,3 +99,14 @@ export {
   PolicyNotUsable,
   type AnchoredPolicyRecord,
 } from "./policy-loader.ts";
+
+export {
+  bindingFor,
+  bindingMismatches,
+  bindingHolds,
+  type ChallengeBinding,
+  type BindingFields,
+  type BindingMismatch,
+  type ExpectedTerms,
+  type PresentedChallenge,
+} from "./x402-guard.ts";

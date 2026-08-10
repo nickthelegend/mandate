@@ -33,6 +33,12 @@ import { Wallet, type Signer } from "ethers";
 import { encodePaymentHeader, type PaymentPayload } from "./x402.ts";
 import { SpendLedger, type SpendDecision } from "./spend-policy.ts";
 
+import {
+  bindingFor,
+  bindingMismatches,
+  type ExpectedTerms,
+} from "./x402-guard.ts";
+
 /** One option from a 402's `accepts` array, normalised across v1 and v2. */
 export type Challenge = {
   scheme: string;
@@ -90,6 +96,9 @@ function chainIdOf(network: string): number {
  * Throws rather than returning a partial: this value decides how much money
  * leaves a wallet, so "mostly parsed" is not a state worth having.
  */
+/** How many fields the binding check commits to comparing. */
+const BOUND_FIELD_COUNT = 6;
+
 export function parseChallenge(body: unknown): Challenge {
   const b = body as Record<string, unknown>;
   const accepts = b?.accepts;
@@ -245,6 +254,14 @@ export type PurchaseOpts = {
    * matches what the listing advertised.
    */
   ledger?: SpendLedger;
+  /**
+   * The full advertised terms, for the Challenge Binding Check.
+   *
+   * `advertisedUsdc` catches a price swap. This catches the rest: a challenge
+   * that keeps the price and changes the payee, or the asset, or the chain.
+   * Supply it and every bound field must agree before a signature exists.
+   */
+  expectedTerms?: ExpectedTerms;
   /** What the listing advertised, so a bait-and-switch challenge is caught. */
   advertisedUsdc?: number | null;
   onEvent?: (e: { stage: string; detail: string }) => void;
@@ -309,6 +326,35 @@ export async function payAndCall(opts: PurchaseOpts): Promise<PurchaseResult> {
     advertisedUsdc: opts.advertisedUsdc,
     slug: opts.slug,
   });
+
+  /*
+   * The binding check runs before the ledger's verdict, because a challenge
+   * that does not match the listing is not a spend to be judged -- it is a
+   * different offer wearing the listing's name, and no cap makes it safe.
+   */
+  if (opts.expectedTerms) {
+    const binding = bindingFor(opts.expectedTerms, {
+      amount: challenge.amount,
+      asset: challenge.asset,
+      payTo: challenge.payTo,
+      chainId: challenge.chainId,
+    });
+    const mismatches = bindingMismatches(binding);
+    if (mismatches.length > 0) {
+      const detail = mismatches
+        .map((m) => `${m.field}: advertised ${m.expected ?? "(absent)"}, challenged ${m.presented ?? "(absent)"}`)
+        .join("; ");
+      say({ stage: "policy", detail: `challenge binding failed -- ${detail}` });
+      const err = new Error(`challenge does not match the listing -- ${detail}`) as Error & {
+        binding: typeof binding;
+        mismatches: typeof mismatches;
+      };
+      err.binding = binding;
+      err.mismatches = mismatches;
+      throw err;
+    }
+    say({ stage: "policy", detail: `challenge binding holds across ${BOUND_FIELD_COUNT} fields` });
+  }
 
   say({ stage: "policy", detail: decision.detail });
   if (!decision.allow) {
