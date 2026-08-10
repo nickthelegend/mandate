@@ -32,7 +32,7 @@ export function Navbar() {
   const active = (href: string) => path.startsWith(href);
 
   return (
-    <div className="flex justify-center px-3 pt-4 sm:px-4 sm:pt-6">
+    <header className="flex justify-center px-3 pt-4 sm:px-4 sm:pt-6">
       <div className="relative w-full max-w-[760px] rounded-full border border-neutral-200 bg-white py-2 pl-2 pr-2 shadow-sm">
         <div className="flex items-center gap-6">
           <Link href="/" className="flex shrink-0 items-center gap-2 pl-1" aria-label="Outcome home">
@@ -77,7 +77,7 @@ export function Navbar() {
               aria-label={open ? "Close menu" : "Open menu"}
               className="flex size-9 items-center justify-center rounded-full text-neutral-700 transition-colors hover:bg-neutral-100 md:hidden"
             >
-              {open ? <Menu className="size-5" /> : <Menu className="size-5" />}
+              {open ? <X className="size-5" /> : <Menu className="size-5" />}
             </button>
           </div>
         </div>
@@ -123,6 +123,6 @@ export function Navbar() {
           </div>
         )}
       </div>
-    </div>
+    </header>
   );
 }
