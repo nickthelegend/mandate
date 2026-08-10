@@ -9,24 +9,28 @@ import { cn } from "@/lib/utils";
 const SNIPPETS = {
   sdk: {
     install: "npm i mandate-sdk",
-    code: `import { MandateClient } from "mandate-sdk";
+    code: `import { createAuthorityClient } from "mandate-mcp";
 
-const mandate = new MandateClient({
-  provider: "https://ethereum-sepolia-rpc.publicnode.com",
-  escrow:   "0x0ED9d1235cB9FD080D687FD978a38d972a34dC3B",
-  token:    "0x49C86277a91002c4943837bf20F6ED41976Db09F",
+const authority = createAuthorityClient(
+  "https://gateway-production-944e.up.railway.app"
+);
+
+// Ask before you act. Writes nothing, moves nothing.
+const check = await authority.preflight({
+  agent: "research-bot",
+  amount: 0.4,
+  category: "market-data",
 });
+// -> { decision: "APPROVED", rules: [...15], budget: {...} }
 
-// Same job, same id -- so a duplicate collides on chain.
-const id = mandate.intentId("deliver 1 tUSDC to treasury", agent);
-if (await mandate.isClaimed(id)) return; // someone is already on it
-
-// Did that transaction actually move value?
-const { proven, reason } = await mandate.verify({
-  transactionHash,
-  recipient,
-  minAmount: 1_000_000n,
-});`,
+// Binding. A refusal has nothing to route around it.
+const spend = await authority.decide({
+  agent: "research-bot",
+  amount: 0.4,
+  category: "market-data",
+  nonce: Date.now(),
+});
+// -> { decision, transactionHash?, escalation? }`,
   },
   mcp: {
     install: "npx mandate-mcp",

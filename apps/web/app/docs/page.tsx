@@ -3,21 +3,17 @@ import { DEPLOYMENT, address } from "@/lib/mandate";
 import { PageHead } from "@/components/page-head";
 
 const TOOLS = [
-  ["mandate_intent_id", "Derive the id for a piece of work. Two agents given the same task and payee get the same id, so a duplicate claim is refused on chain rather than paid for twice."],
-  ["mandate_get_intent", "State, amount, and beneficiary — the address the work actually has to reach."],
-  ["mandate_verify", "Did this transaction move value? Reads the receipt for a real ERC-20 Transfer. Read-only; never moves money."],
-  ["mandate_settle", "Release or refund, decided from a transaction hash. Accepts no verdict, no done flag, no description of the work."],
-  ["mandate_diagnose", "Why an execution failed, and whether resending can fix it. In-flight is never worth resending."],
-  ["mandate_audit", "The decision record: what was verified, what was settled, and why."],
+  ["mandate_can_spend", "Would this spend be allowed? The same fifteen rules against the same anchored policy and the same persisted ledger — and it writes nothing. Ask before you act; a refusal you can read is one you can adjust to."],
+  ["mandate_spend", "Ask to spend. Binding: a refusal has nothing to route around it, because the agent holds no key. On approval the money moves and you get the transaction hash."],
+  ["mandate_budget", "What this agent has spent today and what is left, read from the ledger rather than from anything the agent tracks itself."],
+  ["mandate_policy", "The rules being enforced and their status in the on-chain registry. An agent can read its own limits; it cannot change them."],
+  ["mandate_score", "What the bureau makes of a payee — the score, the uncertainty, and the lower bound enforcement actually compares against the floor."],
+  ["mandate_decisions", "The decision record. Refusals kept as well as approvals, because a record of only the approvals cannot answer what an audit asks."],
+  ["mandate_escalations", "Spends the policy would neither approve nor refuse, waiting on a person. Nothing is charged while one is open."],
 ];
 
 const ENV = [
-  ["MANDATE_RPC_URL", "RPC endpoint", "public Sepolia"],
-  ["MANDATE_ESCROW", "MandateEscrow address", "the live deployment"],
-  ["MANDATE_TOKEN", "ERC-20 address", "tUSDC on Sepolia"],
-  ["MANDATE_CHAIN_ID", "chain id", "11155111"],
-  ["KEEPERHUB_API_KEY", "enables mandate_settle", "unset — read-only"],
-  ["MANDATE_AUDIT_LOG", "decision trail path, or - to disable", ".mandate/audit.jsonl"],
+  ["MANDATE_AUTHORITY_URL", "where the authority is", "the live deployment"],
 ];
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
@@ -48,36 +44,33 @@ export default function DocsPage() {
           it, and a verification tool that first demands an API key has already lost the argument.
         </p>
         <p>
-          Only <code className="font-mono text-[var(--ink)]">mandate_settle</code> moves money, and
-          only it needs <code className="font-mono text-[var(--ink)]">KEEPERHUB_API_KEY</code>.
-          Without one it returns a clear refusal rather than failing at startup.
+          Only <code className="font-mono text-[var(--ink)]">mandate_spend</code> moves money, and
+          the credential for it lives on the authority rather than in this package — which never
+          holds a key at all. That is the same property that makes a refusal binding.
         </p>
       </Section>
 
-      <Section title="Guarding an x402 endpoint">
+      <Section title="Buying from the marketplace, autonomously">
         <p>
-          x402 ends at <em>&ldquo;the facilitator reported success&rdquo;</em>. One call closes it —
-          read the transaction the facilitator named and confirm the money reached{" "}
-          <code className="font-mono text-[var(--ink)]">payTo</code> before you serve anything.
+          KeeperHub lists workflows other agents publish, priced per call, and its own tool says
+          plainly: <em>&ldquo;this tool DOES NOT auto-pay.&rdquo;</em> A paid listing answers 402
+          with an x402 challenge and something human has to settle it.
         </p>
         <pre className="overflow-x-auto rounded-[10px] border border-[var(--line)] bg-[var(--surface)] p-4 font-mono text-xs leading-relaxed text-[var(--ink)]">
-{`import { verifySettlement } from "mandate-sdk/x402";
+{`import { payAndCall } from "mandate-sdk";
 
-const verdict = await verifySettlement(mandate, {
-  requirements,   // the PaymentRequirements you quoted
-  settlement,     // the SettlementResponse it handed back
-});
-
-if (!verdict.proven) return respond402(verdict.reason);
-return serve(resource);`}
+const result = await payAndCall({
+  apiKey, slug, signer,
+  maxSpend: 50_000n,        // base units; an unattended payer without a cap
+  expectedTerms: listing,   // is a wallet with a public endpoint
+});`}
         </pre>
         <p>
-          The same entry exports the wire format with the specification&rsquo;s exact field names:{" "}
-          <code className="font-mono text-[var(--ink)]">paymentRequired</code>,{" "}
-          <code className="font-mono text-[var(--ink)]">encodePaymentHeader</code>,{" "}
-          <code className="font-mono text-[var(--ink)]">decodePaymentHeader</code>, and the{" "}
-          <code className="font-mono text-[var(--ink)]">PaymentRequirements</code> /{" "}
-          <code className="font-mono text-[var(--ink)]">SettlementResponse</code> types.
+          <code className="font-mono text-[var(--ink)]">expectedTerms</code> is the Challenge
+          Binding Check: every field of the 402 compared against what the listing advertised,
+          before a signature exists. A signed EIP-3009 authorisation is bearer-spendable the moment
+          it leaves the process, so a challenge that quietly changed the payee has to be caught
+          before signing, not after.
         </p>
       </Section>
 

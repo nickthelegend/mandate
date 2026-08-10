@@ -157,18 +157,16 @@ shared, not per-instance.
 | | |
 |---|---|
 | `PolicyRegistry` | [`0x13452fcA…C5E304`](https://sepolia.etherscan.io/address/0x13452fcA19819d37Fa4b01a0e64C8Fce60C5E304) |
-| `MandateEscrow` | [`0x0ED9d123…dC3B`](https://sepolia.etherscan.io/address/0x0ED9d1235cB9FD080D687FD978a38d972a34dC3B) |
-| `USDCx` (EIP-3009) | [`0x0d864A62…CF13`](https://sepolia.etherscan.io/address/0x0d864A625c280F7f9B9AD024d12F94f5D6DCCF13) |
 
 ## KeeperHub surfaces used
 
 | Surface | Where |
 |---|---|
 | **Execute API** | every policy anchor, every authorised transfer |
-| **MCP server** | KeeperHub's, to create and publish a workflow; plus `mandate-mcp`, six tools of our own |
-| **x402** | spec-exact adapter, a resource server that verifies settlement, and an autonomous payer |
+| **MCP server** | KeeperHub's, to create and publish a workflow; plus `mandate-mcp`, seven tools of our own including a real preflight |
+| **x402** | spec-exact adapter and an autonomous payer, with a Challenge Binding Check so a swapped payee is caught before signing |
 | **Workflow builder** | [`mandate-escrow-intent-status`](https://app.keeperhub.com), listed at $0.02/call |
-| **Audit trail** | KeeperHub's execution record read back; our own decision ledger persisted to MongoDB |
+| **Audit trail** | KeeperHub's execution record read back at `/inspect`; our own decision record, refusals included, persisted to MongoDB |
 | **CLI** | `kh execute contract-call` anchors a policy — [`0xfecbcf8f`](https://sepolia.etherscan.io/tx/0xfecbcf8f777dcc08b579aa6d176270ab3af4389f536c1a9479625fe106a7c478) |
 | **MPP** | **not used** — see Known gaps |
 
@@ -189,7 +187,7 @@ authorisation is bearer-spendable the moment it leaves the process.
 
 ```bash
 npm i mandate-sdk mandate-policy   # the authority, the payer, the KeeperHub client
-npx mandate-mcp                    # six MCP tools; every read-only one needs no credential
+npx mandate-mcp                    # seven MCP tools; every read-only one needs no credential
 ```
 
 Two packages, because they answer different questions and only one of them
@@ -203,13 +201,26 @@ client, the x402 payer.
 
 ```bash
 npm install
-npm test                       # 146 tests across policy, sdk and mcp
+npm test                       # 156 tests across policy, bureau, escalation and sdk
 npm run test:contracts         # 21 more against the Solidity
 npm run build -w mandate-web
 ```
 
 Set `KEEPERHUB_API_KEY`, `SEPOLIA_RPC_URL` and `MONGODB_URI` in `.env` (see
 `.env.example`).
+
+## What this used to be
+
+An earlier version of this repo argued a different thesis: that x402 settles on
+a facilitator's word, and a payment can report success while moving nothing.
+That is true, it was demonstrated with a real lying facilitator against a real
+escrow, and it is not this product. Keeping it meant shipping two products under
+one name, so the resource server, the escrow, the job board and the
+verify-a-payment page were removed rather than left to confuse anyone reading.
+
+What survived is what the authority actually uses: the chain-reading verifier
+(so a payment the authority made can be checked), the x402 payer (so an agent
+can buy from KeeperHub's marketplace), and the Challenge Binding Check.
 
 ## Provenance
 
