@@ -83,7 +83,12 @@ const CASES = [
     label: "Agent tries to spend $5,000",
     note: "A prompt-injected agent asking for the whole treasury.",
     policy: POLICY,
-    intent: { ...BASE_INTENT, amount: 5000 },
+    /*
+     * maxAmount moves with the amount deliberately. `intent.maxAmountBound`
+     * runs ahead of the cap, so leaving it at $1 would refuse this on the
+     * bound and prove nothing about the per-call cap the case is meant to show.
+     */
+    intent: { ...BASE_INTENT, amount: 5000, maxAmount: 5_000_000_000n },
     ledger: EMPTY_LEDGER,
   },
   {
