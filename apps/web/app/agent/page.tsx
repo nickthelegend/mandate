@@ -101,7 +101,7 @@ export default function AgentPage() {
       {cycle && (
         <div className="mt-8 space-y-4">
           <div className="rounded-[10px] border border-[var(--line)] bg-[var(--surface)] p-5">
-            <div className="font-mono text-xs uppercase tracking-wide text-[var(--ink-3)]">
+            <div className="field-label">
               the payer posts and leaves
             </div>
             <p className="mt-2 font-mono text-sm">{cycle.task}</p>

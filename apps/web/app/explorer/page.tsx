@@ -19,7 +19,7 @@ import { PageHead } from "@/components/page-head";
 function Stat({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
     <div className="rounded-[10px] border border-[var(--line)] bg-[var(--surface)] p-4">
-      <div className="font-mono text-xs uppercase tracking-wide text-[var(--ink-3)]">{label}</div>
+      <div className="field-label">{label}</div>
       <div className="mt-1.5 font-mono text-2xl font-semibold tabular-nums">{value}</div>
       {hint && <div className="mt-1 text-xs text-[var(--ink-3)]">{hint}</div>}
     </div>
@@ -70,7 +70,7 @@ export default function ExplorerPage() {
         <div className="mt-8 overflow-x-auto rounded-[10px] border border-[var(--line)]">
           <table className="w-full min-w-[820px] text-sm">
             <thead>
-              <tr className="border-b border-[var(--line)] bg-[var(--surface)] text-left font-mono text-xs uppercase tracking-wide text-[var(--ink-3)]">
+              <tr className="border-b border-[var(--line)] bg-[var(--surface)] text-left field-label">
                 <th className="px-4 py-3 font-medium">Intent</th>
                 <th className="px-4 py-3 font-medium">Amount</th>
                 <th className="px-4 py-3 font-medium">Outcome</th>

@@ -117,6 +117,13 @@ project built is in the footer.
 
 White, 1rem radius, `--shadow-sm`, optional hairline via `--bordered`.
 
+### Labels (`.field-label`)
+
+Inter, 12px, medium, `--ink-3`. Deliberately not the tracked monospace uppercase
+an earlier visual world used for the same job: mono here would claim the label
+is data, and a label is the question, not the answer. Monospace is reserved for
+`.figure` — hashes, addresses, amounts, timestamps.
+
 ### Fields (`.field`)
 
 White, 1px `--line-2`, 8px radius. Focus is an orange border plus a 3px
@@ -140,6 +147,27 @@ The signature component. Two facts side by side that never move: **what the
 facilitator claimed** and **what the chain actually moved**. Putting them in one
 row is the argument — the reader does not have to hold two numbers across a
 scroll to notice they disagree.
+
+### Rule chain (`components/rule-chain.tsx`)
+
+Fifteen chips in engine order. Passed rules fill in the brand wash, the refusing
+rule is ringed in the refusal colour and set semibold, and everything after it
+dims to `--ink-4`. The dim is doing real work: it says *never consulted*, not
+*passed*, which is the difference between an ordered chain and a checklist.
+
+Motion: the chain fills one chip every 55ms rather than appearing at once,
+because the sequence is the mechanism. It replays when the decision changes, and
+`prefers-reduced-motion` renders it settled.
+
+### Decision demo (`components/decision-demo.tsx`)
+
+The Persuade surface's operable moment. Six cases down the left, the verdict and
+rule chain on the right. Each case changes exactly one input so the rule it trips
+is unambiguous — including `maxAmount` moving with the amount on the cap case,
+since `intent.maxAmountBound` runs first and would otherwise steal the refusal.
+
+Runs the real engine client-side. The label "judged in your browser · no server"
+is load-bearing copy, not decoration.
 
 ### The mark
 

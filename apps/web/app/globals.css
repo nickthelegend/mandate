@@ -203,6 +203,18 @@
     color: var(--ink);
   }
 
+  /*
+   * A field or column label. Inter, not the tracked monospace uppercase an
+   * earlier visual world used -- mono here would claim the label is data,
+   * and it is the question, not the answer.
+   */
+  .field-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--ink-3);
+  }
+
   .figure {
     font-family: var(--font-mono);
     font-variant-numeric: tabular-nums;

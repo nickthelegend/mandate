@@ -17,7 +17,7 @@ export default function InspectPage() {
             Open the execution record.
           </h1>
           {/* The shell the real page fills, ruled so the layout does not jump. */}
-          <div className="mt-10 border-t-2 border-[var(--ink)]">
+          <div className="mt-10 border-t border-[var(--line)]">
             {[0, 1].map((i) => (
               <div key={i} className="flex items-center gap-6 border-b border-[var(--line)] py-4">
                 <span className="h-3 w-32 bg-[var(--surface)]" />

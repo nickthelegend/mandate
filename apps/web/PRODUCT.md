@@ -33,13 +33,18 @@ face of surfaces an agent reads as JSON.
 
 ## Product Purpose
 
-KeeperHub executes transactions for agents. Nothing in the stack checks that the
-execution did what it claimed. Outcome is the settlement layer that reads the
-receipt.
+Teams are handing autonomous agents private keys and hoping. Outcome is the
+authority that sits between an agent and its money: fifteen deterministic rules,
+anchored on chain, and — because KeeperHub holds the signer and the policy is
+the only path to execution — a limit the agent has no key to break.
 
-Success is a visitor who *believes the failure is real* — because they watched a
-facilitator report `success: true` while the chain showed zero, on a transaction
-they can open on Etherscan themselves.
+Success is a visitor who *tries to overspend and watches it stop*, then sees the
+same refusal proven on chain. Not a claim about safety; a gate they operated
+themselves.
+
+Receipt verification still exists and still matters — it is how a spend is
+confirmed to have moved value — but it is now a component of the authority, not
+the pitch.
 
 ## Positioning
 
@@ -59,10 +64,18 @@ chain:
 
 ## Operating Context
 
-Ten routes, and they are not one mode. `/`, `/x402` and `/docs` are read by
-someone deciding. `/demo`, `/verify`, `/claim` and `/agent` are operated —
-buttons that spend real testnet funds and take seconds to return. `/explorer`,
-`/ledger` and `/inspect` are read as records.
+Ten routes, and they are not one mode.
+
+**Persuade** — `/` only. It has to make one claim land in ninety seconds and let
+the visitor test it. Its decision demo runs the real engine client-side, so the
+persuasion is an operable thing rather than a promise.
+
+**Operate** — `/demo`, `/verify`, `/claim`, `/agent`. Buttons that spend real
+testnet funds and take seconds to return. Scanability and honest state beat
+expression here; a spinner that never resolves is worse than an error.
+
+**Read** — `/x402`, `/docs` for someone deciding; `/explorer`, `/ledger`,
+`/inspect` as records. Comprehension and wayfinding, nothing performing.
 
 Everything on every page is fetched live: Sepolia through a public RPC in the
 visitor's own browser, and the hosted gateway for settlement traces and the

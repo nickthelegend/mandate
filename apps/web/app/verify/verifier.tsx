@@ -185,7 +185,7 @@ export function Verifier() {
 
       <form onSubmit={submit} className="mt-8 space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="hash" className="font-mono text-xs uppercase tracking-wide text-[var(--ink-3)]">
+          <Label htmlFor="hash" className="field-label">
             Transaction hash
           </Label>
           <Input
@@ -210,7 +210,7 @@ export function Verifier() {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="token" className="font-mono text-xs uppercase tracking-wide text-[var(--ink-3)]">
+          <Label htmlFor="token" className="field-label">
             Paid in which token
           </Label>
           <Input
@@ -236,7 +236,7 @@ export function Verifier() {
 
         <div className="grid gap-4 sm:grid-cols-[1fr_200px]">
           <div className="space-y-2">
-            <Label htmlFor="to" className="font-mono text-xs uppercase tracking-wide text-[var(--ink-3)]">
+            <Label htmlFor="to" className="field-label">
               Who had to be paid
             </Label>
             <Input
@@ -254,7 +254,7 @@ export function Verifier() {
             )}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="amt" className="font-mono text-xs uppercase tracking-wide text-[var(--ink-3)]">
+            <Label htmlFor="amt" className="field-label">
               At least (base units)
             </Label>
             <Input

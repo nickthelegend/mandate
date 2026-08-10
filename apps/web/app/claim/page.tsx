@@ -155,7 +155,7 @@ export default function ClaimPage() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="task" className="font-mono text-xs uppercase tracking-wide text-[var(--ink-3)]">
+            <Label htmlFor="task" className="field-label">
               The work being paid for
             </Label>
             <Input
