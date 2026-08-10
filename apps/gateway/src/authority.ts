@@ -75,10 +75,16 @@ const CHAIN_ID = 11155111;
 /** The owner wallet the policy is registered to, and the intent's declared owner. */
 const OWNER = process.env.AUTHORITY_OWNER ?? "0x7A2E11B3ECEBaB8Ea46966eDaDD4092583809b67";
 
+/**
+ * What the file on disk carries.
+ *
+ * No `id` and no `status`: both come from the chain at request time, and a copy
+ * of either in the file would be a second answer that could disagree with the
+ * registry. The id is whatever `registerPolicy` assigned; the status is whatever
+ * the registry says right now, which is what makes the pause a kill switch.
+ */
 type PolicyDoc = {
-  id: string;
   version: number;
-  status: string;
   rules: Record<string, unknown>;
 };
 

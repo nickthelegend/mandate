@@ -34,11 +34,16 @@ asks the agent nicely. An authority is a gate the money has to pass through.
 Fifteen rules, in a fixed order, each naming itself when it fires:
 
 ```
-policy.active → duplicate → cooldown → replay.contextBinding → recipient
-→ agent.worker → category → vendor.lcbFloor → intent.maxAmountBound
-→ hardCap → perCall.cap → budget.daily → rate.limit → proof.tierRequired
+policy.active → duplicate.<configured tuple> → cooldown.sameService
+→ replay.contextBinding → recipient.allowDeny → agent.workerAllowDeny
+→ category.allow → vendor.lcbFloor → intent.maxAmountBound → hardCap.absolute
+→ perCall.cap → budget.daily → rate.limit → proof.tierRequired
 → escalate.aboveThreshold
 ```
+
+Those are the ids the engine emits, exported as `IMPLEMENTED_RULES`. The
+duplicate rule names the tuple it actually compared, so a trace cannot claim a
+comparison it did not make.
 
 A decision returns `APPROVED`, a `BLOCKED_*`, or an `ESCALATED_*`, together with
 the trace of every rule evaluated and which one refused.
@@ -86,6 +91,66 @@ Proven end to end on Sepolia:
 
 Every one of those writes was sent by KeeperHub's relayer `0xA17cb6ad…`, not by
 a local key.
+
+## Running it for real
+
+Judging a spend and *enforcing* one are different things, and for a while only
+the first was true here. The engine is pure and takes the ledger as an argument;
+`executeIfAuthorised` takes a decision the caller already computed. In both, the
+state that decides — how much has been spent today — is supplied by whoever is
+asking permission. The policy engine said so outright: *"the ledger window is
+per-process and resets on restart."*
+
+A budget that resets on restart is not a budget. An agent that wants to
+overspend waits for a deploy.
+
+So the ledger is durable and there is one entry point where the caller supplies
+none of the inputs that decide:
+
+```
+POST /authority/spend      { "amount": 0.40, "category": "market-data" }
+
+  1. read the policy from PolicyRegistry, Sepolia    ← not from the request
+  2. check the document hashes to the anchor          ← not from the request
+  3. take the partition lease
+  4. read the spend window from MongoDB               ← not from the request
+  5. run all fifteen rules
+  6. record the decision, approved or refused
+  7. charge the budget, then execute through KeeperHub
+```
+
+Three properties the store has that a counter would not:
+
+- **Windows are computed at read.** The trailing hour is derived from stored
+  call timestamps, the daily budget from the stored UTC day key. Nothing has to
+  have been running for the answer to be right — an instance down for a week
+  reads what one that never stopped reads.
+- **Cooldown clocks are stored as pairs, not a map.** The engine keys them by
+  host, hosts contain dots, and a dotted Mongo key is a path expression whose
+  failure is silent: the lookup misses, the rule reads "never called", and the
+  cooldown never fires.
+- **The lease crosses processes.** A Mongo document with a unique id and a TTL,
+  which is the durable form of the in-memory per-agent lock.
+
+The budget is charged **before** the transfer, not after. Both orders lose
+something if the process dies mid-request: charge-first can consume budget for a
+spend that never happened, execute-first can move money no budget counted. The
+first over-refuses, the second over-spends.
+
+`/authority` on the site is that loop, operable. Spend it down and reload — the
+refusal is still true, because it is in a database rather than in the page.
+
+| Step | Result | Transaction |
+|---|---|---|
+| Anchor this gateway's policy | `ACTIVE`, owner = KeeperHub | [`0x17cc144a`](https://sepolia.etherscan.io/tx/0x17cc144a475c94e2243dd859166a90ab2fd2923728f876de5bc9dda7054a9ad2) |
+| Approved $0.25 spend | budget 0.50 → 0.75 | [`0xd8bd2b61`](https://sepolia.etherscan.io/tx/0xd8bd2b6170811f38831ea6b118f142ecaebbf0b2389e137e2ac5e508062288b8) |
+| Approved $0.40, driven from the browser | budget 0.75 → 1.15 | [`0x67c881c2`](https://sepolia.etherscan.io/tx/0x67c881c2a723670cfdeec3a7ff3515ed5274321bde5f69ea7527eba88b38dc45) |
+| Pause on chain | next spend dies at `policy.active`, rule 1 of 15 | [`0x384a73fe`](https://sepolia.etherscan.io/tx/0x384a73fe41aaad058d171984d17838b08a50ebab440bc40d3d4e47db436e1b9d) |
+| Resume | `ACTIVE` again | [`0x408a2da6`](https://sepolia.etherscan.io/tx/0x408a2da6841874095e4fd9b6d5c00dc0d8ce119e582dd3f87c80d46a6b73df50) |
+
+Budget read `0.75` before a process restart and `0.75` after, then the same
+figure from a different machine — the deployed gateway — because the ledger is
+shared, not per-instance.
 
 ## Deployments
 
@@ -161,6 +226,13 @@ Stated rather than hidden.
   cannot settle. Blocked on funding, not on capability — so it is left undone
   rather than faked.
 - **Sepolia, not mainnet.** x402's own gate is Base-mainnet-only.
-- **The web console still presents the earlier verification product**, not the
-  authority. The backend above is real and tested; the site has not caught up.
+- **One policy, one agent.** The gateway enforces a single anchored policy read
+  from `POLICY_ID`. The registry, the engine and the ledger are all keyed per
+  policy and would take many without changing shape, but nothing here provisions
+  a second one, so multi-tenancy is untested rather than supported.
+- **The daily budget is $5 and shared.** `/authority` is public and unmetered
+  beyond the policy itself, so a determined visitor can spend the day's float
+  and leave the next one only refusals. That is the honest consequence of
+  letting the product be the rate limit; a real deployment would scope a policy
+  per caller.
 - Verification covers ERC-20 transfers, not arbitrary off-chain work.
