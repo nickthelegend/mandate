@@ -10,13 +10,13 @@ import type { Address, Hex } from "./viem-shim.ts";
  */
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Outcomes (§7.1 terminal states)
+// Mandates (§7.1 terminal states)
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
  * The terminal decision codes THIS slice can emit. Ten of §7.1's thirteen RULE_EVAL rules are
  * now real (plus the `policy.active` lookup), so this slice produces the full BLOCKED_* family
- * for them AND the first ESCALATED_* outcomes (`ESCALATED_THRESHOLD`, `ESCALATED_PER_CALL_CAP`).
+ * for them AND the first ESCALATED_* mandates (`ESCALATED_THRESHOLD`, `ESCALATED_PER_CALL_CAP`).
  *
  * All fifteen rules are live, so the full BLOCKED_* and ESCALATED_* families are reachable,
  * including BLOCKED_REPLAY (replay/CBC), BLOCKED_VENDOR_RISK / ESCALATED_VENDOR_RISK (vendor
@@ -24,13 +24,13 @@ import type { Address, Hex } from "./viem-shim.ts";
  * caller rather than here: REJECTED_UNAUTHENTICATED, REJECTED_STALE_INTENT,
  * ESCALATED_SIGNER_DOWN.
  *
- * Fail-closed (I2): every code here except APPROVED withholds the spend. An ESCALATED_* outcome
+ * Fail-closed (I2): every code here except APPROVED withholds the spend. An ESCALATED_* mandate
  * withholds too — it routes to the approval pipeline (§7.2), it is NOT an approval.
  *
  * `BLOCKED_PER_CALL_CAP` / `ESCALATED_PER_CALL_CAP` are named to the codebase convention; §7.1
  * states per-call-cap resolves to "ESCALATED or BLOCKED (per policy)" without a verbatim suffix.
  */
-export type DecisionOutcome =
+export type DecisionMandate =
   | "REJECTED_MALFORMED"
   | "BLOCKED_NO_ACTIVE_POLICY"
   | "BLOCKED_FAIL_CLOSED"
@@ -364,7 +364,7 @@ export interface LedgerWindowState {
  * it, and it carries `implemented: false` (and a `note`) there so the trace is
  * self-describing and the manifest test can enumerate exactly which rules are real.
  *
- * A rule that triggers an ESCALATED_* outcome records `result: "FAIL"` here (its condition was
+ * A rule that triggers an ESCALATED_* mandate records `result: "FAIL"` here (its condition was
  * violated); whether that violation blocks or escalates lives in the top-level `Decision.decision`.
  * This keeps the rule-level result the §8.2 PASS/FAIL binary — no second shape.
  */
@@ -407,7 +407,7 @@ export interface RuleTraceEntry {
  * `decisions` table.
  */
 export interface Decision {
-  readonly decision: DecisionOutcome;
+  readonly decision: DecisionMandate;
   readonly intentHash: Hex;
   readonly policyId: string;
   readonly policyVersion: number;

@@ -5,7 +5,7 @@
 # beyond copying files.
 #
 # basePath is set here rather than committed to next.config.mjs: the app is
-# served from /outcome/ on github.io but from / anywhere else, and hard-coding
+# served from /mandate/ on github.io but from / anywhere else, and hard-coding
 # the repo name would break every other way of running it.
 name: pages
 
@@ -41,12 +41,12 @@ jobs:
       # depend on it, but the console imports it directly for the client-side
       # decision demo, and an unbuilt workspace package fails resolution rather
       # than falling back to source.
-      - run: npm run build -w outcome-policy
-      - run: npm run build -w outcome-sdk
+      - run: npm run build -w mandate-policy
+      - run: npm run build -w mandate-sdk
 
-      - run: npm run build -w outcome-web
+      - run: npm run build -w mandate-web
         env:
-          NEXT_PUBLIC_BASE_PATH: /outcome
+          NEXT_PUBLIC_BASE_PATH: /mandate
 
       - uses: actions/configure-pages@v5
 

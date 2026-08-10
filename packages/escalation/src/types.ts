@@ -1,9 +1,9 @@
 /**
  * The escalation state machine.
  *
- * A policy decision has three outcomes, not two. APPROVED and BLOCKED_* are
+ * A policy decision has three mandates, not two. APPROVED and BLOCKED_* are
  * settled; ESCALATED_* is the one that needs a person. Before this package
- * Outcome had nowhere to put that third answer, so an escalated spend was
+ * Mandate had nowhere to put that third answer, so an escalated spend was
  * recorded like a refusal and quietly dropped — the rule fired, produced a
  * distinct verdict, and nothing acted on it.
  *

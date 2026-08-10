@@ -51,21 +51,21 @@ import {
   PolicyNotUsable,
   executeIfAuthorised,
   type KeeperHubClient,
-} from "outcome-sdk/node";
+} from "mandate-sdk/node";
 import {
   mongoLedger,
   toRuleTrace,
   type SpendLedger,
   type DecisionRecord,
   type RuleTrace,
-} from "outcome-sdk/node";
-import { proposeDecision, ledgerPartitionKey } from "outcome-policy";
-import { hashCanonicalJson } from "outcome-policy/canon";
+} from "mandate-sdk/node";
+import { proposeDecision, ledgerPartitionKey } from "mandate-policy";
+import { hashCanonicalJson } from "mandate-policy/canon";
 import {
   EscalationService,
   mongoEscalations,
   type EscalationRecord,
-} from "outcome-escalation";
+} from "mandate-escalation";
 import {
   mongoBureau,
   mongoSnapshots,
@@ -73,7 +73,7 @@ import {
   toVendorScoreInject,
   epochOf,
   type ScoreResult,
-} from "outcome-bureau";
+} from "mandate-bureau";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 
@@ -82,7 +82,7 @@ export const REGISTRY = process.env.POLICY_REGISTRY ?? "0x13452fcA19819d37Fa4b01
 /** The on-chain policy id this gateway enforces. Set once the document is anchored. */
 export const POLICY_ID = process.env.POLICY_ID ?? "";
 /** tUSDC on Sepolia -- what an approved spend actually moves. */
-const TOKEN = process.env.OUTCOME_TOKEN ?? "0x49C86277a91002c4943837bf20F6ED41976Db09F";
+const TOKEN = process.env.MANDATE_TOKEN ?? "0x49C86277a91002c4943837bf20F6ED41976Db09F";
 const CHAIN_ID = 11155111;
 
 /** The owner wallet the policy is registered to, and the intent's declared owner. */
@@ -249,8 +249,8 @@ function taskHashOf(req: SpendRequest): `0x${string}` {
 /**
  * The ledger partition for one agent under this policy.
  *
- * `outcome-policy`'s own `ledgerPartitionKey` keys on the policy alone, because
- * untch's model is one policy per agent -- their comment says so. Outcome runs
+ * `mandate-policy`'s own `ledgerPartitionKey` keys on the policy alone, because
+ * untch's model is one policy per agent -- their comment says so. Mandate runs
  * one anchored policy over many agents, so the key carries both. The rules, the
  * hash and the on-chain anchor are still shared and still the thing being
  * enforced; only the spend history is per agent, which is exactly the state
@@ -294,6 +294,17 @@ export type Authority = {
   ledger: SpendLedger;
   partitionKey: string;
   decide(req: SpendRequest): Promise<AuthorityOutcome>;
+  /**
+   * The same decision, with nothing written and no money moved.
+   *
+   * Possible only because the engine returns PROPOSED effects rather than
+   * applying them — a caller that discards the proposal has changed nothing,
+   * and there is no code path through which it could have. That is what makes
+   * a preflight honest rather than a second, laxer evaluator: it is the same
+   * fifteen rules against the same anchored policy and the same persisted
+   * ledger, and its verdict is the verdict.
+   */
+  preflight(req: Omit<SpendRequest, "nonce">): Promise<AuthorityOutcome>;
   history(limit: number, agent?: string): Promise<DecisionRecord[]>;
   /** Score a payee on demand, from the same sources a decision would use. */
   score(payee: string): Promise<ScoreResult>;
@@ -304,7 +315,7 @@ export type Authority = {
     operator: string;
     action: "APPROVE" | "DENY";
   }): Promise<{
-    outcome: string;
+    mandate: string;
     status: string | null;
     detail: string;
     executionId?: string;
@@ -631,6 +642,93 @@ export async function createAuthority(args: {
       });
     },
 
+    async preflight(req) {
+      // No lease: nothing is written, so there is nothing to serialize against.
+      const full: SpendRequest = { ...req, nonce: Date.now() };
+      const now = Date.now();
+      const part = partitionFor(policyId, full.agent);
+
+      let anchor: Awaited<ReturnType<typeof readAnchor>> | null = null;
+      let anchorError: string | null = null;
+      try {
+        anchor = await readAnchor();
+      } catch (e) {
+        if (e instanceof PolicyAnchorMismatch || e instanceof PolicyNotUsable) anchorError = e.message;
+        else throw e;
+      }
+
+      const vendorScore = vendorFloor === undefined ? null : await scoreFor(full.recipient, now);
+      const before = await ledger.read(part, now);
+      const onChainStatus = anchor ? statusFromAnchor(anchor) : null;
+      const policy = {
+        ...POLICY_DOC,
+        id: policyId,
+        status: anchorError ? "PAUSED" : (onChainStatus?.status ?? "PAUSED"),
+        policyHash: POLICY_HASH,
+      };
+      const state = vendorScore
+        ? { ...before, vendorScore: toVendorScoreInject(vendorScore) }
+        : before;
+
+      const { decision } = proposeDecision(
+        toIntent(full) as never,
+        policy as never,
+        state as never,
+        { nowMs: now }
+      );
+      const failed = decision.rules.find((r) => r.result === "FAIL");
+      const spent = before.budgetUsage.effectiveToday;
+
+      return {
+        decision: decision.decision,
+        approved: decision.decision === "APPROVED",
+        failedRule: failed?.rule ?? null,
+        reason: anchorError ?? decision.reasons?.[0] ?? decision.decision,
+        intentHash: decision.intentHash,
+        policyId,
+        policyVersion: POLICY_DOC.version,
+        rules: decision.rules.map((r) => toRuleTrace(r as never)),
+        /*
+         * `spentAfter` is what the ledger holds NOW, not what it would hold if
+         * this were executed. A preflight that reported a spend it did not make
+         * would be describing a world that does not exist.
+         */
+        budget: {
+          limit: dailyLimit,
+          spentBefore: spent,
+          spentAfter: spent,
+          remaining: Math.max(0, dailyLimit - spent),
+        },
+        callsInLastHour: before.callsInLastHour,
+        anchor: {
+          registry: REGISTRY,
+          policyHash: POLICY_HASH,
+          onChainStatus: anchorError ? "unusable" : (onChainStatus?.status ?? "unknown"),
+          usable: Boolean(anchor?.usable),
+        },
+        ...(vendorScore
+          ? {
+              vendor: {
+                payee: vendorScore.subject,
+                lcb: vendorScore.lcb,
+                score: vendorScore.score,
+                sigma: vendorScore.sigma,
+                band: vendorScore.band,
+                floor: vendorFloor!,
+                epoch: vendorScore.epoch,
+                features: vendorScore.features.map((f) => ({
+                  key: f.key,
+                  value: f.value,
+                  weightApplied: f.weightApplied,
+                  observed: f.implemented,
+                  note: f.note,
+                })),
+              },
+            }
+          : {}),
+      } satisfies AuthorityOutcome;
+    },
+
     async history(limit, agent) {
       return ledger.decisions(limit, partitionFor(policyId, agent ?? DEFAULT_AGENT));
     },
@@ -651,12 +749,12 @@ export async function createAuthority(args: {
 
       // Anything short of a clean approval changes no money.
       if (verdict.outcome !== "APPROVED") {
-        return { outcome: verdict.outcome, status: verdict.status, detail: verdict.detail };
+        return { mandate: verdict.outcome, status: verdict.status, detail: verdict.detail };
       }
 
       const rec = await escalations.get(id);
       if (!rec) {
-        return { outcome: verdict.outcome, status: verdict.status, detail: "escalation vanished" };
+        return { mandate: verdict.outcome, status: verdict.status, detail: "escalation vanished" };
       }
 
       /*
@@ -716,7 +814,7 @@ export async function createAuthority(args: {
           error: `approved by operator but ${released.blocked}: ${released.reason}`,
         });
         return {
-          outcome: "APPROVED",
+          mandate: "APPROVED",
           status: "APPROVED",
           detail: `operator approved, but the spend is now ${released.blocked}: ${released.reason}`,
         };
@@ -725,7 +823,7 @@ export async function createAuthority(args: {
       await escalations.recordExecution(id, released.run);
       const limit = dailyLimit;
       return {
-        outcome: "APPROVED",
+        mandate: "APPROVED",
         status: "APPROVED",
         detail: "released by bound operator",
         ...(released.run.executionId ? { executionId: released.run.executionId } : {}),

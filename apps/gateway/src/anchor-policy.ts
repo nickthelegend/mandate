@@ -22,13 +22,13 @@ import {
   anchorPolicy,
   updateAnchoredPolicy,
   readAnchoredPolicy,
-} from "outcome-sdk/node";
+} from "mandate-sdk/node";
 
 import { POLICY_DOC, POLICY_HASH, REGISTRY } from "./authority.ts";
 
 const CHAIN_ID = 11155111;
 const RPC =
-  process.env.OUTCOME_RPC_URL ??
+  process.env.MANDATE_RPC_URL ??
   process.env.SEPOLIA_RPC_URL ??
   "https://ethereum-sepolia-rpc.publicnode.com";
 const AGENT = process.env.AUTHORITY_AGENT ?? "0x7A2E11B3ECEBaB8Ea46966eDaDD4092583809b67";

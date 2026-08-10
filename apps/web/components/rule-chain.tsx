@@ -25,7 +25,7 @@
  */
 
 import { useEffect, useRef, useState } from "react";
-import { IMPLEMENTED_RULES } from "outcome-policy";
+import { IMPLEMENTED_RULES } from "mandate-policy";
 
 import { cn } from "@/lib/utils";
 

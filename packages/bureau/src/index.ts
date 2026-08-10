@@ -1,10 +1,10 @@
 /**
- * outcome-bureau — deterministic payee reliability scoring.
+ * mandate-bureau — deterministic payee reliability scoring.
  *
  * Ported from untch's `@untch/trust-bureau`: the LCB enforcement primitive, the
  * weight-renormalization fallback that turns missing signal into wider
  * uncertainty, and the feature/σ shrink model. The features themselves are
- * Outcome's, computed from its own payment record and from the chain.
+ * Mandate's, computed from its own payment record and from the chain.
  *
  * This exists to make one policy rule real. `vendor.lcbFloor` was in the
  * engine's chain from the first commit and had nothing to read, so it returned

@@ -1,7 +1,7 @@
 import Link from "next/link";
 
-import { OutcomeMark } from "@/components/logo";
-import { DEPLOYMENT, source } from "@/lib/outcome";
+import { MandateMark } from "@/components/logo";
+import { DEPLOYMENT, source } from "@/lib/mandate";
 
 /**
  * The footer carries what the nav gave up.
@@ -13,12 +13,9 @@ import { DEPLOYMENT, source } from "@/lib/outcome";
  */
 
 const MORE = [
-  { href: "/demo", label: "The x402 gap, live", note: "a settlement that pays nobody" },
-  { href: "/ledger", label: "Decision ledger", note: "every verdict, and why" },
-  { href: "/explorer", label: "Intent explorer", note: "read from the chain" },
+  { href: "/ledger", label: "Decision record", note: "every verdict, and why" },
   { href: "/inspect", label: "Execution record", note: "KeeperHub's own account" },
-  { href: "/x402", label: "The x402 gap", note: "what the spec leaves open" },
-  { href: "/claim", label: "Post a job", note: "with your own wallet" },
+  { href: "/docs", label: "SDK and MCP", note: "npm i mandate-sdk" },
 ];
 
 export function SiteFooter() {
@@ -28,20 +25,20 @@ export function SiteFooter() {
         <div className="grid gap-10 md:grid-cols-[1.2fr_1fr]">
           <div>
             <span className="flex items-center gap-2">
-              <OutcomeMark size={26} />
-              <span className="text-[17px] font-semibold tracking-[-0.02em]">Outcome</span>
+              <MandateMark size={26} />
+              <span className="text-[17px] font-semibold tracking-[-0.02em]">Mandate</span>
             </span>
             <p className="mt-3 max-w-sm text-[14px] leading-relaxed text-neutral-600">
               Payment that follows a verified result. Every number on this site is read from{" "}
               {DEPLOYMENT.chainName} in your browser — there is no backend to trust.
             </p>
             <a
-              href={source(DEPLOYMENT.escrow)}
+              href={source(DEPLOYMENT.registry)}
               target="_blank"
               rel="noopener"
               className="figure mt-4 inline-block text-[11px] text-neutral-500 underline-offset-4 hover:text-[var(--brand)] hover:underline"
             >
-              OutcomeEscrow · {DEPLOYMENT.escrow.slice(0, 18)}… · verified
+              PolicyRegistry · {DEPLOYMENT.registry.slice(0, 18)}… · verified
             </a>
           </div>
 

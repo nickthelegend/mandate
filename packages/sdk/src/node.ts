@@ -1,7 +1,7 @@
 /**
- * outcome-sdk/node -- the half that signs, settles, and writes to disk.
+ * mandate-sdk/node -- the half that signs, settles, and writes to disk.
  *
- * Split from the main entry so that importing `outcome-sdk` in a browser never
+ * Split from the main entry so that importing `mandate-sdk` in a browser never
  * drags in `node:fs`, a KeeperHub credential, or a wallet. Everything here
  * needs one of those.
  *
@@ -11,15 +11,6 @@
  * replayed as a release.
  */
 
-export { createTools, type Env, type Tools } from "./tools.ts";
-export {
-  jobsFromEnv,
-  fileJobs,
-  memoryJobs,
-  mongoJobs,
-  type Job,
-  type JobStore,
-} from "./jobs.ts";
 export {
   auditFromEnv,
   fileAudit,
@@ -41,14 +32,6 @@ export {
   type EffectsToApply,
   type StoredIntent,
 } from "./ledger.ts";
-export { settle, ESCROW_ABI, type SettleParams, type SettleResult } from "./settle.ts";
-export {
-  work,
-  jobId,
-  loadJobs,
-  postJob,
-  type AgentReport,
-} from "./agent.ts";
 export { KeeperHubClient } from "./keeperhub/client.ts";
 export {
   executeIfAuthorised,

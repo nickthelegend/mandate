@@ -13,7 +13,7 @@ import assert from "node:assert/strict";
 import { bindingFor, bindingMismatches, bindingHolds } from "../src/x402-guard.ts";
 
 const LISTING = {
-  slug: "outcome-escrow-intent-status",
+  slug: "mandate-escrow-intent-status",
   amount: "20000",
   asset: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
   payTo: "0x7A2E11B3ECEBaB8Ea46966eDaDD4092583809b67",

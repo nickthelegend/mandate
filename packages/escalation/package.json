@@ -1,5 +1,5 @@
 {
-  "name": "outcome-escalation",
+  "name": "mandate-escalation",
   "version": "0.1.0",
   "type": "module",
   "description": "The lifecycle that carries a spend decision to a human and carries the answer back, without letting the channel decide.",

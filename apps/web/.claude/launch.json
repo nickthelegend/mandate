@@ -1,1 +1,1 @@
-{"version":"0.0.1","configurations":[{"name":"outcome-web","runtimeExecutable":"npm","runtimeArgs":["run","dev"],"port":4180}]}
+{"version":"0.0.1","configurations":[{"name":"mandate-web","runtimeExecutable":"npm","runtimeArgs":["run","dev"],"port":4180}]}

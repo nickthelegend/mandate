@@ -10,7 +10,7 @@
  *   node record-demo.mjs                        # against the deployed site
  *   node record-demo.mjs http://localhost:4180  # against a local build
  *
- * Output: demo/outcome-demo.webm plus a still of each beat.
+ * Output: demo/mandate-demo.webm plus a still of each beat.
  *
  * The pacing is deliberate. Approvals are real transfers and take twenty to
  * forty seconds, so the script waits on the page's own state rather than on a
@@ -21,7 +21,7 @@
 import { chromium } from "playwright";
 import { mkdirSync } from "node:fs";
 
-const BASE = (process.argv[2] ?? "https://nickthelegend.github.io/outcome").replace(/\/$/, "");
+const BASE = (process.argv[2] ?? "https://nickthelegend.github.io/mandate").replace(/\/$/, "");
 const OUT = "demo";
 mkdirSync(OUT, { recursive: true });
 

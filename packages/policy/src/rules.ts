@@ -1,6 +1,6 @@
 import { canonAddress, canonUrl } from "./canon/index.ts";
 import type {
-  DecisionOutcome,
+  DecisionMandate,
   LedgerWindowState,
   Policy,
   PolicyRules,
@@ -94,29 +94,29 @@ interface RuleContext {
 }
 
 /**
- * A rule's verdict. `outcome === null` ⇒ the rule passed, evaluation continues. A non-null
- * `outcome` short-circuits the chain with that terminal decision and `reason` (BLOCKED_* or
+ * A rule's verdict. `mandate === null` ⇒ the rule passed, evaluation continues. A non-null
+ * `mandate` short-circuits the chain with that terminal decision and `reason` (BLOCKED_* or
  * ESCALATED_*); the entry's `result` is `"FAIL"` in both block and escalate cases.
  */
-interface RuleOutcome {
+interface RuleMandate {
   readonly entry: RuleTraceEntry;
-  readonly outcome: DecisionOutcome | null;
+  readonly mandate: DecisionMandate | null;
   readonly reason?: string;
 }
 
-type RuleFn = (ctx: RuleContext) => RuleOutcome;
+type RuleFn = (ctx: RuleContext) => RuleMandate;
 
-function pass(rule: string, extra: Omit<RuleTraceEntry, "rule" | "result"> = {}): RuleOutcome {
-  return { entry: { rule, result: "PASS", ...extra }, outcome: null };
+function pass(rule: string, extra: Omit<RuleTraceEntry, "rule" | "result"> = {}): RuleMandate {
+  return { entry: { rule, result: "PASS", ...extra }, mandate: null };
 }
 
 function halt(
   rule: string,
-  outcome: DecisionOutcome,
+  mandate: DecisionMandate,
   reason: string,
   extra: Omit<RuleTraceEntry, "rule" | "result"> = {},
-): RuleOutcome {
-  return { entry: { rule, result: "FAIL", ...extra }, outcome, reason };
+): RuleMandate {
+  return { entry: { rule, result: "FAIL", ...extra }, mandate, reason };
 }
 
 /** The service identity for cooldown: an endpoint's canonical host (`canonUrl` normalized). */
@@ -397,10 +397,10 @@ const rulePerCallCap: RuleFn = ({ intent, policy }) => {
   const limit = money(cap);
   if (minorUnits(intent.amount) > minorUnits(cap)) {
     const mode = policy.rules.onPerCallCapExceeded ?? "BLOCK";
-    const outcome = mode === "ESCALATE" ? "ESCALATED_PER_CALL_CAP" : "BLOCKED_PER_CALL_CAP";
+    const mandate = mode === "ESCALATE" ? "ESCALATED_PER_CALL_CAP" : "BLOCKED_PER_CALL_CAP";
     return halt(
       rule,
-      outcome,
+      mandate,
       `per-call cap exceeded: ${observed} > ${limit} ${token} (policy onPerCallCapExceeded ⇒ ${mode})`,
       { observed, limit, token },
     );
@@ -699,20 +699,20 @@ const RULE_EVAL_CHAIN: readonly ChainStep[] = [
 
 /**
  * Run the ordered §7.1 RULE_EVAL chain, appending each rule's trace entry to `rules` as it goes.
- * Returns the first terminal `outcome` (short-circuit), or `null` if every rule passed.
+ * Returns the first terminal `mandate` (short-circuit), or `null` if every rule passed.
  */
 export function evaluateRuleChain(
   ctx: RuleContext,
   rules: RuleTraceEntry[],
-): { outcome: DecisionOutcome | null; reason?: string } {
+): { mandate: DecisionMandate | null; reason?: string } {
   for (const step of RULE_EVAL_CHAIN) {
     const res = step.fn(ctx);
     rules.push(res.entry);
-    if (res.outcome) {
-      return res.reason === undefined ? { outcome: res.outcome } : { outcome: res.outcome, reason: res.reason };
+    if (res.mandate) {
+      return res.reason === undefined ? { mandate: res.mandate } : { mandate: res.mandate, reason: res.reason };
     }
   }
-  return { outcome: null };
+  return { mandate: null };
 }
 
 export type { RuleContext };

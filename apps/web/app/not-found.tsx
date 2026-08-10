@@ -17,14 +17,14 @@ import { PageHead } from "@/components/page-head";
  */
 
 export const metadata = {
-  title: "Not found — Outcome",
-  description: "That page does not exist. The authority, the verifier and the docs do.",
+  title: "Not found — Mandate",
+  description: "That page does not exist. The authority, the decision record and the docs do.",
 };
 
 const WAYS_OUT = [
   { href: "/authority", label: "The authority", note: "spend it down, live" },
-  { href: "/verify", label: "Verify a payment", note: "check one yourself" },
-  { href: "/agent", label: "The agent", note: "no key, no ETH" },
+  { href: "/ledger", label: "Every decision", note: "refusals kept too" },
+  { href: "/inspect", label: "Executions", note: "KeeperHub's own record" },
   { href: "/docs", label: "Docs", note: "the SDK and the MCP tools" },
 ];
 

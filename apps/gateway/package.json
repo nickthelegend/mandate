@@ -1,5 +1,5 @@
 {
-  "name": "outcome-gateway",
+  "name": "mandate-gateway",
   "version": "0.1.0",
   "private": true,
   "description": "An x402 resource server that checks it was actually paid.",
@@ -12,10 +12,10 @@
   },
   "dependencies": {
     "ethers": "^6.17.0",
-    "outcome-sdk": "*",
-    "outcome-policy": "*",
-    "outcome-bureau": "*",
-    "outcome-escalation": "*"
+    "mandate-sdk": "*",
+    "mandate-policy": "*",
+    "mandate-bureau": "*",
+    "mandate-escalation": "*"
   },
   "devDependencies": {
     "@types/node": "^22.20.1",

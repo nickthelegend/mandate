@@ -1,5 +1,5 @@
 {
-  "name": "outcome-bureau",
+  "name": "mandate-bureau",
   "version": "0.1.0",
   "type": "module",
   "description": "Deterministic vendor reliability scoring. Enforcement reads the lower-confidence bound, never the raw score.",

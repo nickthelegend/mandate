@@ -19,7 +19,7 @@ import { CheckCircle2, Fuel, Loader2, Search } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { tx } from "@/lib/outcome";
+import { tx } from "@/lib/mandate";
 import { cn } from "@/lib/utils";
 import { PageHead } from "@/components/page-head";
 
@@ -139,7 +139,7 @@ export function Inspector() {
       </form>
 
       <p className="mt-3 font-mono text-xs text-[var(--ink-3)]">
-        Run the <a href="/outcome/demo/" className="underline underline-offset-4 hover:text-[var(--ink)]">live demo</a>{" "}
+        Run the <a href="/mandate/demo/" className="underline underline-offset-4 hover:text-[var(--ink)]">live demo</a>{" "}
         and it will link you straight here with its own id.
       </p>
 
@@ -201,7 +201,7 @@ export function Inspector() {
             </p>
             {data.transactionHash && (
               <Button asChild variant="outline" size="sm" className="mt-4">
-                <a href={`/outcome/verify/?hash=${data.transactionHash}`}>Check this one yourself</a>
+                <a href={`/mandate/verify/?hash=${data.transactionHash}`}>Check this one yourself</a>
               </Button>
             )}
           </div>

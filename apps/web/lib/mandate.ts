@@ -1,7 +1,7 @@
 /**
  * The one client this site uses.
  *
- * Built from `outcome-sdk` -- the same package published to npm, not a private
+ * Built from `mandate-sdk` -- the same package published to npm, not a private
  * copy of the logic. That is deliberate: if the SDK could not drive this site,
  * the SDK would not be worth publishing, and a dashboard reading the chain
  * through a bespoke backend route would prove nothing about either.
@@ -10,13 +10,11 @@
  * server here to trust.
  */
 
-import { OutcomeClient } from "outcome-sdk";
 
 export const DEPLOYMENT = {
   chainId: 11155111,
   chainName: "Sepolia",
   rpcUrl: "https://ethereum-sepolia-rpc.publicnode.com",
-  escrow: "0x0ED9d1235cB9FD080D687FD978a38d972a34dC3B",
   /** PolicyRegistry: where a spend policy is anchored, and where a pause takes effect. */
   registry: "0x13452fcA19819d37Fa4b01a0e64C8Fce60C5E304",
   token: "0x49C86277a91002c4943837bf20F6ED41976Db09F",
@@ -25,12 +23,10 @@ export const DEPLOYMENT = {
   explorer: "https://sepolia.etherscan.io",
 } as const;
 
-export const outcome = new OutcomeClient({
-  provider: DEPLOYMENT.rpcUrl,
-  escrow: DEPLOYMENT.escrow,
-  token: DEPLOYMENT.token,
-  chainId: DEPLOYMENT.chainId,
-});
+
+/** The authority. Every live number on this site comes from here. */
+export const GATEWAY =
+  process.env.NEXT_PUBLIC_GATEWAY_URL ?? "https://gateway-production-944e.up.railway.app";
 
 export const tx = (hash: string) => `${DEPLOYMENT.explorer}/tx/${hash}`;
 export const address = (a: string) => `${DEPLOYMENT.explorer}/address/${a}`;

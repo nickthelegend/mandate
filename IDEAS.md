@@ -11,7 +11,7 @@ source, and the **live** marketplace API. Nothing here is from memory.
 > Deadline **2026-08-13 12:00 UTC+2**. Grand prize + $1,000 onboarding-UX bounty
 > (stackable).
 
-Six surfaces. Outcome currently uses two (x402, execute API) and a bit of a
+Six surfaces. Mandate currently uses two (x402, execute API) and a bit of a
 third (its own audit trail, not KeeperHub's). **That is the scoring gap.**
 
 ## The discovery that changes the brief
@@ -92,11 +92,11 @@ nothing, **files an onchain claim** against an escrow the seller staked. Turns
 
 ---
 
-## What happens to Outcome
+## What happens to Mandate
 
 It is not thrown away — it becomes the settlement conscience *inside* #1. The
 agent only books a purchase as complete when the payment is **proven on chain**
-(`outcome-sdk` verify), and only releases its own escrow on proof. The escrow,
+(`mandate-sdk` verify), and only releases its own escrow on proof. The escrow,
 the idempotent intent id, and `diagnose` all keep earning their place; they stop
 being the whole pitch and become the part that makes the agent trustworthy.
 

@@ -38,7 +38,7 @@ export {
 } from "./rules.ts";
 export type {
   Decision,
-  DecisionOutcome,
+  DecisionMandate,
   RuleResult,
   RuleTraceEntry,
   Policy,

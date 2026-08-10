@@ -231,7 +231,7 @@ describe("rate.limit · BLOCKED_RATE (§7.1 RULE_EVAL)", () => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// escalate.aboveThreshold → ESCALATED_THRESHOLD (this package's first ESCALATED outcome family)
+// escalate.aboveThreshold → ESCALATED_THRESHOLD (this package's first ESCALATED mandate family)
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("escalate.aboveThreshold · ESCALATED_THRESHOLD (§7.1 RULE_EVAL)", () => {
@@ -252,7 +252,7 @@ describe("escalate.aboveThreshold · ESCALATED_THRESHOLD (§7.1 RULE_EVAL)", () 
     assert.equal(d.decision, "APPROVED");
   });
 
-  test("an ESCALATED outcome withholds — it does NOT commit to the ledger", async () => {
+  test("an ESCALATED mandate withholds — it does NOT commit to the ledger", async () => {
     // #given a ledger that counts commits
     let commits = 0;
     const ledger: Ledger = {

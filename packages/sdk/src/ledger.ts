@@ -1,7 +1,7 @@
 /**
  * The spend ledger, made durable.
  *
- * `outcome-policy` judges an intent against a `LedgerWindowState` -- how much
+ * `mandate-policy` judges an intent against a `LedgerWindowState` -- how much
  * has been spent today, which intents are inside their duplicate window, when
  * each service was last called, how many calls landed in the trailing hour. The
  * engine is pure and takes that state as an argument, which is right: it makes
@@ -66,7 +66,7 @@ function money(v: number): number {
   return Math.round(v * 1e6) / 1e6;
 }
 
-/** UTC day bucket. Must agree with `outcome-policy`'s `utcDayKey` -- same slice, same reason. */
+/** UTC day bucket. Must agree with `mandate-policy`'s `utcDayKey` -- same slice, same reason. */
 export function utcDayKey(nowMs: number): string {
   return new Date(nowMs).toISOString().slice(0, 10);
 }
@@ -119,7 +119,7 @@ export type LedgerWindow = {
   seenIntentHashes: string[];
 };
 
-/** The effects an approved decision applies, as `outcome-policy` proposes them. */
+/** The effects an approved decision applies, as `mandate-policy` proposes them. */
 export type EffectsToApply = {
   partitionKey: string;
   duplicate: { recentIntent: StoredIntent };
@@ -286,7 +286,7 @@ export async function mongoLedger(opts: {
   const client: MongoClient = new MongoClient(opts.uri, { serverSelectionTimeoutMS: 15_000 });
   await client.connect();
 
-  const db: Db = client.db(opts.db ?? "outcome");
+  const db: Db = client.db(opts.db ?? "mandate");
   const base = opts.collection ?? "authority";
   const ledger: Collection<LedgerDoc> = db.collection(`${base}_ledger`);
   const log: Collection<DecisionRecord> = db.collection(`${base}_decisions`);

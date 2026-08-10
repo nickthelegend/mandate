@@ -16,7 +16,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronRight, Menu, X } from "lucide-react";
 
-import { OutcomeMark } from "@/components/logo";
+import { MandateMark } from "@/components/logo";
 import { cn } from "@/lib/utils";
 
 /*
@@ -27,8 +27,8 @@ import { cn } from "@/lib/utils";
  */
 const NAV = [
   { href: "/authority", label: "The authority" },
-  { href: "/verify", label: "Verify" },
-  { href: "/agent", label: "Agent" },
+  { href: "/ledger", label: "Decisions" },
+  { href: "/inspect", label: "Executions" },
   { href: "/docs", label: "Docs" },
 ];
 
@@ -41,9 +41,9 @@ export function Navbar() {
     <header className="flex justify-center px-3 pt-4 sm:px-4 sm:pt-6">
       <div className="relative w-full max-w-[760px] rounded-full border border-neutral-200 bg-white py-2 pl-2 pr-2 shadow-sm">
         <div className="flex items-center gap-6">
-          <Link href="/" className="flex shrink-0 items-center gap-2 pl-1" aria-label="Outcome home">
-            <OutcomeMark className="h-7 w-7 sm:h-8 sm:w-8" />
-            <span className="text-[15px] font-semibold tracking-[-0.02em]">Outcome</span>
+          <Link href="/" className="flex shrink-0 items-center gap-2 pl-1" aria-label="Mandate home">
+            <MandateMark className="h-7 w-7 sm:h-8 sm:w-8" />
+            <span className="text-[15px] font-semibold tracking-[-0.02em]">Mandate</span>
           </Link>
 
           <nav className="hidden items-center gap-6 md:flex">
@@ -119,7 +119,7 @@ export function Navbar() {
               </Link>
             ))}
             <a
-              href="https://github.com/nickthelegend/outcome"
+              href="https://github.com/nickthelegend/mandate"
               target="_blank"
               rel="noopener"
               className="block rounded-xl px-3 py-2.5 text-[14px] text-neutral-700 transition-colors hover:bg-neutral-50"

@@ -1,17 +1,17 @@
 {
-  "name": "outcome-mcp",
+  "name": "mandate-mcp",
   "version": "0.1.2",
   "description": "MCP server that lets an agent verify it was actually paid: reads the receipt instead of trusting the status byte, with on-chain idempotency, escrow settlement and execution diagnosis.",
   "license": "MIT",
-  "author": "Outcome",
-  "homepage": "https://github.com/nickthelegend/outcome/tree/main/packages/mcp#readme",
+  "author": "Mandate",
+  "homepage": "https://github.com/nickthelegend/mandate/tree/main/packages/mcp#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/nickthelegend/outcome.git",
+    "url": "git+https://github.com/nickthelegend/mandate.git",
     "directory": "packages/mcp"
   },
   "bugs": {
-    "url": "https://github.com/nickthelegend/outcome/issues"
+    "url": "https://github.com/nickthelegend/mandate/issues"
   },
   "keywords": [
     "mcp",
@@ -28,7 +28,7 @@
   "main": "./dist/server.js",
   "types": "./dist/server.d.ts",
   "bin": {
-    "outcome-mcp": "./dist/cli.js"
+    "mandate-mcp": "./dist/cli.js"
   },
   "exports": {
     ".": {
@@ -58,7 +58,7 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
     "ethers": "^6.17.0",
-    "outcome-sdk": "*",
+    "mandate-sdk": "*",
     "zod": "^3.23.8"
   },
   "devDependencies": {

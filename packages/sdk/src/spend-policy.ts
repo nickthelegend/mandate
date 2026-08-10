@@ -1,7 +1,7 @@
 /**
  * Whether an autonomous marketplace purchase is allowed to happen.
  *
- * NOT a duplicate of `outcome-policy`, though they overlap and it is fair to
+ * NOT a duplicate of `mandate-policy`, though they overlap and it is fair to
  * ask. That engine is the spend *authority*: fifteen rules, anchored on chain,
  * governing what an agent may do with its budget. This is the narrower guard on
  * one specific outbound act -- paying an x402 challenge on KeeperHub's
@@ -20,7 +20,7 @@
  *   - Named reason codes, never a bare boolean. "refused" is not an answer an
  *     operator can act on; `PRICE_ABOVE_CAP` is.
  *   - A snapshot of what was judged, so the audit trail records the state the
- *     decision was made against and not just its outcome.
+ *     decision was made against and not just its mandate.
  *   - A kill switch that outranks every other gate.
  *
  * The gates below are this product's, not ChronicleAI's. The one worth calling
@@ -83,7 +83,7 @@ export type SpendContext = {
   slug?: string;
 };
 
-/** What was judged, recorded alongside the outcome. */
+/** What was judged, recorded alongside the mandate. */
 export type SpendSnapshot = {
   amount: string;
   advertisedUsdc: number | null;

@@ -113,7 +113,7 @@ export async function mongoAudit(opts: {
   const client = new MongoClient(opts.uri, { serverSelectionTimeoutMS: 15_000 });
   await client.connect();
 
-  const col = client.db(opts.db ?? "outcome").collection<AuditEntry>(opts.collection ?? "audit");
+  const col = client.db(opts.db ?? "mandate").collection<AuditEntry>(opts.collection ?? "audit");
 
   /*
    * Indexed on `at` because every read is "the most recent N", and on intentId
@@ -151,16 +151,16 @@ export async function mongoAudit(opts: {
  * purity that helps nobody.
  */
 export async function auditFromEnv(env: NodeJS.ProcessEnv = process.env): Promise<AuditStore> {
-  if (env.OUTCOME_AUDIT_LOG === "-") return memoryAudit();
+  if (env.MANDATE_AUDIT_LOG === "-") return memoryAudit();
 
-  const path = env.OUTCOME_AUDIT_LOG ?? ".outcome/audit.jsonl";
+  const path = env.MANDATE_AUDIT_LOG ?? ".mandate/audit.jsonl";
   if (!env.MONGODB_URI) return fileAudit(path);
 
   try {
     return await mongoAudit({
       uri: env.MONGODB_URI,
-      db: env.OUTCOME_AUDIT_DB ?? "outcome",
-      collection: env.OUTCOME_AUDIT_COLLECTION ?? "audit",
+      db: env.MANDATE_AUDIT_DB ?? "mandate",
+      collection: env.MANDATE_AUDIT_COLLECTION ?? "audit",
     });
   } catch (err: unknown) {
     /*
@@ -174,7 +174,7 @@ export async function auditFromEnv(env: NodeJS.ProcessEnv = process.env): Promis
      * operating this -- the second one usually means an IP allowlist.
      */
     console.error(
-      "[outcome] audit database unreachable, falling back to file store:",
+      "[mandate] audit database unreachable, falling back to file store:",
       err instanceof Error ? err.message.split("\n")[0] : err
     );
     return fileAudit(path);

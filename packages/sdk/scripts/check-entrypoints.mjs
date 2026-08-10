@@ -1,7 +1,7 @@
 /**
  * Guard the entry split.
  *
- * `outcome-sdk` claims its main entry runs in a browser. That claim is one
+ * `mandate-sdk` claims its main entry runs in a browser. That claim is one
  * stray re-export away from being false, and the failure does not show up until
  * someone else's bundler breaks -- which is exactly how a React import once got
  * into a headless package I shipped. So the built output is walked, not the
@@ -55,7 +55,7 @@ function check(name, entry, { forbid, require: required }) {
   /*
    * A scan that reads nothing passes every rule. Each entry names something it
    * must import, so a broken walk fails loudly instead of silently approving.
-   * Counting files does not work here: react.ts uses OutcomeClient only in type
+   * Counting files does not work here: react.ts uses MandateClient only in type
    * position, so the emitted module legitimately has no relative imports at all.
    */
   for (const spec of required) {

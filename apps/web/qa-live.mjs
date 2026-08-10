@@ -16,7 +16,7 @@
 
 import { chromium } from "playwright";
 
-const BASE = (process.argv[2] ?? "https://nickthelegend.github.io/outcome").replace(/\/$/, "");
+const BASE = (process.argv[2] ?? "https://nickthelegend.github.io/mandate").replace(/\/$/, "");
 const GATEWAY = process.env.GATEWAY_URL ?? "https://gateway-production-944e.up.railway.app";
 
 const IGNORE = [
@@ -284,11 +284,11 @@ await check("unbound operator / wrong code / replay are all refused", async () =
 
   // 3.12 unbound operator
   const a = await post(R, { code, operator: "0x000000000000000000000000000000000000bEEF", action: "APPROVE" });
-  if (a.outcome !== "IGNORED_UNBOUND") fail("3.12", `unbound gave ${a.outcome}`);
+  if (a.mandate !== "IGNORED_UNBOUND") fail("3.12", `unbound gave ${a.mandate}`);
 
   // 3.13 wrong code
   const b2 = await post(R, { code: "0".repeat(24), operator: OP, action: "APPROVE" });
-  if (b2.outcome !== "IGNORED_BAD_CODE") fail("3.13", `wrong code gave ${b2.outcome}`);
+  if (b2.mandate !== "IGNORED_BAD_CODE") fail("3.13", `wrong code gave ${b2.mandate}`);
 
   // still open after both
   const list = await fetch(`${GATEWAY}/authority/escalations?limit=20&agent=${agent}`).then((r) => r.json());
@@ -297,9 +297,9 @@ await check("unbound operator / wrong code / replay are all refused", async () =
 
   // 3.14 replay: approve, then approve again
   const ok = await post(R, { code, operator: OP, action: "APPROVE" });
-  if (ok.outcome !== "APPROVED") fail("3.11", `release gave ${ok.outcome}`);
+  if (ok.mandate !== "APPROVED") fail("3.11", `release gave ${ok.mandate}`);
   const again = await post(R, { code, operator: OP, action: "APPROVE" });
-  if (again.outcome !== "IGNORED_ALREADY_RESOLVED") fail("3.14", `replay gave ${again.outcome}`);
+  if (again.mandate !== "IGNORED_ALREADY_RESOLVED") fail("3.14", `replay gave ${again.mandate}`);
 
   return "UNBOUND, BAD_CODE, still PENDING, then APPROVED and ALREADY_RESOLVED";
 });
@@ -376,7 +376,7 @@ await check("/demo lying facilitator: reports success, serves nothing", async ()
   const t = await text();
   // The whole point: the facilitator claimed success and the article was withheld.
   if (!/withheld|not served|no Transfer|moved nothing|402/i.test(t)) {
-    fail("wrong outcome", "a lying settlement did not read as a refusal");
+    fail("wrong mandate", "a lying settlement did not read as a refusal");
   }
   return `${Math.round((Date.now() - t0) / 1000)}s, article withheld`;
 });

@@ -1,76 +1,79 @@
 "use client";
 
-import Link from "next/link";
-import { useIntents, useEscrowed } from "outcome-sdk/react";
-
-import { amount, DEPLOYMENT } from "@/lib/outcome";
-
 /**
- * The standing totals, read live.
+ * The authority's standing totals, read live from the gateway.
+ *
+ * These used to be escrow counts — intents seen, amount held, work released —
+ * from a product this no longer is. What matters now is what the authority has
+ * actually decided: how many spends it judged, how many it refused, and how
+ * much has been let through today. A number that describes the wrong product
+ * is worse than no number, because a reader takes it as the point.
  *
  * Written as one line of running totals rather than four cards of
- * big-number-over-small-label: these are the running totals struck at the foot of
- * a run, and a printout does not box its own subtotals.
+ * big-number-over-small-label: these are the subtotals struck at the foot of a
+ * run, and a printout does not box its own subtotals.
  *
- * Deliberately shows an em dash while loading rather than a zero. A zero that
- * later becomes a three is a number the page was willing to state before it
- * knew, which is a small version of exactly the habit this project objects to.
+ * Shows an em dash while loading rather than a zero. A zero that later becomes
+ * a three is a number the page was willing to state before it knew, which is a
+ * small version of exactly the habit this project objects to.
  */
-export function LiveStats() {
-  const { data: rows, error } = useIntents();
-  const { data: escrowed } = useEscrowed();
 
-  const count = (s: string) => (rows ? String(rows.filter((r) => r.state === s).length) : "—");
+import Link from "next/link";
+import { useEffect, useState } from "react";
+
+import { GATEWAY } from "@/lib/mandate";
+
+type Totals = {
+  decisions: { total: number; approved: number; refused: number };
+  spentToday: number;
+  rules: { budgets: { daily: number } };
+};
+
+export function LiveStats() {
+  const [t, setT] = useState<Totals | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let live = true;
+    fetch(`${GATEWAY}/authority`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (!live) return;
+        if (d.error) setError(d.error);
+        else setT(d);
+      })
+      .catch((e) => live && setError(e instanceof Error ? e.message : String(e)));
+    return () => {
+      live = false;
+    };
+  }, []);
+
+  const dash = (v: string | number) => (t ? String(v) : "—");
 
   const stats = [
-    { label: "Intents", value: rows ? String(rows.length) : "—" },
-    { label: "Released", value: count("released") },
-    { label: "Refunded", value: count("refunded") },
+    { label: "Decisions", value: dash(t?.decisions.total ?? 0) },
+    { label: "Refused", value: dash(t?.decisions.refused ?? 0) },
+    { label: "Approved", value: dash(t?.decisions.approved ?? 0) },
     {
-      label: `In escrow (${DEPLOYMENT.tokenSymbol})`,
-      value: escrowed === undefined ? "—" : amount(escrowed),
+      label: "Spent today",
+      value: t ? `$${t.spentToday.toFixed(2)} / $${t.rules.budgets.daily.toFixed(2)}` : "—",
     },
   ];
 
-  /*
-   * A read that failed says so. The em dash means "not known yet"; leaving it
-   * there after a failure would be the page quietly claiming to still be
-   * loading, which is the habit this whole project objects to.
-   */
-  if (error) {
-    return (
-      <div className="border-t-2 border-[var(--refused)] pt-3">
-        <div className="text-[11px] font-medium uppercase tracking-wide text-neutral-500 text-[#b42318]">could not read the chain</div>
-        <p className="figure mt-2 text-xs leading-relaxed text-[var(--ink-3)]">{error}</p>
-        <a
-          href={`${DEPLOYMENT.explorer}/address/${DEPLOYMENT.escrow}#events`}
-          target="_blank"
-          rel="noopener"
-          className="figure mt-3 inline-block text-xs underline-offset-4 hover:text-[var(--ink)] hover:underline"
-        >
-          read the events on Etherscan instead →
-        </a>
-      </div>
-    );
-  }
-
   return (
-    <Link href="/explorer" className="group block">
-      <div className="flex items-baseline justify-between border-b border-[var(--line)] pb-2">
-        <span className="text-[11px] font-medium uppercase tracking-wide text-neutral-500">On chain so far</span>
-        <span className="text-[11px] font-medium uppercase tracking-wide text-neutral-500 transition-colors group-hover:text-[var(--ink)]">
-          open the explorer →
+    <div className="flex flex-wrap items-baseline gap-x-8 gap-y-3">
+      {stats.map((s) => (
+        <span key={s.label} className="inline-flex items-baseline gap-2">
+          <span className="figure text-lg font-medium">{s.value}</span>
+          <span className="text-[12px] text-[var(--ink-3)]">{s.label}</span>
         </span>
-      </div>
-
-      <dl className="flex flex-wrap items-baseline gap-x-12 gap-y-5 border-b-2 border-[var(--ink)] py-6">
-        {stats.map((s) => (
-          <div key={s.label} className="flex items-baseline gap-3">
-            <dt className="text-[11px] font-medium uppercase tracking-wide text-neutral-500">{s.label}</dt>
-            <dd className="figure text-2xl font-semibold tracking-[-0.03em]">{s.value}</dd>
-          </div>
-        ))}
-      </dl>
-    </Link>
+      ))}
+      <Link
+        href="/authority"
+        className="text-[12px] text-[var(--ink-3)] underline-offset-4 hover:text-[var(--ink)] hover:underline"
+      >
+        {error ? "the authority is not answering — open it" : "spend it down yourself →"}
+      </Link>
+    </div>
   );
 }

@@ -103,7 +103,7 @@ export default function LedgerPage() {
       {!error && !loading && entries.length === 0 && (
         <p className="mt-10 max-w-[60ch] text-sm leading-relaxed text-[var(--ink-3)]">
           Nothing struck yet. Run the{" "}
-          <a href="/outcome/demo/" className="text-[var(--ink)] underline underline-offset-4">
+          <a href="/mandate/demo/" className="text-[var(--ink)] underline underline-offset-4">
             live demo
           </a>{" "}
           and the first verdict lands here.

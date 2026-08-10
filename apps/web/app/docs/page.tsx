@@ -1,23 +1,23 @@
 import { CodeTabs } from "@/components/code-tabs";
-import { DEPLOYMENT, address } from "@/lib/outcome";
+import { DEPLOYMENT, address } from "@/lib/mandate";
 import { PageHead } from "@/components/page-head";
 
 const TOOLS = [
-  ["outcome_intent_id", "Derive the id for a piece of work. Two agents given the same task and payee get the same id, so a duplicate claim is refused on chain rather than paid for twice."],
-  ["outcome_get_intent", "State, amount, and beneficiary — the address the work actually has to reach."],
-  ["outcome_verify", "Did this transaction move value? Reads the receipt for a real ERC-20 Transfer. Read-only; never moves money."],
-  ["outcome_settle", "Release or refund, decided from a transaction hash. Accepts no verdict, no done flag, no description of the work."],
-  ["outcome_diagnose", "Why an execution failed, and whether resending can fix it. In-flight is never worth resending."],
-  ["outcome_audit", "The decision record: what was verified, what was settled, and why."],
+  ["mandate_intent_id", "Derive the id for a piece of work. Two agents given the same task and payee get the same id, so a duplicate claim is refused on chain rather than paid for twice."],
+  ["mandate_get_intent", "State, amount, and beneficiary — the address the work actually has to reach."],
+  ["mandate_verify", "Did this transaction move value? Reads the receipt for a real ERC-20 Transfer. Read-only; never moves money."],
+  ["mandate_settle", "Release or refund, decided from a transaction hash. Accepts no verdict, no done flag, no description of the work."],
+  ["mandate_diagnose", "Why an execution failed, and whether resending can fix it. In-flight is never worth resending."],
+  ["mandate_audit", "The decision record: what was verified, what was settled, and why."],
 ];
 
 const ENV = [
-  ["OUTCOME_RPC_URL", "RPC endpoint", "public Sepolia"],
-  ["OUTCOME_ESCROW", "OutcomeEscrow address", "the live deployment"],
-  ["OUTCOME_TOKEN", "ERC-20 address", "tUSDC on Sepolia"],
-  ["OUTCOME_CHAIN_ID", "chain id", "11155111"],
-  ["KEEPERHUB_API_KEY", "enables outcome_settle", "unset — read-only"],
-  ["OUTCOME_AUDIT_LOG", "decision trail path, or - to disable", ".outcome/audit.jsonl"],
+  ["MANDATE_RPC_URL", "RPC endpoint", "public Sepolia"],
+  ["MANDATE_ESCROW", "MandateEscrow address", "the live deployment"],
+  ["MANDATE_TOKEN", "ERC-20 address", "tUSDC on Sepolia"],
+  ["MANDATE_CHAIN_ID", "chain id", "11155111"],
+  ["KEEPERHUB_API_KEY", "enables mandate_settle", "unset — read-only"],
+  ["MANDATE_AUDIT_LOG", "decision trail path, or - to disable", ".mandate/audit.jsonl"],
 ];
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
@@ -48,7 +48,7 @@ export default function DocsPage() {
           it, and a verification tool that first demands an API key has already lost the argument.
         </p>
         <p>
-          Only <code className="font-mono text-[var(--ink)]">outcome_settle</code> moves money, and
+          Only <code className="font-mono text-[var(--ink)]">mandate_settle</code> moves money, and
           only it needs <code className="font-mono text-[var(--ink)]">KEEPERHUB_API_KEY</code>.
           Without one it returns a clear refusal rather than failing at startup.
         </p>
@@ -61,9 +61,9 @@ export default function DocsPage() {
           <code className="font-mono text-[var(--ink)]">payTo</code> before you serve anything.
         </p>
         <pre className="overflow-x-auto rounded-[10px] border border-[var(--line)] bg-[var(--surface)] p-4 font-mono text-xs leading-relaxed text-[var(--ink)]">
-{`import { verifySettlement } from "outcome-sdk/x402";
+{`import { verifySettlement } from "mandate-sdk/x402";
 
-const verdict = await verifySettlement(outcome, {
+const verdict = await verifySettlement(mandate, {
   requirements,   // the PaymentRequirements you quoted
   settlement,     // the SettlementResponse it handed back
 });
@@ -135,7 +135,7 @@ return serve(resource);`}
         <div className="overflow-hidden rounded-[10px] border border-[var(--line)] font-mono text-xs">
           {[
             ["chain", `${DEPLOYMENT.chainName} (${DEPLOYMENT.chainId})`, null],
-            ["escrow", DEPLOYMENT.escrow, address(DEPLOYMENT.escrow)],
+            ["registry", DEPLOYMENT.registry, address(DEPLOYMENT.registry)],
             ["token", `${DEPLOYMENT.token} (${DEPLOYMENT.tokenSymbol})`, address(DEPLOYMENT.token)],
           ].map(([label, value, href]) => (
             <div key={label as string} className="flex gap-4 border-b border-[var(--line)] p-3 last:border-0">

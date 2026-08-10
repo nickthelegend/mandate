@@ -23,7 +23,7 @@ two things and decide.
 
 **Secondary: an engineer evaluating the SDK.** [inferred from README's install
 block and the four documented entry points] They want to know whether
-`outcome-sdk` is real infrastructure or a demo dressed as a package, and they
+`mandate-sdk` is real infrastructure or a demo dressed as a package, and they
 answer that by reading the API surface and checking whether the claims are
 checkable.
 
@@ -33,7 +33,7 @@ face of surfaces an agent reads as JSON.
 
 ## Product Purpose
 
-Teams are handing autonomous agents private keys and hoping. Outcome is the
+Teams are handing autonomous agents private keys and hoping. Mandate is the
 authority that sits between an agent and its money: fifteen deterministic rules,
 anchored on chain, and — because KeeperHub holds the signer and the policy is
 the only path to execution — a limit the agent has no key to break.
@@ -50,7 +50,7 @@ the pitch.
 
 **A status byte is not evidence.** `status: 0x1` means the EVM did not revert;
 it says nothing about whether value moved. Every comparable project (Clawback,
-internet-court, x402r) resolves payment disputes with an LLM judge. Outcome
+internet-court, x402r) resolves payment disputes with an LLM judge. Mandate
 resolves them with a lookup, because the chain already knows.
 
 Three claims a neighbouring project cannot truthfully copy, each verifiable on
@@ -85,8 +85,8 @@ can fail; the interface has to be honest about not knowing yet.
 ## Capabilities and Constraints
 
 - Next.js 15 static export (`output: "export"`), React 19, Tailwind 4, shadcn/ui
-  primitives, `basePath: /outcome` on GitHub Pages. No server runtime.
-- Data: `outcome-sdk` + `outcome-sdk/react` hooks reading Sepolia client-side;
+  primitives, `basePath: /mandate` on GitHub Pages. No server runtime.
+- Data: `mandate-sdk` + `mandate-sdk/react` hooks reading Sepolia client-side;
   the Railway gateway for `/demo`, `/audit`, `/execution/:id`.
 - Reads have a 20s deadline and surface failure rather than spinning forever.
 - Numbers are base units (6 decimals) and hashes are 66 characters. Both must
@@ -97,7 +97,7 @@ can fail; the interface has to be honest about not knowing yet.
 
 ## Brand Commitments
 
-Name: **Outcome**. Existing marks: an emerald status dot beside a lowercase
+Name: **Mandate**. Existing marks: an emerald status dot beside a lowercase
 monospace wordmark.
 
 **Voice, as already written in the repo** — the strongest asset and binding:
@@ -113,7 +113,7 @@ No exclamation marks. No emoji. No marketing verbs the product cannot evidence.
 
 Real, and all of it checkable:
 
-- Live transactions for both x402 outcomes: honest `0x3aac3134` (HTTP 200),
+- Live transactions for both x402 mandates: honest `0x3aac3134` (HTTP 200),
   lying `0x6db7218d` (HTTP 402, zero moved).
 - A running gateway that produces a fresh pair on demand.
 - A public decision ledger in MongoDB, readable without a credential.

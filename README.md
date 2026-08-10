@@ -1,4 +1,4 @@
-# Outcome
+# Mandate
 
 **An agent spending authority. The limit is not advisory — the agent has no key to break it with.**
 
@@ -18,7 +18,7 @@ suggestion: the agent holds the key, so anything it decides to sign, it signs.
 
 ## What this does
 
-Outcome puts a **deterministic authority** between an agent and its money, and
+Mandate puts a **deterministic authority** between an agent and its money, and
 makes it binding by removing the key.
 
 - The agent holds **no private key**. KeeperHub owns the signer.
@@ -157,7 +157,7 @@ shared, not per-instance.
 | | |
 |---|---|
 | `PolicyRegistry` | [`0x13452fcA…C5E304`](https://sepolia.etherscan.io/address/0x13452fcA19819d37Fa4b01a0e64C8Fce60C5E304) |
-| `OutcomeEscrow` | [`0x0ED9d123…dC3B`](https://sepolia.etherscan.io/address/0x0ED9d1235cB9FD080D687FD978a38d972a34dC3B) |
+| `MandateEscrow` | [`0x0ED9d123…dC3B`](https://sepolia.etherscan.io/address/0x0ED9d1235cB9FD080D687FD978a38d972a34dC3B) |
 | `USDCx` (EIP-3009) | [`0x0d864A62…CF13`](https://sepolia.etherscan.io/address/0x0d864A625c280F7f9B9AD024d12F94f5D6DCCF13) |
 
 ## KeeperHub surfaces used
@@ -165,9 +165,9 @@ shared, not per-instance.
 | Surface | Where |
 |---|---|
 | **Execute API** | every policy anchor, every authorised transfer |
-| **MCP server** | KeeperHub's, to create and publish a workflow; plus `outcome-mcp`, six tools of our own |
+| **MCP server** | KeeperHub's, to create and publish a workflow; plus `mandate-mcp`, six tools of our own |
 | **x402** | spec-exact adapter, a resource server that verifies settlement, and an autonomous payer |
-| **Workflow builder** | [`outcome-escrow-intent-status`](https://app.keeperhub.com), listed at $0.02/call |
+| **Workflow builder** | [`mandate-escrow-intent-status`](https://app.keeperhub.com), listed at $0.02/call |
 | **Audit trail** | KeeperHub's execution record read back; our own decision ledger persisted to MongoDB |
 | **CLI** | `kh execute contract-call` anchors a policy — [`0xfecbcf8f`](https://sepolia.etherscan.io/tx/0xfecbcf8f777dcc08b579aa6d176270ab3af4389f536c1a9479625fe106a7c478) |
 | **MPP** | **not used** — see Known gaps |
@@ -188,14 +188,14 @@ authorisation is bearer-spendable the moment it leaves the process.
 ## Install
 
 ```bash
-npm i outcome-sdk outcome-policy   # the authority, the payer, the KeeperHub client
-npx outcome-mcp                    # six MCP tools; every read-only one needs no credential
+npm i mandate-sdk mandate-policy   # the authority, the payer, the KeeperHub client
+npx mandate-mcp                    # six MCP tools; every read-only one needs no credential
 ```
 
 Two packages, because they answer different questions and only one of them
-needs a connection. `outcome-policy` decides whether a spend is allowed and is
+needs a connection. `mandate-policy` decides whether a spend is allowed and is
 pure — no I/O, no credential, runs in a browser, which is why the decision demo
-on the site can run the real engine client-side. `outcome-sdk` is everything
+on the site can run the real engine client-side. `mandate-sdk` is everything
 that touches the world: the durable ledger, the anchor reads, the KeeperHub
 client, the x402 payer.
 
@@ -205,7 +205,7 @@ client, the x402 payer.
 npm install
 npm test                       # 146 tests across policy, sdk and mcp
 npm run test:contracts         # 21 more against the Solidity
-npm run build -w outcome-web
+npm run build -w mandate-web
 ```
 
 Set `KEEPERHUB_API_KEY`, `SEPOLIA_RPC_URL` and `MONGODB_URI` in `.env` (see

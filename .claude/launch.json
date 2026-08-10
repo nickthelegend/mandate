@@ -2,9 +2,9 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "outcome-web",
+      "name": "mandate-web",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "-w", "outcome-web"],
+      "runtimeArgs": ["run", "dev", "-w", "mandate-web"],
       "port": 4180
     }
   ]

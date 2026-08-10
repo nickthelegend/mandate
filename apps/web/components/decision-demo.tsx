@@ -4,7 +4,7 @@
  * The authority, judged live in the visitor's own browser.
  *
  * Pick a spend, watch the chain run, see which rule refuses it. This is the
- * real `outcome-policy` engine — the same fifteen rules that gate the on-chain
+ * real `mandate-policy` engine — the same fifteen rules that gate the on-chain
  * executions, running client-side with no server in the path, so the verdict a
  * judge sees is computed in front of them rather than fetched from somewhere
  * that could have made it up.
@@ -15,7 +15,7 @@
  */
 
 import { useMemo, useState } from "react";
-import { evaluateIntent } from "outcome-policy";
+import { evaluateIntent } from "mandate-policy";
 
 import { RuleChain } from "@/components/rule-chain";
 import { cn } from "@/lib/utils";

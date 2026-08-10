@@ -21,14 +21,14 @@ import { fileAudit, memoryAudit, mongoAudit, auditFromEnv, type AuditEntry } fro
 
 const entry = (n: number): AuditEntry => ({
   at: new Date(Date.UTC(2026, 0, 1, 0, 0, n)).toISOString(),
-  tool: "outcome_verify",
+  tool: "mandate_verify",
   intentId: `0x${String(n).padStart(64, "0")}`,
   outcome: n % 2 === 0 ? "proven" : "not_proven",
   detail: `decision ${n}`,
 });
 
 function tmpPath(): string {
-  return join(mkdtempSync(join(tmpdir(), "outcome-audit-")), "audit.jsonl");
+  return join(mkdtempSync(join(tmpdir(), "mandate-audit-")), "audit.jsonl");
 }
 
 test("the file store survives a new instance reading the same path", async () => {
@@ -52,7 +52,7 @@ test("a torn final line costs one entry, not the file", async () => {
   const a = fileAudit(path);
   await a.append(entry(1));
   await a.append(entry(2));
-  appendFileSync(path, '{"at":"2026-01-01T00:00:03.000Z","tool":"outcome_ver');
+  appendFileSync(path, '{"at":"2026-01-01T00:00:03.000Z","tool":"mandate_ver');
 
   assert.equal(await a.count(), 2);
   assert.equal((await a.recent(10)).length, 2);
@@ -78,12 +78,12 @@ test("recent hands back the oldest first, capped", async () => {
 });
 
 test("auditFromEnv opts out of persistence only when asked", async () => {
-  const store = await auditFromEnv({ OUTCOME_AUDIT_LOG: "-" } as NodeJS.ProcessEnv);
+  const store = await auditFromEnv({ MANDATE_AUDIT_LOG: "-" } as NodeJS.ProcessEnv);
   await store.append(entry(1));
   assert.equal(await store.count(), 1);
 
   const path = tmpPath();
-  const onDisk = await auditFromEnv({ OUTCOME_AUDIT_LOG: path } as NodeJS.ProcessEnv);
+  const onDisk = await auditFromEnv({ MANDATE_AUDIT_LOG: path } as NodeJS.ProcessEnv);
   await onDisk.append(entry(1));
   assert.equal(await fileAudit(path).count(), 1, "wrote to the path it was given");
 });
@@ -97,7 +97,7 @@ test(
     // A throwaway collection per run, so a failing test cannot poison the real
     // record and two runs cannot see each other's entries.
     const collection = `audit_test_${Date.now()}`;
-    const open = () => mongoAudit({ uri: MONGO!, db: "outcome", collection });
+    const open = () => mongoAudit({ uri: MONGO!, db: "mandate", collection });
 
     const a = await open();
     t.after(async () => {
@@ -110,7 +110,7 @@ test(
       const { MongoClient } = await import("mongodb");
       const client = new MongoClient(MONGO!, { serverSelectionTimeoutMS: 15_000 });
       await client.connect();
-      await client.db("outcome").collection(collection).drop().catch(() => {});
+      await client.db("mandate").collection(collection).drop().catch(() => {});
       await client.close();
       await a.close?.();
     });
@@ -142,8 +142,8 @@ test("an unreachable database degrades to the file store instead of throwing", a
   const store = await auditFromEnv({
     // A routable address that will not answer as MongoDB, with the driver's own
     // timeout doing the work rather than a fake.
-    MONGODB_URI: "mongodb://127.0.0.1:1/outcome?serverSelectionTimeoutMS=1500",
-    OUTCOME_AUDIT_LOG: path,
+    MONGODB_URI: "mongodb://127.0.0.1:1/mandate?serverSelectionTimeoutMS=1500",
+    MANDATE_AUDIT_LOG: path,
   } as NodeJS.ProcessEnv);
 
   await store.append(entry(1));

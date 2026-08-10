@@ -23,7 +23,7 @@ import assert from "node:assert/strict";
 import { mongoLedger, utcDayKey, type EffectsToApply, type SpendLedger } from "../src/ledger.ts";
 
 const URI = process.env.MONGODB_URI;
-const DB = "outcome_test";
+const DB = "mandate_test";
 const skip = URI ? false : "MONGODB_URI is not set";
 
 /** A fresh partition per test, so a rerun never reads the last run's spend. */

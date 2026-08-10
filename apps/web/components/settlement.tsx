@@ -14,7 +14,7 @@ export function Settlement({
   proven,
   observed,
   reason,
-  outcome,
+  mandate,
   href,
 }: {
   label: string;
@@ -22,7 +22,7 @@ export function Settlement({
   proven: boolean;
   observed: string;
   reason: string;
-  outcome: string;
+  mandate: string;
   href: string;
 }) {
   return (
@@ -52,7 +52,7 @@ export function Settlement({
       <p className="mt-3.5 text-[13px] leading-relaxed text-[var(--ink-2)]">{reason}</p>
 
       <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-white/[0.07] pt-3">
-        <span className="figure text-xs font-semibold text-[var(--ink)]">{outcome}</span>
+        <span className="figure text-xs font-semibold text-[var(--ink)]">{mandate}</span>
         <a
           href={href}
           target="_blank"

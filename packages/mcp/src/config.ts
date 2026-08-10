@@ -2,53 +2,28 @@
  * Configuration, resolved once at startup.
  *
  * Every read-only tool works with no configuration at all. That is deliberate:
- * the point of this server is that a payment can be checked by whoever is being
- * asked to trust it, and a verification tool that first demands an API key has
- * already lost the argument. `npx outcome-mcp` against the public defaults can
- * verify any Sepolia transaction on the spot.
+ * the party most in need of knowing what an agent is allowed to spend is rarely
+ * the party holding the operator's credential, and a tool that demands a key
+ * before it will tell you an agent's limit has made itself useless to exactly
+ * the person who should be asking. `npx mandate-mcp` against the public
+ * defaults can read the live policy, any agent's budget, and the whole decision
+ * record.
  *
- * Only settlement -- the one operation that moves money -- needs a credential,
- * and its absence is reported when the tool is called rather than at boot, so a
- * missing key costs one clear error instead of a server that refuses to start.
+ * Only `mandate_spend` moves money, and the credential it needs lives on the
+ * authority rather than here — this package never holds a key, which is the
+ * same property that makes the authority binding in the first place.
  */
 
 export type Config = {
-  rpcUrl: string;
-  escrow: string;
-  token: string;
-  chainId: number;
-  keeperHubApiKey?: string;
-  auditPath: string | null;
+  /** Where the authority is. Everything else is derived from it. */
+  authorityUrl: string;
 };
 
 /** The live deployment, so the defaults point at something real. */
-export const SEPOLIA = {
-  rpcUrl: "https://ethereum-sepolia-rpc.publicnode.com",
-  escrow: "0x0ED9d1235cB9FD080D687FD978a38d972a34dC3B",
-  token: "0x49C86277a91002c4943837bf20F6ED41976Db09F",
-  chainId: 11155111,
-} as const;
+export const DEFAULT_AUTHORITY = "https://gateway-production-944e.up.railway.app";
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   return {
-    rpcUrl: env.OUTCOME_RPC_URL ?? env.SEPOLIA_RPC_URL ?? SEPOLIA.rpcUrl,
-    escrow: env.OUTCOME_ESCROW ?? SEPOLIA.escrow,
-    token: env.OUTCOME_TOKEN ?? env.POLARIS_USDC ?? SEPOLIA.token,
-    chainId: Number(env.OUTCOME_CHAIN_ID ?? SEPOLIA.chainId),
-    keeperHubApiKey: env.KEEPERHUB_API_KEY,
-    // "-" turns the trail off; anything else is a path. Off is never the default,
-    // because a service that decides who gets paid owes an account of why.
-    auditPath: env.OUTCOME_AUDIT_LOG === "-" ? null : (env.OUTCOME_AUDIT_LOG ?? ".outcome/audit.jsonl"),
+    authorityUrl: env.MANDATE_AUTHORITY_URL ?? env.AUTHORITY_URL ?? DEFAULT_AUTHORITY,
   };
-}
-
-export function describe(c: Config): string {
-  return [
-    `  rpc      ${c.rpcUrl}`,
-    `  escrow   ${c.escrow}`,
-    `  token    ${c.token}`,
-    `  chain    ${c.chainId}`,
-    `  settle   ${c.keeperHubApiKey ? "enabled (KeeperHub key present)" : "read-only (set KEEPERHUB_API_KEY to settle)"}`,
-    `  audit    ${c.auditPath ?? "disabled"}`,
-  ].join("\n");
 }

@@ -16,7 +16,7 @@
  *
  * Ported from untch's `@untch/escalation`. The lifecycle and the
  * authority-boundary check are theirs; the store is Mongo and the channel is
- * Outcome's own authenticated HTTP surface, which is the analogue of untch's
+ * Mandate's own authenticated HTTP surface, which is the analogue of untch's
  * dashboard channel (the one they bind by wallet rather than by chat handle).
  */
 

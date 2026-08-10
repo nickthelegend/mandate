@@ -1,5 +1,5 @@
 {
-  "name": "outcome-contracts",
+  "name": "mandate-contracts",
   "private": true,
   "scripts": {
     "build": "hardhat compile",

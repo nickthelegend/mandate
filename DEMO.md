@@ -5,7 +5,7 @@ everything?*
 
 Everything below is live. Nothing is a recording.
 
-A recorded run of this script is at `apps/web/demo/outcome-demo.mp4` — two
+A recorded run of this script is at `apps/web/demo/mandate-demo.mp4` — two
 minutes, made by driving the deployed site against the live gateway, with every
 transaction in it landing on Sepolia as it recorded. Re-record any time with
 `node apps/web/record-demo.mjs`.
@@ -16,8 +16,8 @@ transaction in it landing on Sepolia as it recorded. Re-record any time with
 
 Open these three tabs:
 
-1. `https://nickthelegend.github.io/outcome/authority/`
-2. `https://nickthelegend.github.io/outcome/agent/`
+1. `https://nickthelegend.github.io/mandate/authority/`
+2. `https://nickthelegend.github.io/mandate/agent/`
 3. A terminal in the repo, with `.env` filled in
 
 Warm the gateway — Railway sleeps idle services and a cold start mid-demo is the
@@ -160,7 +160,7 @@ Tab 2. Click **Run the cycle**.
 Terminal:
 
 ```bash
-npm i outcome-sdk
+npm i mandate-sdk
 ```
 
 > "The engine, the ledger and the anchor are a package. The MCP server is the

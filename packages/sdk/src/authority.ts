@@ -1,7 +1,7 @@
 /**
  * The join: a spend decision, and the execution it authorised.
  *
- * The policy engine (`outcome-policy`) decides whether an agent may spend. This
+ * The policy engine (`mandate-policy`) decides whether an agent may spend. This
  * is what makes that decision binding rather than advisory, and it rests on one
  * property of KeeperHub: **the agent never holds the key**. KeeperHub owns the
  * signer, and this function is the only path from a decision to an execution.
@@ -26,7 +26,7 @@
 import type { KeeperHubClient } from "./keeperhub/client.ts";
 
 
-/** The decision shape `outcome-policy`'s `evaluateIntent` returns. */
+/** The decision shape `mandate-policy`'s `evaluateIntent` returns. */
 export type PolicyDecisionLike = {
   decision: string;
   rules: readonly { rule: string; result: string }[];
@@ -76,7 +76,7 @@ export function failedRules(d: PolicyDecisionLike): string[] {
  * Execute a transfer only if the policy approved it.
  *
  * `decision` is passed in rather than computed here so the judgement stays
- * pure and testable in `outcome-policy`, and so the caller cannot accidentally
+ * pure and testable in `mandate-policy`, and so the caller cannot accidentally
  * evaluate a different intent from the one it is about to execute -- the
  * decision it holds is the decision that gates the money.
  */

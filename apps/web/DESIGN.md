@@ -1,5 +1,5 @@
 ---
-name: Outcome
+name: Mandate
 description: Give an agent a budget it cannot exceed — an on-chain spending authority
 colors:
   brand: "#ef4d23"
@@ -125,7 +125,7 @@ components:
     padding: "2px 8px 2px 6px"
 ---
 
-# Design System: Outcome
+# Design System: Mandate
 
 ## Overview
 
@@ -139,7 +139,7 @@ headline, dashboard tray — is cut off by the same corners. Content bleeding pa
 the bottom edge is deliberate: it says the surface continues past what you can
 see, which is exactly what a live system does.
 
-**What Outcome adds to the theme:** a verdict pair. No marketing surface ships
+**What Mandate adds to the theme:** a verdict pair. No marketing surface ships
 with the state this product exists to render — a settlement that *succeeded* and
 still paid nobody. That is `--proven` / `--refused`.
 
@@ -315,7 +315,7 @@ is load-bearing copy, not decoration.
 
 A ring in the brand orange with a gap at the top right, and a check in `--dark`
 entering *through* that gap. The claim is the circle; the proof comes from
-outside it. Inline SVG in `components/logo.tsx`, also `public/outcome-mark.svg`.
+outside it. Inline SVG in `components/logo.tsx`, also `public/mandate-mark.svg`.
 
 ## Do's and Don'ts
 

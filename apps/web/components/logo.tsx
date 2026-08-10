@@ -1,11 +1,11 @@
 /**
- * The Outcome mark.
+ * The Mandate mark.
  *
  * Polaris's own logo grammar is a ring with a break in it and a dot inside, so
- * Outcome stays in that family rather than arriving as a different brand: a
+ * Mandate stays in that family rather than arriving as a different brand: a
  * ring, drawn in Polaris blue, with a deliberate gap at the top right.
  *
- * What Outcome adds is the check, in the Polaris action colour, and the one
+ * What Mandate adds is the check, in the Polaris action colour, and the one
  * detail that carries the product: the check does not sit politely inside the
  * ring, it enters through the gap. The claim is the circle. The proof comes
  * from outside it. That is the entire thesis in a 24px mark.
@@ -14,7 +14,7 @@
  * and costs no request.
  */
 
-export function OutcomeMark({
+export function MandateMark({
   size = 26,
   className,
 }: {

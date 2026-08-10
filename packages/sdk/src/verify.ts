@@ -134,3 +134,31 @@ export function verifyTransfer(
     proof,
   };
 }
+
+
+/**
+ * An ethers receipt, put back into wire form.
+ *
+ * `verifyTransfer` is deliberately a pure function over a plain receipt with no
+ * provider to stand in for, which is the property most worth keeping about it —
+ * so something has to translate. ethers decodes the JSON-RPC response into
+ * numbers and a readonly log array; this puts the three fields the verifier
+ * reads back the way they arrived.
+ *
+ * `status: null` becomes `undefined` rather than `0x0`. A receipt whose status
+ * the node did not report is unknown, and rendering unknown as failure would
+ * turn a missing field into a verdict.
+ */
+export function toWireReceipt(r: {
+  status: number | null;
+  blockNumber: number;
+  hash: string;
+  logs: readonly { address: string; topics: readonly string[]; data: string }[];
+}): Receipt {
+  return {
+    status: r.status === null ? undefined : `0x${r.status.toString(16)}`,
+    blockNumber: `0x${r.blockNumber.toString(16)}`,
+    transactionHash: r.hash,
+    logs: r.logs.map((l) => ({ address: l.address, topics: [...l.topics], data: l.data })),
+  };
+}

@@ -14,7 +14,7 @@
  * so there is no "sign it and check afterwards".
  *
  * Ported from untch's `@untch/x402-guard`. The field list and the split between
- * a replay failure and a binding failure are theirs — `outcome-policy`'s
+ * a replay failure and a binding failure are theirs — `mandate-policy`'s
  * `replay.contextBinding` rule was ported from the same source and its own
  * comment says "field order matches @untch/x402-guard CBC". The rule has been
  * in the chain since that port with nothing to read, returning NO_CHALLENGE on
@@ -123,7 +123,7 @@ export type BindingMismatch = {
 };
 
 /**
- * The fields that must agree, in the order `outcome-policy` checks them.
+ * The fields that must agree, in the order `mandate-policy` checks them.
  *
  * Kept here as well as in the engine deliberately: this list is what the guard
  * COMMITS to comparing, and a caller that never reaches the engine — a payer

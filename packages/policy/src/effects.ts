@@ -70,7 +70,7 @@ export interface ActivitySeed {
 /**
  * Everything a decision proposes to change, and nothing it has changed.
  *
- * `null` for a decision that changes nothing — every non-APPROVED outcome. A blocked intent consumed
+ * `null` for a decision that changes nothing — every non-APPROVED mandate. A blocked intent consumed
  * no budget and is not a duplicate anybody should be compared against later, so the honest proposal
  * is the absence of one.
  */

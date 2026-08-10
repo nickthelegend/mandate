@@ -71,7 +71,7 @@ const pace = () => new Promise((r) => setTimeout(r, 1800));
 console.log("\n1. CONTRACTS ON SEPOLIA");
 const ADDR = {
   "1.1": ["PolicyRegistry", "0x13452fcA19819d37Fa4b01a0e64C8Fce60C5E304"],
-  "1.2": ["OutcomeEscrow", "0x0ED9d1235cB9FD080D687FD978a38d972a34dC3B"],
+  "1.2": ["MandateEscrow", "0x0ED9d1235cB9FD080D687FD978a38d972a34dC3B"],
   "1.3": ["USDCx", "0x0d864A625c280F7f9B9AD024d12F94f5D6DCCF13"],
   "1.4": ["tUSDC", "0x49C86277a91002c4943837bf20F6ED41976Db09F"],
 };
@@ -245,7 +245,7 @@ async function anyExecutionId() {
   const c = new MongoClient(env.MONGODB_URI, { serverSelectionTimeoutMS: 15000 });
   await c.connect();
   const row = await c
-    .db(env.OUTCOME_AUDIT_DB ?? "outcome")
+    .db(env.MANDATE_AUDIT_DB ?? "mandate")
     .collection("authority_decisions")
     .findOne({ executionId: { $exists: true, $ne: null } }, { sort: { at: -1 } });
   await c.close();
@@ -334,8 +334,8 @@ await item("2.23", async () => {
 });
 await item("2.24", async () => {
   const b = await jpost(RESOLVE, { code: "a".repeat(24), operator: "0x7A2E11B3ECEBaB8Ea46966eDaDD4092583809b67", action: "APPROVE" }, 200);
-  must(b.outcome === "IGNORED_NOT_FOUND", `outcome was ${b.outcome}`);
-  return b.outcome;
+  must(b.mandate === "IGNORED_NOT_FOUND", `mandate was ${b.mandate}`);
+  return b.mandate;
 });
 
 // ── 6. External integrations ────────────────────────────────────────────────
@@ -349,7 +349,7 @@ await item("6.2", async () => {
   const { MongoClient } = await import("mongodb");
   const c = new MongoClient(env.MONGODB_URI, { serverSelectionTimeoutMS: 15000 });
   await c.connect();
-  const db = c.db(env.OUTCOME_AUDIT_DB ?? "outcome");
+  const db = c.db(env.MANDATE_AUDIT_DB ?? "mandate");
   const counts = {};
   for (const n of ["authority_ledger", "authority_decisions", "authority_escalations"]) {
     counts[n] = await db.collection(n).countDocuments();
@@ -407,7 +407,7 @@ await item("6.5", async () => {
 });
 await item("6.6", async () => {
   const call = await khRpc();
-  const r = await call({ jsonrpc: "2.0", id: 3, method: "tools/call", params: { name: "get_workflow_listing", arguments: { slug: "outcome-escrow-intent-status" } } });
+  const r = await call({ jsonrpc: "2.0", id: 3, method: "tools/call", params: { name: "get_workflow_listing", arguments: { slug: "mandate-escrow-intent-status" } } });
   const d = JSON.parse(r.result.content[0].text);
   must(d.priceUsdcPerCall === "0.02", `listed at ${d.priceUsdcPerCall}, expected 0.02`);
   return `${d.listedSlug} live at $${d.priceUsdcPerCall}/call`;
@@ -420,11 +420,11 @@ await item("6.7", async () => {
   const line = out.split("\n").find((l) => l.includes('"id":2'));
   const tools = JSON.parse(line).result.tools.map((t) => t.name);
   must(tools.length === 6, `${tools.length} tools, expected 6`);
-  must(tools.includes("outcome_verify") && tools.includes("outcome_settle"), "expected tools missing");
+  must(tools.includes("mandate_verify") && tools.includes("mandate_settle"), "expected tools missing");
   return `${tools.length} tools over stdio, no credential needed to list`;
 });
 await item("6.8", async () => {
-  for (const p of ["outcome-sdk", "outcome-policy"]) {
+  for (const p of ["mandate-sdk", "mandate-policy"]) {
     const r = await fetch(`https://registry.npmjs.org/${p}`);
     must(r.ok, `${p} is not published`);
     const d = await r.json();
@@ -483,10 +483,29 @@ await item("7.3", async () => {
   return "0 errors";
 });
 await item("7.4", async () => {
-  const out = execSync("gh run list --limit 6 --json workflowName,conclusion -q '.[] | \"\\(.workflowName):\\(.conclusion)\"'", { cwd: ROOT, encoding: "utf8", timeout: 120000 });
-  const recent = out.trim().split("\n").slice(0, 2);
-  must(recent.every((l) => l.endsWith(":success")), `CI: ${recent.join(", ")}`);
-  return recent.join(", ");
+  /*
+   * Wait for the head commit's runs rather than reading whatever is newest.
+   * An in-progress run has a null conclusion, and treating that as a failure
+   * makes this item fail purely because the check ran too soon after a push.
+   */
+  const head = execSync("git rev-parse HEAD", { cwd: ROOT, encoding: "utf8" }).trim();
+  const deadline = Date.now() + 600000;
+  for (;;) {
+    const out = execSync(
+      `gh run list --commit ${head} --json workflowName,status,conclusion -q '.[] | "\(.workflowName):\(.status):\(.conclusion)"'`,
+      { cwd: ROOT, encoding: "utf8", timeout: 120000 }
+    ).trim();
+    const runs = out ? out.split("\n") : [];
+    must(runs.length > 0 || Date.now() < deadline, "no CI runs for the head commit");
+    const done = runs.length >= 2 && runs.every((r) => r.includes(":completed:"));
+    if (done) {
+      const bad = runs.filter((r) => !r.endsWith(":success"));
+      must(bad.length === 0, `CI: ${bad.join(", ")}`);
+      return runs.map((r) => r.split(":").slice(0, 1) + ":success").join(", ");
+    }
+    must(Date.now() < deadline, `CI still running after 10 minutes: ${runs.join(", ")}`);
+    await new Promise((r) => setTimeout(r, 15000));
+  }
 });
 await item("7.5", async () => {
   const out = execSync(

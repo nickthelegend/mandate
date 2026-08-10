@@ -1,5 +1,5 @@
 /**
- * The four things Outcome is actually in a position to know about a payee.
+ * The four things Mandate is actually in a position to know about a payee.
  *
  * Pure functions: records in, {value in [0,100], n, note} out. `n` drives the
  * per-feature σ, so a feature computed from two observations is automatically
@@ -7,7 +7,7 @@
  *
  * The shape is untch's. The features are not, because the data is not.
  * untch scores vendors on a marketplace it operates and can see delivery
- * outcomes for. Outcome sees payments: who it paid, whether the money arrived,
+ * outcomes for. Mandate sees payments: who it paid, whether the money arrived,
  * and what went wrong. So `delivery_consistency` — untch's T0 schema-proof pass
  * rate — becomes `settlement_consistency`, and it is checked the way this whole
  * project argues everything should be checked: against the chain, by reading

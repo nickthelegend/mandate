@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * `npx outcome-mcp`
+ * `npx mandate-mcp`
  *
  * Anything printed on stdout would corrupt the JSON-RPC stream, so every human
  * message here goes to stderr. That is not a style preference -- a single stray
@@ -8,8 +8,17 @@
  * no useful error, and it is the most common way one of these fails.
  */
 
-import { loadConfig, describe } from "./config.ts";
+import { loadConfig, type Config } from "./config.ts";
 import { serve, VERSION } from "./server.ts";
+
+/** What this process is pointed at, on stderr, so a misconfiguration is visible. */
+function describe(c: Config): string {
+  return [
+    `  authority  ${c.authorityUrl}`,
+    "  reads      no credential required",
+    "  spending   authorised by the authority, which holds the key",
+  ].join("\n");
+}
 
 const argv = process.argv.slice(2);
 
@@ -20,23 +29,20 @@ if (argv.includes("--version") || argv.includes("-v")) {
 
 if (argv.includes("--help") || argv.includes("-h")) {
   console.log(
-    `outcome-mcp ${VERSION} -- pay agents for verified results, not attempts.
+    `mandate-mcp ${VERSION} -- give an agent a budget it cannot exceed.
 
-  npx outcome-mcp            start the MCP server on stdio
+  npx mandate-mcp            start the MCP server on stdio
 
-Works with no configuration: the defaults point at the live Sepolia deployment,
-and every read-only tool -- including verifying any transaction -- runs without
-a credential. Only settlement moves money, and only settlement needs a key.
+Works with no configuration: the default points at the live authority, and
+every read-only tool runs without a credential. Only mandate_spend moves money,
+and the credential for that lives on the authority rather than here -- this
+package never holds a key, which is the same property that makes a refusal
+binding.
 
-  OUTCOME_RPC_URL       RPC endpoint          (default: public Sepolia)
-  OUTCOME_ESCROW        OutcomeEscrow address (default: the live deployment)
-  OUTCOME_TOKEN         ERC-20 address
-  OUTCOME_CHAIN_ID      chain id              (default: 11155111)
-  KEEPERHUB_API_KEY     enables outcome_settle
-  OUTCOME_AUDIT_LOG     decision trail path, or "-" to disable
+  MANDATE_AUTHORITY_URL  where the authority is (default: the live deployment)
 
-Tools: outcome_intent_id, outcome_get_intent, outcome_verify, outcome_settle,
-       outcome_diagnose, outcome_audit`
+Tools: mandate_can_spend, mandate_spend, mandate_budget, mandate_policy,
+       mandate_score, mandate_decisions, mandate_escalations`
   );
   process.exit(0);
 }
@@ -44,9 +50,9 @@ Tools: outcome_intent_id, outcome_get_intent, outcome_verify, outcome_settle,
 const config = loadConfig();
 
 // stderr: stdout belongs to the protocol.
-console.error(`outcome-mcp ${VERSION}\n${describe(config)}`);
+console.error(`mandate-mcp ${VERSION}\n${describe(config)}`);
 
 serve(config).catch((err: unknown) => {
-  console.error("outcome-mcp failed to start:", err instanceof Error ? err.message : err);
+  console.error("mandate-mcp failed to start:", err instanceof Error ? err.message : err);
   process.exit(1);
 });

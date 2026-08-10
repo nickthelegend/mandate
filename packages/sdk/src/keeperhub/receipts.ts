@@ -3,7 +3,7 @@
  *
  * A BNPL provider has to answer "was this customer charged, when, and can you
  * prove it?" long after the fact. KeeperHub already logs every direct execution
- * (trigger, simulation result, transaction hash, gas used, outcome, timestamp)
+ * (trigger, simulation result, transaction hash, gas used, mandate, timestamp)
  * to its own audit trail; this is the PolarisPay-side projection of that,
  * joined to the loan and installment it belongs to so it can be shown to a
  * merchant, a customer, or an auditor without a KeeperHub login.
@@ -18,13 +18,13 @@ export type ReceiptKind =
   | "merchant_settlement"
   | "score_update";
 
-export type ReceiptOutcome = "succeeded" | "failed" | "skipped";
+export type ReceiptMandate = "succeeded" | "failed" | "skipped";
 
 export type Receipt = {
   /** Stable id of the business action, e.g. `loan-42-inst-3`. */
   actionId: string;
   kind: ReceiptKind;
-  outcome: ReceiptOutcome;
+  outcome: ReceiptMandate;
   loanId?: string;
   installment?: number;
   subscriptionId?: string;
@@ -63,7 +63,7 @@ export type Receipt = {
 };
 
 export function receiptFromStatus(
-  base: Omit<Receipt, "execution" | "createdAt" | "completedAt" | "outcome">,
+  base: Omit<Receipt, "execution" | "createdAt" | "completedAt" | "mandate">,
   status: ExecutionStatusResponse
 ): Receipt {
   return {

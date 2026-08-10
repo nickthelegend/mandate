@@ -24,7 +24,7 @@ import { Loader2, RotateCw } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { RuleChain } from "@/components/rule-chain";
-import { DEPLOYMENT, tx as txUrl, address as addressUrl, short } from "@/lib/outcome";
+import { DEPLOYMENT, tx as txUrl, address as addressUrl, short } from "@/lib/mandate";
 import { cn } from "@/lib/utils";
 
 const GATEWAY =
@@ -45,7 +45,7 @@ const GATEWAY =
  */
 function agentId(): string {
   if (typeof window === "undefined") return "shared";
-  const KEY = "outcome.agent";
+  const KEY = "mandate.agent";
   let id = window.localStorage.getItem(KEY);
   if (!id || !/^[a-z0-9][a-z0-9_-]{2,63}$/i.test(id)) {
     id = `agent-${Math.random().toString(36).slice(2, 10)}`;
@@ -65,7 +65,7 @@ type RuleTrace = {
   priorIntentId?: string;
 };
 
-type Outcome = {
+type Mandate = {
   decision: string;
   approved: boolean;
   failedRule: string | null;
@@ -133,7 +133,7 @@ type LogRow = {
 /**
  * The spends on offer.
  *
- * Each is one honest request, not a scripted outcome -- what comes back depends
+ * Each is one honest request, not a scripted mandate -- what comes back depends
  * entirely on what the ledger already holds. The $0.40 button approves on a
  * fresh day and is refused once the budget runs low, and neither is decided
  * here.
@@ -188,7 +188,7 @@ function randomPayee(): string {
 export function AuthorityConsole() {
   const [state, setState] = useState<State | null>(null);
   const [log, setLog] = useState<LogRow[]>([]);
-  const [outcome, setOutcome] = useState<Outcome | null>(null);
+  const [mandate, setMandate] = useState<Mandate | null>(null);
   const [busy, setBusy] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -255,7 +255,7 @@ export function AuthorityConsole() {
     if (spending.current) return;
     spending.current = true;
     setBusy(i);
-    setOutcome(null);
+    setMandate(null);
     setError(null);
     try {
       const res = await fetch(`${GATEWAY}/authority/spend`, {
@@ -278,7 +278,7 @@ export function AuthorityConsole() {
       const body = await res.json();
       if (!res.ok) setError(body.error ?? `gateway returned ${res.status}`);
       else {
-        setOutcome(body);
+        setMandate(body);
         // Held spends carry a single-use code the server never returns again.
         if (body.escalation?.id) {
           setCodes((c) => ({ ...c, [body.escalation.id]: body.escalation.code }));
@@ -345,7 +345,7 @@ export function AuthorityConsole() {
       const body = await res.json();
       if (!res.ok) setError(body.error ?? `gateway returned ${res.status}`);
       else if (body.outcome !== "APPROVED" && body.outcome !== "DENIED") {
-        // The ignored outcomes are the interesting ones: the service verified
+        // The ignored mandates are the interesting ones: the service verified
         // the response and declined to honour it, and says which check refused.
         setError(`${body.outcome}: ${body.detail}`);
       } else {
@@ -354,7 +354,7 @@ export function AuthorityConsole() {
         // refetch lands.
         setHeld((h) => h.filter((x) => x.id !== id));
         if (body.transactionHash) {
-          setOutcome((o) => (o ? { ...o, transactionHash: body.transactionHash } : o));
+          setMandate((o) => (o ? { ...o, transactionHash: body.transactionHash } : o));
         }
         if (body.budget) {
           setState((prev) =>
@@ -580,54 +580,54 @@ export function AuthorityConsole() {
       )}
 
       {/* ── The decision ──────────────────────────────────────────────── */}
-      {outcome && (
+      {mandate && (
         <div className="card-p card-p--bordered p-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <span
               className={cn(
                 "verdict",
-                outcome.approved ? "verdict--proven" : "verdict--not_proven"
+                mandate.approved ? "verdict--proven" : "verdict--not_proven"
               )}
             >
               <svg viewBox="0 0 20 20" aria-hidden="true">
                 <circle cx="10" cy="10" r="8" />
-                {!outcome.approved && (
+                {!mandate.approved && (
                   <path d="M3 17 L17 3" stroke="currentColor" strokeWidth="2.5" />
                 )}
               </svg>
-              {outcome.decision}
+              {mandate.decision}
             </span>
             <span className="text-[12px] text-[var(--ink-4)]">
               judged on the server, against the chain and the ledger
             </span>
           </div>
 
-          <p className="mt-3 text-[13px] leading-relaxed text-[var(--ink-2)]">{outcome.reason}</p>
+          <p className="mt-3 text-[13px] leading-relaxed text-[var(--ink-2)]">{mandate.reason}</p>
 
           {/* Only an approval moved money, and only a hash proves it did. */}
-          {outcome.transactionHash ? (
+          {mandate.transactionHash ? (
             <div className="settlement mt-4">
               <div>
                 <p className="field-label">Budget after this spend</p>
                 <p className="figure mt-1">
-                  {money(outcome.budget.spentAfter)} of {money(outcome.budget.limit)}
+                  {money(mandate.budget.spentAfter)} of {money(mandate.budget.limit)}
                 </p>
               </div>
               <div>
                 <p className="field-label">What moved on Sepolia</p>
                 <a
-                  href={txUrl(outcome.transactionHash)}
+                  href={txUrl(mandate.transactionHash)}
                   target="_blank"
                   rel="noopener"
                   className="figure mt-1 block break-all underline-offset-4 hover:text-[var(--ink)] hover:underline"
                 >
-                  {short(outcome.transactionHash, 10, 8)} →
+                  {short(mandate.transactionHash, 10, 8)} →
                 </a>
               </div>
             </div>
-          ) : outcome.executionError ? (
+          ) : mandate.executionError ? (
             <p className="mt-4 rounded-[10px] border border-[var(--line)] bg-[var(--surface)] p-3 text-[12px] text-[var(--ink-3)]">
-              Authorised, but the execution did not confirm: {outcome.executionError}. The budget
+              Authorised, but the execution did not confirm: {mandate.executionError}. The budget
               stays charged — un-charging a failed execution would make retries free.
             </p>
           ) : null}
@@ -641,30 +641,30 @@ export function AuthorityConsole() {
             * the entire point of enforcing on the lower bound, and impossible
             * to see from a verdict alone.
             */}
-          {outcome.vendor && (
+          {mandate.vendor && (
             <div className="mt-5 rounded-[10px] border border-[var(--line)] bg-[var(--surface)] p-4">
               <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <p className="field-label">What the payee scored</p>
-                <span className="text-[11px] text-[var(--ink-4)]">{outcome.vendor.band}</span>
+                <span className="text-[11px] text-[var(--ink-4)]">{mandate.vendor.band}</span>
               </div>
               <p className="figure mt-1 text-sm">
-                score {outcome.vendor.score.toFixed(1)} − 1.28 × σ {outcome.vendor.sigma.toFixed(1)}{" "}
+                score {mandate.vendor.score.toFixed(1)} − 1.28 × σ {mandate.vendor.sigma.toFixed(1)}{" "}
                 ={" "}
                 <span
                   className={cn(
                     "font-semibold",
-                    outcome.vendor.lcb >= outcome.vendor.floor
+                    mandate.vendor.lcb >= mandate.vendor.floor
                       ? "text-[var(--proven)]"
                       : "text-[var(--refused)]"
                   )}
                 >
-                  {outcome.vendor.lcb.toFixed(1)}
+                  {mandate.vendor.lcb.toFixed(1)}
                 </span>{" "}
-                <span className="text-[var(--ink-4)]">vs floor {outcome.vendor.floor}</span>
+                <span className="text-[var(--ink-4)]">vs floor {mandate.vendor.floor}</span>
               </p>
 
               <div className="mt-3 space-y-1">
-                {outcome.vendor.features.map((f) => (
+                {mandate.vendor.features.map((f) => (
                   <div key={f.key} className="flex items-center gap-3 text-[11px]">
                     <span
                       className={cn(
@@ -701,13 +701,13 @@ export function AuthorityConsole() {
 
           <RuleChain
             className="mt-5"
-            failedAt={outcome.failedRule}
-            decision={outcome.decision}
+            failedAt={mandate.failedRule}
+            decision={mandate.decision}
           />
 
           {/* The refusing rule's own numbers, which is what makes it checkable. */}
           {(() => {
-            const f = outcome.rules.find((r) => r.result === "FAIL");
+            const f = mandate.rules.find((r) => r.result === "FAIL");
             if (!f || (f.observed === undefined && f.priorIntentId === undefined)) return null;
             return (
               <dl className="mt-4 flex flex-wrap gap-x-6 gap-y-1 border-t border-[var(--line)] pt-3 text-[12px]">

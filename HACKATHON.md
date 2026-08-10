@@ -22,7 +22,7 @@ the agent has no key to route around it with.*
 
 ### Why this and not "verified payments"
 
-The earlier pitch was "x402 pays on a promise, Outcome pays on a receipt." It is
+The earlier pitch was "x402 pays on a promise, Mandate pays on a receipt." It is
 true, the demo still runs at `/demo`, and it is now a supporting exhibit rather
 than the argument. Two reasons it lost the lead:
 
@@ -104,7 +104,7 @@ The full beat sheet with timings and exact wording lives in
 1:15  The proof        Reload the page. The spend is still gone. It is in a database.
 1:40  The kill switch  Pause on chain → next request dies at rule 1 of 15
 2:10  The agent        /agent → full cycle, no key, no ETH
-2:35  Infrastructure   npm i outcome-sdk · npx outcome-mcp · reads need no credential
+2:35  Infrastructure   npm i mandate-sdk · npx mandate-mcp · reads need no credential
 2:55  The close        "No model in the money path."
 ```
 
@@ -180,7 +180,7 @@ Because a model introduces a way to be wrong about a question that has a
 deterministic answer, and it puts a probabilistic component in the money path.
 
 **"What stops the agent lying to you?"**
-It cannot. `outcome_settle` takes a transaction hash and refuses a verdict —
+It cannot. `mandate_settle` takes a transaction hash and refuses a verdict —
 there is no `proven` flag in the schema, and a test asserts there never will be.
 An agent supplies evidence, not conclusions.
 
@@ -192,7 +192,7 @@ is documented as a known gap rather than glossed.
 
 ## Still outstanding
 
-- [x] Demo video — `apps/web/demo/outcome-demo.mp4`, two minutes, recorded by
+- [x] Demo video — `apps/web/demo/mandate-demo.mp4`, two minutes, recorded by
       driving the deployed site against the live gateway. Every transaction in
       it landed on Sepolia while it was recording. Re-record any time with
       `node apps/web/record-demo.mjs`.

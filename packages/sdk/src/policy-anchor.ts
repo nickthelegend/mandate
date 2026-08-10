@@ -81,7 +81,7 @@ function pick(status: ExecutionStatusResponse, policyHash: string): AnchorResult
  * Register a policy for an agent.
  *
  * `policyHash` is the canonical hash of the policy document -- use
- * `hashCanonicalJson` from `outcome-policy/canon`, which is the same function
+ * `hashCanonicalJson` from `mandate-policy/canon`, which is the same function
  * the engine hashes with, so the anchored bytes and the judged bytes cannot
  * drift.
  *

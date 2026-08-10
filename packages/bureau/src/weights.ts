@@ -8,7 +8,7 @@
  * enforcement without anyone noticing.
  *
  * Ported from untch's `@untch/trust-bureau` §12 weights. The structure is
- * theirs; which features are real is not, because Outcome has different data.
+ * theirs; which features are real is not, because Mandate has different data.
  */
 
 export type FeatureSource = "observed" | "cold-start-prior";
@@ -31,7 +31,7 @@ export interface VendorFeatureSpec {
 /**
  * The seven vendor features, base weights summing to 1.00.
  *
- * `real: true` means Outcome computes it from data it actually holds. The four
+ * `real: true` means Mandate computes it from data it actually holds. The four
  * real ones are the ones this system is in a position to know: how often it has
  * paid this recipient, whether those payments actually landed on chain, how
  * often something went wrong, and what the payout address looks like publicly.

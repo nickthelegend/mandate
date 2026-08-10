@@ -24,14 +24,13 @@ const instrument = Instrument_Serif({
 });
 
 
-import { Providers } from "@/components/providers";
 import { SiteFooter } from "@/components/site-footer";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Outcome — pay agents for verified results",
+  title: "Mandate — pay agents for verified results",
   description:
-    "x402 pays per request and nobody checks the request was served. Outcome makes payment follow a verified result: it reads the receipt instead of trusting the status byte.",
+    "x402 pays per request and nobody checks the request was served. Mandate makes payment follow a verified result: it reads the receipt instead of trusting the status byte.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -43,10 +42,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         * it floats over the hero video and is clipped by the same corners.
         */}
       <body className="min-h-screen w-full bg-background p-3 font-sans antialiased sm:p-4">
-        <Providers>
           <main>{children}</main>
           <SiteFooter />
-        </Providers>
       </body>
     </html>
   );

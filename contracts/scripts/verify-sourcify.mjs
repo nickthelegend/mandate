@@ -35,7 +35,7 @@ const BUILD_INFO = "artifacts/build-info";
  * red line for something that is not this project's to verify.
  */
 const TARGETS = [
-  { name: "OutcomeEscrow", address: "0x0ED9d1235cB9FD080D687FD978a38d972a34dC3B" },
+  { name: "MandateEscrow", address: "0x0ED9d1235cB9FD080D687FD978a38d972a34dC3B" },
   { name: "USDCx", address: "0x0d864A625c280F7f9B9AD024d12F94f5D6DCCF13" },
 ];
 

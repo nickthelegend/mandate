@@ -47,10 +47,10 @@ jobs:
         run: npm run test:contracts
 
       - name: SDK
-        run: npm run test -w outcome-sdk
+        run: npm run test -w mandate-sdk
 
       - name: MCP over stdio
-        run: npm run test -w outcome-mcp
+        run: npm run test -w mandate-mcp
 
       # The published entry points claim to be browser-safe. This is the check
       # that keeps that true.

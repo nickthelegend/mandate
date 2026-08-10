@@ -5,7 +5,7 @@
  *
  * Three rules, all about not overclaiming.
  *
- * There is no third state. Proven and not-proven are the only outcomes, and an
+ * There is no third state. Proven and not-proven are the only mandates, and an
  * unreadable receipt is *not proven* rather than unknown -- an "inconclusive"
  * mark invites a human to wave it through, which is the failure being designed
  * against. "Awaiting" is a separate thing entirely: nobody has ruled yet.

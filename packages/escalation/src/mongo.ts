@@ -24,7 +24,7 @@ export async function mongoEscalations(opts: {
   const client: MongoClient = new MongoClient(opts.uri, { serverSelectionTimeoutMS: 15_000 });
   await client.connect();
 
-  const db: Db = client.db(opts.db ?? "outcome");
+  const db: Db = client.db(opts.db ?? "mandate");
   const coll: Collection<EscalationRecord> = db.collection(
     `${opts.collection ?? "authority"}_escalations`
   );

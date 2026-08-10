@@ -2,7 +2,7 @@ import { AuthorityConsole } from "./console";
 import { PageHead } from "@/components/page-head";
 
 export const metadata = {
-  title: "The authority, live — Outcome",
+  title: "The authority, live — Mandate",
   description:
     "A spending authority enforcing a policy anchored on Sepolia against a budget persisted in MongoDB. Spend it down; the refusal survives a reload.",
 };

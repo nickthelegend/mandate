@@ -2,7 +2,7 @@
  * Where a score's inputs come from.
  *
  * Two sources, both real, and the split matters. The payment history is
- * Outcome's own decision record in MongoDB — what this authority approved and
+ * Mandate's own decision record in MongoDB — what this authority approved and
  * what it executed. The settlement outcomes and the wallet profile come from
  * the chain, because whether the money arrived is not something the authority's
  * own record is entitled to assert.
@@ -37,7 +37,7 @@ export interface BureauDataSource {
  * Read a receipt and answer one question: did this transaction move the token
  * to this address?
  *
- * The same check `outcome-sdk`'s verifier performs, applied to history instead
+ * The same check `mandate-sdk`'s verifier performs, applied to history instead
  * of a single payment. A transaction that mined without a matching Transfer
  * answers `false` — it is not missing data, it is a settlement that paid
  * nobody, and the feature must count it as one.
@@ -84,7 +84,7 @@ export async function mongoBureau(opts: MongoBureauOptions): Promise<
   const client: MongoClient = new MongoClient(opts.uri, { serverSelectionTimeoutMS: 15_000 });
   await client.connect();
 
-  const db: Db = client.db(opts.db ?? "outcome");
+  const db: Db = client.db(opts.db ?? "mandate");
   const base = opts.collection ?? "authority";
   const decisions: Collection = db.collection(`${base}_decisions`);
   const escalationsColl: Collection = db.collection(`${base}_escalations`);
@@ -203,7 +203,7 @@ export async function mongoSnapshots(opts: {
   const client = new MongoClient(opts.uri, { serverSelectionTimeoutMS: 15_000 });
   await client.connect();
   const coll = client
-    .db(opts.db ?? "outcome")
+    .db(opts.db ?? "mandate")
     .collection(`${opts.collection ?? "authority"}_scores`);
   await coll.createIndex({ subject: 1, epoch: 1 }, { unique: true }).catch(() => {});
 

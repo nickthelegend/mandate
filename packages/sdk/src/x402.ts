@@ -22,8 +22,8 @@
  * nothing should not need a server to ask.
  */
 
-import type { OutcomeClient } from "./client.ts";
-import type { Verdict } from "./verify.ts";
+import { verifyTransfer, toWireReceipt, type Verdict } from "./verify.ts";
+import type { Provider } from "ethers";
 
 /** The version this module speaks. */
 export const X402_VERSION = 1;
@@ -188,8 +188,18 @@ export type SettlementVerdict = Verdict & {
  *
  * Serve the resource only when the returned verdict is `proven`.
  */
+/**
+ * Just enough to read a receipt.
+ *
+ * This used to take the whole escrow client, which is a much larger promise
+ * than the function keeps — it reads one receipt and answers one question. A
+ * narrow parameter is also what lets the escrow go without taking the x402
+ * adapter with it.
+ */
+export type ReceiptReader = Pick<Provider, "getTransactionReceipt">;
+
 export async function verifySettlement(
-  client: OutcomeClient,
+  provider: ReceiptReader,
   args: { requirements: PaymentRequirements; settlement: SettlementResponse }
 ): Promise<SettlementVerdict> {
   const { requirements: req, settlement } = args;
@@ -218,12 +228,29 @@ export async function verifySettlement(
     };
   }
 
-  const verdict = await client.verify({
-    transactionHash: settlement.transaction,
+  const receipt = await provider.getTransactionReceipt(settlement.transaction);
+  if (!receipt) {
+    return {
+      proven: false,
+      reason: `no receipt for ${settlement.transaction}: the transaction is unknown to this node`,
+      observed: 0n,
+      proof: settlement.transaction,
+      logCount: 0,
+      facilitatorClaimedSuccess: true,
+    };
+  }
+
+  const verdict: Verdict = verifyTransfer(toWireReceipt(receipt as never), {
     recipient: req.payTo,
     minAmount: BigInt(req.maxAmountRequired),
     token: req.asset,
   });
 
-  return { ...verdict, facilitatorClaimedSuccess: true };
+  return {
+    ...verdict,
+    // Reported so a reader can see the receipt was not empty. A settlement that
+    // mined with logs and still moved nothing is the case worth naming.
+    logCount: receipt.logs?.length ?? 0,
+    facilitatorClaimedSuccess: true,
+  };
 }

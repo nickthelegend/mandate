@@ -24,12 +24,12 @@ integrations) · **M** exercised manually in a browser.
 | # | Item | Correct means |
 |---|---|---|
 | 1.1 | `PolicyRegistry` `0x13452fcA…` | `eth_getCode` returns non-empty bytecode |
-| 1.2 | `OutcomeEscrow` `0x0ED9d123…` | non-empty bytecode |
+| 1.2 | `MandateEscrow` `0x0ED9d123…` | non-empty bytecode |
 | 1.3 | `USDCx` (EIP-3009) `0x0d864A62…` | non-empty bytecode |
 | 1.4 | `tUSDC` `0x49C86277…` | non-empty bytecode |
 | 1.5 | The enforced policy is anchored | `getPolicy(POLICY_ID)` returns `status == 1` and `isUsable == true` |
 | 1.6 | The anchor matches the document on disk | registry `policyHash` == `hashCanonicalJson(policy.json.rules)` exactly |
-| 1.7 | Escrow reads work | `OutcomeEscrow` answers a `getIntent` call without reverting |
+| 1.7 | Escrow reads work | `MandateEscrow` answers a `getIntent` call without reverting |
 | 1.8 | Every transaction the site displays is real | each hash resolves to a receipt with `status == 1` |
 | 1.9 | The "moved nothing" claim is true | the lying-facilitator tx has **zero** ERC-20 `Transfer` logs |
 | 1.10 | The "moved money" claim is true | the honest tx has a `Transfer` of exactly 1000000 base units |
@@ -61,7 +61,7 @@ integrations) · **M** exercised manually in a browser.
 | 2.21 | `POST /authority/escalation/<id>/resolve` bad code | 400, "code is 24 hex characters" |
 | 2.22 | …bad operator | 400, "operator must be a 20-byte address" |
 | 2.23 | …bad action | 400, "action must be APPROVE or DENY" |
-| 2.24 | Unknown escalation id | 200, `outcome == "IGNORED_NOT_FOUND"` |
+| 2.24 | Unknown escalation id | 200, `mandate == "IGNORED_NOT_FOUND"` |
 
 ## 3. The authority engine, end to end (L)
 
@@ -132,9 +132,9 @@ integrations) · **M** exercised manually in a browser.
 | 6.3 | KeeperHub execute API | an execution status query returns a real record |
 | 6.4 | KeeperHub MCP | initialize → 44 tools |
 | 6.5 | KeeperHub marketplace | discovery returns listings, ≥ 1 paid |
-| 6.6 | Our marketplace listing | `outcome-escrow-intent-status` live at `$0.02/call` |
-| 6.7 | `outcome-mcp` over stdio | initialize → exactly the 6 tools, read-only ones need no credential |
-| 6.8 | npm | `outcome-sdk` and `outcome-policy` install clean and export what the README claims |
+| 6.6 | Our marketplace listing | `mandate-escrow-intent-status` live at `$0.02/call` |
+| 6.7 | `mandate-mcp` over stdio | initialize → exactly the 6 tools, read-only ones need no credential |
+| 6.8 | npm | `mandate-sdk` and `mandate-policy` install clean and export what the README claims |
 | 6.9 | x402 challenge binding | an honest challenge binds; a swapped payee or price is caught |
 
 ## 7. Repository hygiene (I)

@@ -2,10 +2,10 @@ import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 
 import { Navbar } from "@/components/navbar";
-import { DashboardPreview } from "@/components/dashboard-preview";
+import { LiveStats } from "@/components/live-stats";
 import { DecisionDemo } from "@/components/decision-demo";
 import { CodeTabs } from "@/components/code-tabs";
-import { DEPLOYMENT, tx, address } from "@/lib/outcome";
+import { DEPLOYMENT, tx, address } from "@/lib/mandate";
 
 /*
  * Built for a judge with ninety seconds.
@@ -17,7 +17,7 @@ import { DEPLOYMENT, tx, address } from "@/lib/outcome";
  */
 
 /**
- * Static export puts the site under /outcome on Pages, and a raw `src` is not
+ * Static export puts the site under /mandate on Pages, and a raw `src` is not
  * rewritten for that the way `next/link` and `next/image` are — so a plain
  * "/hero/hero.mp4" 404s in production while working perfectly in dev.
  */
@@ -150,7 +150,7 @@ export default function Home() {
               signer; the policy is the only way through.
             </p>
 
-            <Link href="/demo" className="btn btn--dark mt-6 sm:mt-8">
+            <Link href="/authority" className="btn btn--dark mt-6 sm:mt-8">
               Watch it refuse a payment
               <span className="btn__dot">
                 <ChevronRight className="size-4" />
@@ -158,8 +158,22 @@ export default function Home() {
             </Link>
           </div>
 
-          <div className="px-3 sm:px-4">
-            <DashboardPreview />
+          {/*
+            * The tray, bleeding past the frame's bottom edge.
+            *
+            * The frame is the signature and content running off it is the
+            * point: it says the surface continues past what you can see. What
+            * used to sit here previewed escrow intents from a product this no
+            * longer is; these are the authority's own running totals, read
+            * from the live gateway.
+            */}
+          <div className="mt-auto px-3 sm:px-4">
+            <div className="tray rounded-t-[16px] px-5 pb-10 pt-5 sm:px-7 sm:pb-14 sm:pt-6">
+              <p className="field-label">Decided so far, by the live authority</p>
+              <div className="mt-3">
+                <LiveStats />
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -319,7 +333,7 @@ export default function Home() {
             The rules are deterministic and the chain is the arbiter. Nothing here asks a language
             model whether a payment should happen.
           </p>
-          <Link href="/verify" className="btn btn--brand mt-8">
+          <Link href="/ledger" className="btn btn--brand mt-8">
             Check a payment yourself
             <span className="btn__dot">
               <ChevronRight className="size-4" />

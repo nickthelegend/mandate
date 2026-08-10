@@ -1,5 +1,5 @@
 /**
- * outcome-escalation — the third answer a policy decision can have.
+ * mandate-escalation — the third answer a policy decision can have.
  *
  * Ported from untch's `@untch/escalation`: the lifecycle, the single-use hashed
  * approval codes, and the authority-boundary check that re-verifies every

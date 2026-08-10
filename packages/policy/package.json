@@ -1,5 +1,5 @@
 {
-  "name": "outcome-policy",
+  "name": "mandate-policy",
   "version": "0.1.0",
   "type": "module",
   "description": "Deterministic spend-authority engine: decides whether an autonomous agent may spend, before any money moves.",
@@ -39,7 +39,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/nickthelegend/outcome.git",
+    "url": "git+https://github.com/nickthelegend/mandate.git",
     "directory": "packages/policy"
   }
 }

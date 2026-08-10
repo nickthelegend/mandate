@@ -17,3 +17,6 @@ apps/web/.shots-prod/
 # Recording artefacts: the video is the deliverable, the stills are scratch.
 apps/web/demo/*.png
 apps/web/demo/*.webm
+
+# Stale static export; the deploy builds it fresh.
+apps/web/out/

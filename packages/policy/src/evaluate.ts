@@ -4,7 +4,7 @@ import { evaluatePolicyActive, evaluateRuleChain, IMPLEMENTED_RULES } from "./ru
 import { ENGINE_VERSION, RULE_MANIFEST_HASH } from "./manifest.ts";
 import type {
   Decision,
-  DecisionOutcome,
+  DecisionMandate,
   LedgerWindowState,
   Policy,
   RuleTraceEntry,
@@ -15,7 +15,7 @@ import type {
  * `evaluateIntent` — the pure, deterministic preflight pipeline (PRD §7.1). No LLM (I1), no I/O,
  * no clock unless injected: given an intent, an active-policy record, and a ledger snapshot it
  * returns a §8.2-shaped Decision. Fail-closed (I2): any missing/malformed input yields a
- * BLOCKED_* / REJECTED_* outcome — never a silent APPROVE.
+ * BLOCKED_* / REJECTED_* mandate — never a silent APPROVE.
  *
  * Pipeline: canonicalize+validate → policy-active lookup → state-assembly guard → RULE_EVAL
  * (the ordered §7.1 chain in `rules.ts` — all thirteen rules), short-circuiting on the first
@@ -41,7 +41,7 @@ export function evaluateIntent(
   const policyVersion = policy?.version ?? 0;
 
   const make = (
-    decision: DecisionOutcome,
+    decision: DecisionMandate,
     intentHash: Hex,
     reasons: string[],
     rules: RuleTraceEntry[],
@@ -94,9 +94,9 @@ export function evaluateIntent(
   // 4. RULE_EVAL — the ordered §7.1 chain, short-circuit on first fail/escalate. Any unexpected
   //    throw (e.g. a malformed prior-intent record) is caught and failed closed, never approved.
   try {
-    const { outcome, reason } = evaluateRuleChain({ intent, policy: active, state, nowMs }, rules);
-    if (outcome) {
-      return make(outcome, intentHash, [reason ?? outcome], rules);
+    const { mandate, reason } = evaluateRuleChain({ intent, policy: active, state, nowMs }, rules);
+    if (mandate) {
+      return make(mandate, intentHash, [reason ?? mandate], rules);
     }
     return make(
       "APPROVED",

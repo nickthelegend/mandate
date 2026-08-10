@@ -16,7 +16,7 @@
 
 import { chromium } from "playwright";
 
-const BASE = (process.argv[2] ?? "https://nickthelegend.github.io/outcome").replace(/\/$/, "");
+const BASE = (process.argv[2] ?? "https://nickthelegend.github.io/mandate").replace(/\/$/, "");
 const GATEWAY = process.env.GATEWAY_URL ?? "https://gateway-production-944e.up.railway.app";
 
 /** Noise that is genuinely not the app's fault. Kept tight on purpose. */
@@ -102,7 +102,7 @@ for (const [path, re] of [
   ["/explorer/", /intent/i],
   ["/inspect/", /execution/i],
   ["/x402/", /402/i],
-  ["/docs/", /outcome_verify|Quickstart/i],
+  ["/docs/", /mandate_verify|Quickstart/i],
 ]) {
   await check(`renders ${path}`, async () => {
     await go(path);

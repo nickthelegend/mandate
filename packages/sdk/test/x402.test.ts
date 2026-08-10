@@ -13,7 +13,6 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { id as ethersId } from "ethers";
 
-import { OutcomeClient } from "../src/client.ts";
 import {
   X402_VERSION,
   encodePaymentHeader,
@@ -65,13 +64,9 @@ const PAYLOAD: PaymentPayload = {
   },
 };
 
-/** A client whose only job is to return one receipt. */
+/** A provider whose only job is to hand back one receipt. */
 function clientReturning(receipt: unknown) {
-  return new OutcomeClient({
-    provider: { getTransactionReceipt: async () => receipt } as never,
-    escrow: PAY_TO,
-    token: ASSET,
-  });
+  return { getTransactionReceipt: async () => receipt } as never;
 }
 
 const receiptPaying = (to: string, value: bigint, token = ASSET) => ({
@@ -203,16 +198,12 @@ test("a transfer of some other token does not count", async () => {
 
 test("success with no transaction named is refused without a chain read", async () => {
   let read = false;
-  const client = new OutcomeClient({
-    provider: {
-      getTransactionReceipt: async () => {
-        read = true;
-        return null;
-      },
-    } as never,
-    escrow: PAY_TO,
-    token: ASSET,
-  });
+  const client = {
+    getTransactionReceipt: async () => {
+      read = true;
+      return null;
+    },
+  } as never;
 
   const v = await verifySettlement(client, {
     requirements: REQUIREMENTS,

@@ -8,45 +8,45 @@ import { cn } from "@/lib/utils";
 
 const SNIPPETS = {
   sdk: {
-    install: "npm i outcome-sdk",
-    code: `import { OutcomeClient } from "outcome-sdk";
+    install: "npm i mandate-sdk",
+    code: `import { MandateClient } from "mandate-sdk";
 
-const outcome = new OutcomeClient({
+const mandate = new MandateClient({
   provider: "https://ethereum-sepolia-rpc.publicnode.com",
   escrow:   "0x0ED9d1235cB9FD080D687FD978a38d972a34dC3B",
   token:    "0x49C86277a91002c4943837bf20F6ED41976Db09F",
 });
 
 // Same job, same id -- so a duplicate collides on chain.
-const id = outcome.intentId("deliver 1 tUSDC to treasury", agent);
-if (await outcome.isClaimed(id)) return; // someone is already on it
+const id = mandate.intentId("deliver 1 tUSDC to treasury", agent);
+if (await mandate.isClaimed(id)) return; // someone is already on it
 
 // Did that transaction actually move value?
-const { proven, reason } = await outcome.verify({
+const { proven, reason } = await mandate.verify({
   transactionHash,
   recipient,
   minAmount: 1_000_000n,
 });`,
   },
   mcp: {
-    install: "npx outcome-mcp",
+    install: "npx mandate-mcp",
     code: `// .mcp.json  (or claude_desktop_config.json)
 {
   "mcpServers": {
-    "outcome": {
+    "mandate": {
       "command": "npx",
-      "args": ["-y", "outcome-mcp"]
+      "args": ["-y", "mandate-mcp"]
     }
   }
 }
 
 // Six tools, no configuration needed to read or verify:
-//   outcome_intent_id    derive the id, check nobody else has it
-//   outcome_get_intent   state, amount, beneficiary
-//   outcome_verify       did this transaction move value?
-//   outcome_settle       release or refund, from a tx hash only
-//   outcome_diagnose     why it failed, and whether to retry
-//   outcome_audit        the decision record`,
+//   mandate_intent_id    derive the id, check nobody else has it
+//   mandate_get_intent   state, amount, beneficiary
+//   mandate_verify       did this transaction move value?
+//   mandate_settle       release or refund, from a tx hash only
+//   mandate_diagnose     why it failed, and whether to retry
+//   mandate_audit        the decision record`,
   },
 } as const;
 
@@ -72,8 +72,8 @@ export function CodeTabs({ className }: { className?: string }) {
   return (
     <Tabs defaultValue="sdk" className={cn("w-full", className)}>
       <TabsList className="font-mono">
-        <TabsTrigger value="sdk">outcome-sdk</TabsTrigger>
-        <TabsTrigger value="mcp">outcome-mcp</TabsTrigger>
+        <TabsTrigger value="sdk">mandate-sdk</TabsTrigger>
+        <TabsTrigger value="mcp">mandate-mcp</TabsTrigger>
       </TabsList>
 
       {(["sdk", "mcp"] as const).map((k) => (
