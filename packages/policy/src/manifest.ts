@@ -23,8 +23,8 @@
  * "which rules ran, in what order, under which implementation".
  */
 
-import { createHash } from "node:crypto";
 import { IMPLEMENTED_RULES } from "./rules.ts";
+import { sha256Utf8 } from "./viem-shim.ts";
 
 /**
  * Bumped when evaluation behaviour changes, by hand.
@@ -36,9 +36,7 @@ import { IMPLEMENTED_RULES } from "./rules.ts";
 export const ENGINE_VERSION = "2" as const;
 
 /** `sha256` over the ordered rule names, `0x`-prefixed to read like every other hash here. */
-export const RULE_MANIFEST_HASH: string = `0x${createHash("sha256")
-  .update(IMPLEMENTED_RULES.join("\n"))
-  .digest("hex")}`;
+export const RULE_MANIFEST_HASH: string = sha256Utf8(IMPLEMENTED_RULES.join("\n"));
 
 export interface EvaluatorIdentity {
   readonly engineVersion: string;

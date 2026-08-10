@@ -27,7 +27,8 @@
     "react": "^19",
     "react-dom": "^19",
     "sonner": "^1.7.2",
-    "tailwind-merge": "^2.6.0"
+    "tailwind-merge": "^2.6.0",
+    "outcome-policy": "*"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.9",

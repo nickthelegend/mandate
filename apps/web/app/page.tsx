@@ -3,79 +3,80 @@ import { ChevronRight } from "lucide-react";
 
 import { Navbar } from "@/components/navbar";
 import { DashboardPreview } from "@/components/dashboard-preview";
-import { Settlement } from "@/components/settlement";
+import { DecisionDemo } from "@/components/decision-demo";
 import { CodeTabs } from "@/components/code-tabs";
-import { DEPLOYMENT, tx } from "@/lib/outcome";
+import { DEPLOYMENT, tx, address } from "@/lib/outcome";
 
 /*
  * Built for a judge with ninety seconds.
  *
- * One sentence, one action, and the evidence immediately under it. The hero is
- * a single clipped frame -- video, navbar, headline and dashboard are cut off
- * together by the same rounded corners, so the tray bleeding past the bottom
- * edge reads as deliberate rather than as a layout that ran out of room.
+ * One sentence, one action, and the evidence immediately under it. The claim is
+ * that an agent cannot exceed its budget, so the page has to let them try:
+ * the decision engine runs client-side below the fold, and every on-chain step
+ * of the same story links a transaction KeeperHub's relayer sent.
  */
 
-const DEAD = "0x000000000000000000000000000000000000dEaD";
-
-const DEMAND = {
-  amount: "1000000",
-  token: "0x0d864A625c280F7f9B9AD024d12F94f5D6DCCF13",
-  recipient: DEAD,
-};
+const REGISTRY = "0x13452fcA19819d37Fa4b01a0e64C8Fce60C5E304";
+const RELAYER = "0xA17cb6adb58277E5b4A44B8c1ECB449BB6614E87";
 
 /*
- * One demand, settled twice. Both verified against Sepolia from this repo
- * before being written down: same token, same recipient, same amount, and the
- * only difference is whether the money actually moved.
+ * The authority, proven end to end on Sepolia. Every hash here was checked
+ * against the chain before it was written down, and every one was sent by
+ * KeeperHub's relayer rather than a local key -- which is the whole claim.
  */
-const SETTLEMENTS = [
+const CHAIN_OF_CUSTODY = [
   {
-    label: "A lying facilitator",
-    claim: "success: true",
-    proven: false,
-    observed: "0",
-    hash: "0x6db7218d717f5be3c3b37f386593bf0bdf3760b0407ac1145c617ac172136603",
-    reason: "No Transfer to 0x…dEaD in this receipt. It mined, emitted a log, and moved nothing.",
-    outcome: "HTTP 402 — article withheld",
+    step: "Anchor the policy",
+    detail: "Written through KeeperHub, so the registry records its wallet as owner.",
+    result: "owner = KeeperHub",
+    hash: "0x6f023b48e20fb70939a18f8051f800474eae0e0c0f5a89db15dec3ad93a5aad0",
+    kind: "ok" as const,
   },
   {
-    label: "An honest facilitator",
-    claim: "success: true",
-    proven: true,
-    observed: "1000000",
-    hash: "0x3aac3134ba7c4ce4e12c04e206ad7ce468318607fdb7a8e7ad85e91a70fe72ee",
-    reason: "Observed 1000000 reaching 0x…dEaD across 2 logs.",
-    outcome: "HTTP 200 — article served",
+    step: "Agent spends inside policy",
+    detail: "Fifteen rules pass, and only then does KeeperHub move the money.",
+    result: "APPROVED",
+    hash: "0xe9f84233c0e06f5eee5f2c709413c86de4b0e733d75b6bf65b99f60a3d3d801d",
+    kind: "ok" as const,
   },
-] as const;
+  {
+    step: "Someone edits the policy file",
+    detail: "The document no longer hashes to what the registry stores.",
+    result: "PolicyAnchorMismatch",
+    hash: null,
+    kind: "bad" as const,
+  },
+  {
+    step: "Kill switch pulled",
+    detail: "A pause KeeperHub signs. Every agent reading the registry stops.",
+    result: "PAUSED",
+    hash: "0x76478512c7a87cd2e5df233e280b897bd6b8eb9990b7cc9f9955fbf9611f70ab",
+    kind: "bad" as const,
+  },
+  {
+    step: "The same spend, again",
+    detail: "Refused before a single rule is consulted.",
+    result: "PolicyNotUsable",
+    hash: null,
+    kind: "bad" as const,
+  },
+];
 
-const PROOF = [
-  {
-    title: "The agent holds no private key and no ETH",
-    body: "It signs nothing. KeeperHub owns the only signer in the loop, and the wallet that funds delivery has 0.0 ETH.",
-    hash: "0xef3a8f8806cce8f4cc98a286a37063ca68386862dd70c3953b77bfb92123409a",
-  },
-  {
-    title: "The merchant accepts x402 without holding ETH",
-    body: "Settlement runs through KeeperHub's execute API, so accepting agent payments costs no gas and needs no top-ups.",
-    hash: "0x3dba2aa47415056197620e9a40341668d1bf7907b968b66c03dfe9cfff0f3d25",
-  },
-  {
-    title: "Only KeeperHub can move escrowed funds",
-    body: "The admin's verifier role was revoked. Calling release as the deployer now reverts NotVerifier.",
-    hash: "0xe5e25335aa323c837fa91807058dbd0c5b66b1eb76673fb33648c3b2c0999ae3",
-  },
+const SURFACES = [
+  { name: "Execute API", note: "every anchor, every authorised transfer" },
+  { name: "MCP server", note: "KeeperHub's to publish a workflow; six tools of our own" },
+  { name: "CLI", note: "kh execute contract-call anchored a policy" },
+  { name: "x402", note: "spec-exact adapter and an autonomous payer" },
+  { name: "Workflow builder", note: "a listing live at $0.02 a call" },
+  { name: "Audit trail", note: "KeeperHub's record, plus our own decision ledger" },
 ];
 
 export default function Home() {
   return (
     <>
       <section className="frame h-[calc(100vh-24px)] w-full sm:h-[calc(100vh-32px)]">
-        {/*
-          * Ambient only: muted, looping, and not interactive, with a poster so
-          * the frame is never a grey rectangle while the file loads.
-          */}
+        {/* Ambient only: muted, looping, not interactive, with a poster so the
+            frame is never a grey rectangle while the file loads. */}
         <video
           className="pointer-events-none absolute inset-0 h-full w-full object-cover"
           autoPlay
@@ -99,32 +100,33 @@ export default function Home() {
           <div className="flex flex-col items-center px-4 pb-8 pt-10 text-center sm:pb-12 sm:pt-16">
             <p className="eyebrow">
               <span className="inline-block size-1.5 rounded-full bg-[var(--brand)]" />
-              {DEPLOYMENT.chainName} · settled through KeeperHub
+              {DEPLOYMENT.chainName} · every write through KeeperHub
             </p>
 
             <h1
               className="mt-5 max-w-4xl sm:mt-6"
               style={{
-                fontSize: "clamp(36px, 8vw, 72px)",
+                fontSize: "clamp(34px, 7.4vw, 68px)",
                 lineHeight: 1.05,
                 fontWeight: 500,
                 letterSpacing: "-0.02em",
               }}
             >
-              Pay agents for <span className="serif">proven</span>
+              Give an agent a budget
               <br />
-              work, not promises
+              it <span className="serif">cannot</span> exceed
             </h1>
 
             <p
-              className="mt-4 px-2 text-neutral-700 sm:mt-6"
+              className="mt-4 max-w-xl px-2 text-neutral-700 sm:mt-6"
               style={{ fontSize: "clamp(13px, 3.5vw, 16px)" }}
             >
-              x402 pays on a facilitator&rsquo;s word. Outcome reads the receipt.
+              Not a limit it agrees to respect — one it has no key to break. KeeperHub holds the
+              signer; the policy is the only way through.
             </p>
 
             <Link href="/demo" className="btn btn--dark mt-6 sm:mt-8">
-              Run the live demo
+              Watch it refuse a payment
               <span className="btn__dot">
                 <ChevronRight className="size-4" />
               </span>
@@ -137,61 +139,92 @@ export default function Home() {
         </div>
       </section>
 
-      {/* The proof, immediately. Same demand, opposite outcomes. */}
+      {/* The mechanism, running in the visitor's own browser. */}
       <section className="shell py-16 sm:py-20">
         <h2
           className="max-w-2xl"
           style={{ fontSize: "clamp(26px, 4vw, 40px)", lineHeight: 1.1, fontWeight: 500, letterSpacing: "-0.02em" }}
         >
-          The same payment, settled <span className="serif">twice</span>.
+          Try to overspend. <span className="serif">Watch it stop.</span>
         </h2>
         <p className="mt-3 max-w-2xl text-[15px] leading-relaxed text-neutral-700">
-          Both facilitators reported success. One moved the money and one did not. Both transactions
-          are live and open to inspection.
+          Fifteen rules run in order and the first to fail decides — so a refusal names the rule
+          that refused it. This is the real engine, judging in your browser with no server in the
+          path.
         </p>
 
-        <div className="card-p card-p--bordered mt-8 p-5">
-          <p className="text-[12px] font-medium text-neutral-500">What was demanded, both times</p>
-          <p className="figure mt-1.5 break-all text-[13px]">
-            {DEMAND.amount} of {DEMAND.token} to {DEMAND.recipient}
-          </p>
-        </div>
-
-        <div className="mt-5 grid gap-5 lg:grid-cols-2">
-          {SETTLEMENTS.map((s) => (
-            <Settlement key={s.hash} {...s} href={tx(s.hash)} />
-          ))}
+        <div className="mt-8">
+          <DecisionDemo />
         </div>
       </section>
 
-      {/* Three claims a neighbouring project cannot copy. */}
+      {/* The same story, on chain. */}
       <section className="frame bg-[var(--tray)] px-4 py-16 sm:px-8 sm:py-20">
         <div className="shell">
           <h2
             className="max-w-2xl"
             style={{ fontSize: "clamp(26px, 4vw, 40px)", lineHeight: 1.1, fontWeight: 500, letterSpacing: "-0.02em" }}
           >
-            Three things you can check on chain right now.
+            Every step of that, on Sepolia.
           </h2>
+          <p className="mt-3 max-w-2xl text-[15px] leading-relaxed text-neutral-700">
+            Sent by KeeperHub&rsquo;s relayer{" "}
+            <a
+              href={address(RELAYER)}
+              target="_blank"
+              rel="noopener"
+              className="figure text-[13px] text-[var(--brand)] underline-offset-4 hover:underline"
+            >
+              {RELAYER.slice(0, 10)}…
+            </a>
+            , not by a key in anyone&rsquo;s <code className="figure text-[13px]">.env</code>.
+          </p>
 
-          <div className="mt-8 grid gap-4 md:grid-cols-3">
-            {PROOF.map((c) => (
-              <div key={c.hash} className="card-p flex flex-col p-5">
-                <h3 className="text-[15px] font-semibold leading-snug tracking-[-0.01em]">
-                  {c.title}
-                </h3>
-                <p className="mt-2 flex-1 text-[13px] leading-relaxed text-neutral-600">{c.body}</p>
-                <a
-                  href={tx(c.hash)}
-                  target="_blank"
-                  rel="noopener"
-                  className="figure mt-4 text-[11px] text-[var(--brand)] underline-offset-4 hover:underline"
+          <ol className="mt-8 space-y-2">
+            {CHAIN_OF_CUSTODY.map((s, i) => (
+              <li key={s.step} className="card-p flex flex-wrap items-center gap-x-4 gap-y-2 p-4">
+                <span className="figure w-5 shrink-0 text-[12px] text-[var(--ink-4)]">
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+                <div className="min-w-[200px] flex-1">
+                  <p className="text-[14px] font-semibold tracking-[-0.01em]">{s.step}</p>
+                  <p className="text-[12.5px] leading-relaxed text-[var(--ink-3)]">{s.detail}</p>
+                </div>
+                <span
+                  className={`verdict ${s.kind === "ok" ? "verdict--proven" : "verdict--not_proven"}`}
                 >
-                  {c.hash.slice(0, 16)}… on Etherscan →
-                </a>
-              </div>
+                  <svg viewBox="0 0 20 20" aria-hidden="true">
+                    <circle cx="10" cy="10" r="8" />
+                    {s.kind === "bad" && (
+                      <path d="M3 17 L17 3" stroke="currentColor" strokeWidth="2.5" />
+                    )}
+                  </svg>
+                  {s.result}
+                </span>
+                {s.hash ? (
+                  <a
+                    href={tx(s.hash)}
+                    target="_blank"
+                    rel="noopener"
+                    className="figure text-[11px] text-[var(--brand)] underline-offset-4 hover:underline"
+                  >
+                    {s.hash.slice(0, 12)}… →
+                  </a>
+                ) : (
+                  <span className="figure text-[11px] text-[var(--ink-4)]">off-chain check</span>
+                )}
+              </li>
             ))}
-          </div>
+          </ol>
+
+          <a
+            href={address(REGISTRY)}
+            target="_blank"
+            rel="noopener"
+            className="figure mt-5 inline-block text-[12px] text-[var(--ink-3)] underline-offset-4 hover:text-[var(--brand)] hover:underline"
+          >
+            PolicyRegistry · {REGISTRY} →
+          </a>
         </div>
       </section>
 
@@ -202,17 +235,17 @@ export default function Home() {
             <h2
               style={{ fontSize: "clamp(26px, 4vw, 40px)", lineHeight: 1.1, fontWeight: 500, letterSpacing: "-0.02em" }}
             >
-              One call closes the gap.
+              Two calls to wire it in.
             </h2>
             <p className="mt-4 text-[15px] leading-relaxed text-neutral-700">
-              The SDK runs anywhere — browser, edge, or an agent runtime. The MCP server needs no
-              configuration: the defaults point at the live deployment, and every read-only tool
-              works without a credential.
+              Judge the intent, then execute only if it was approved. A refusal returns before any
+              network call exists, so a blocked spend leaves no execution behind. An approval
+              carries its own intent hash as the idempotency key, so a retry after a timeout cannot
+              become a second payment.
             </p>
             <p className="mt-4 text-[15px] leading-relaxed text-neutral-700">
-              The party being asked to trust a payment is the one who most needs to check it, so
-              checking must not require a server or a key. This site is built on the published
-              package, not a private copy of the logic.
+              Every read-only MCP tool works without a credential, because the party being asked to
+              trust a payment is the one who most needs to check it.
             </p>
             <Link href="/docs" className="btn btn--dark mt-7">
               Read the quickstart
@@ -225,7 +258,30 @@ export default function Home() {
         </div>
       </section>
 
-      {/* The close. */}
+      {/* Surfaces, stated plainly. */}
+      <section className="border-y border-[var(--line)] bg-[var(--surface)]">
+        <div className="shell py-16">
+          <h2
+            className="max-w-2xl"
+            style={{ fontSize: "clamp(24px, 3.4vw, 34px)", lineHeight: 1.1, fontWeight: 500, letterSpacing: "-0.02em" }}
+          >
+            Built on six KeeperHub surfaces.
+          </h2>
+          <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {SURFACES.map((s) => (
+              <div key={s.name} className="card-p card-p--bordered p-4">
+                <p className="text-[14px] font-semibold tracking-[-0.01em]">{s.name}</p>
+                <p className="mt-1 text-[12.5px] leading-relaxed text-[var(--ink-3)]">{s.note}</p>
+              </div>
+            ))}
+          </div>
+          <p className="mt-5 text-[12.5px] text-[var(--ink-4)]">
+            MPP is the one we did not use — Tempo is reachable, but the wallet holds no balance
+            there, so a payment cannot settle. Said here rather than hidden.
+          </p>
+        </div>
+      </section>
+
       <section className="frame bg-[var(--dark)] px-4 py-16 text-white sm:px-8 sm:py-20">
         <div className="shell">
           <h2
@@ -235,11 +291,11 @@ export default function Home() {
             No model in the <span className="serif">money path</span>.
           </h2>
           <p className="mt-4 max-w-2xl text-[15px] leading-relaxed text-white/70">
-            Every comparable project resolves payment disputes with an LLM judge. When the chain
-            already knows whether value moved, adjudication is a lookup, not an opinion.
+            The rules are deterministic and the chain is the arbiter. Nothing here asks a language
+            model whether a payment should happen.
           </p>
-          <Link href="/demo" className="btn btn--brand mt-8">
-            See it refuse a payment
+          <Link href="/verify" className="btn btn--brand mt-8">
+            Check a payment yourself
             <span className="btn__dot">
               <ChevronRight className="size-4" />
             </span>

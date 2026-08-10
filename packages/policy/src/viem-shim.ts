@@ -10,7 +10,7 @@
  * what keeps `hashSpendIntent` matching the contract's `IntentHash.hashIntent`.
  */
 
-import { AbiCoder, getAddress, isAddress as ethersIsAddress, keccak256 as ethersKeccak, parseUnits as ethersParseUnits, toUtf8Bytes } from "ethers";
+import { AbiCoder, getAddress, isAddress as ethersIsAddress, keccak256 as ethersKeccak, parseUnits as ethersParseUnits, sha256 as ethersSha256, toUtf8Bytes } from "ethers";
 
 export type Hex = `0x${string}`;
 export type Address = `0x${string}`;
@@ -45,6 +45,18 @@ export function encodeAbiParameters(
     params.map((p) => p.type),
     values as unknown[]
   ) as Hex;
+}
+
+/**
+ * sha256 over a utf8 string.
+ *
+ * Here rather than `node:crypto` because this package is imported by the web
+ * console, and one `node:` import anywhere reachable from the entry point
+ * breaks a browser build for the whole module graph. ethers ships the same
+ * primitive and already had to be a dependency.
+ */
+export function sha256Utf8(value: string): string {
+  return ethersSha256(toUtf8Bytes(value));
 }
 
 export { getAddress };
