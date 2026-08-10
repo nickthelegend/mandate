@@ -31,6 +31,7 @@
 import { Wallet, type Signer } from "ethers";
 
 import { encodePaymentHeader, type PaymentPayload } from "./x402.ts";
+import { SpendLedger, type SpendDecision } from "./spend-policy.ts";
 
 /** One option from a 402's `accepts` array, normalised across v1 and v2. */
 export type Challenge = {
@@ -236,6 +237,16 @@ export type PurchaseOpts = {
   signer?: Signer;
   /** Refuse any chain not in this list. Defaults to refusing nothing extra. */
   allowChains?: number[];
+  /**
+   * A running budget that judges the purchase and remembers what it approved.
+   * Supply one and it replaces `maxSpend`/`allowChains` as the authority, adding
+   * the gates a single cap cannot express -- a total across purchases, an asset
+   * and payee allowlist, a kill switch, and the check that the challenged amount
+   * matches what the listing advertised.
+   */
+  ledger?: SpendLedger;
+  /** What the listing advertised, so a bait-and-switch challenge is caught. */
+  advertisedUsdc?: number | null;
   onEvent?: (e: { stage: string; detail: string }) => void;
 };
 
@@ -277,23 +288,42 @@ export async function payAndCall(opts: PurchaseOpts): Promise<PurchaseResult> {
   });
 
   /*
-   * Both refusals happen before a signature exists. A signed EIP-3009
-   * authorisation is bearer-spendable the moment it leaves this process, so
-   * "sign then decide" is not a thing.
+   * Judged before a signature exists. A signed EIP-3009 authorisation is
+   * bearer-spendable the moment it leaves this process, so "sign then decide"
+   * is not a thing.
    */
-  if (challenge.amount > opts.maxSpend) {
-    throw new Error(
-      `refused: ${challenge.amount} exceeds the cap of ${opts.maxSpend} base units`
-    );
-  }
-  if (opts.allowChains && !opts.allowChains.includes(challenge.chainId)) {
-    throw new Error(`refused: chain ${challenge.chainId} is not in the allowed list`);
-  }
-  if (!opts.signer) {
-    throw new Error("refused: listing is paid and no signer was supplied");
+  const ledger =
+    opts.ledger ??
+    new SpendLedger({
+      maxPerPurchase: opts.maxSpend,
+      maxTotal: opts.maxSpend,
+      allowChains: opts.allowChains,
+    });
+
+  const decision = ledger.evaluate({
+    amount: challenge.amount,
+    chainId: challenge.chainId,
+    asset: challenge.asset,
+    payTo: challenge.payTo,
+    hasSigner: Boolean(opts.signer),
+    advertisedUsdc: opts.advertisedUsdc,
+    slug: opts.slug,
+  });
+
+  say({ stage: "policy", detail: decision.detail });
+  if (!decision.allow) {
+    const err = new Error(decision.detail) as Error & { decision: SpendDecision };
+    // Attached rather than stringified: a caller auditing a refusal wants the
+    // codes and the snapshot, not a sentence it has to parse back apart.
+    err.decision = decision;
+    throw err;
   }
 
-  const payload = await signExact(challenge, opts.signer);
+  // The policy's NO_SIGNER gate already guarantees this; narrowing it here so
+  // the guarantee is one the type system holds too, not just the runtime.
+  const signer = opts.signer;
+  if (!signer) throw new Error("unreachable: policy allowed a purchase with no signer");
+  const payload = await signExact(challenge, signer);
   say({ stage: "signed", detail: `authorised ${challenge.amount} from ${payload.payload.authorization.from}` });
 
   const second = await post(encodePaymentHeader(payload));
@@ -314,6 +344,9 @@ export async function payAndCall(opts: PurchaseOpts): Promise<PurchaseResult> {
     }
   }
 
+  // Committed only after the server accepted the payment, so a rejected
+  // purchase does not silently eat the budget.
+  ledger.commit(challenge.amount, opts.slug);
   say({ stage: "settled", detail: transaction ?? "no transaction reported" });
 
   return {

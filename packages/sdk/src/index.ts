@@ -56,3 +56,15 @@ export {
   type PurchaseOpts,
   type PurchaseResult,
 } from "./marketplace.ts";
+
+/* Whether an autonomous purchase is allowed to happen. */
+export {
+  evaluateSpend,
+  SpendLedger,
+  type SpendContext,
+  type SpendDecision,
+  type SpendPolicyConfig,
+  type SpendReason,
+  type SpendSnapshot,
+  type SpendVerdict,
+} from "./spend-policy.ts";
