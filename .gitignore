@@ -10,3 +10,6 @@ out/
 
 # Local design screenshots
 .shots/
+
+# Local screenshots
+apps/web/.shots-prod/

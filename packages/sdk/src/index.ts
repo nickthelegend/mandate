@@ -39,3 +39,20 @@ export {
   type Cause,
   type Diagnosis,
 } from "./diagnose.ts";
+
+/*
+ * Buying from KeeperHub's marketplace. Browser-safe: `ethers` already ships in
+ * this entry for the client, and nothing here reaches for `node:`.
+ */
+export {
+  discover,
+  parseChallenge,
+  payAndCall,
+  signExact,
+  signerFrom,
+  type Challenge,
+  type DiscoverOpts,
+  type Listing,
+  type PurchaseOpts,
+  type PurchaseResult,
+} from "./marketplace.ts";
