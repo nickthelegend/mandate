@@ -36,8 +36,12 @@ jobs:
 
       - run: npm ci
 
-      # The web app imports the SDK by name, so the workspace build has to run
-      # before Next can resolve it.
+      # The web app imports both workspace packages by name, so their builds
+      # have to run before Next can resolve them. Policy first: the SDK does not
+      # depend on it, but the console imports it directly for the client-side
+      # decision demo, and an unbuilt workspace package fails resolution rather
+      # than falling back to source.
+      - run: npm run build -w outcome-policy
       - run: npm run build -w outcome-sdk
 
       - run: npm run build -w outcome-web
