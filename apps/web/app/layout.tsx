@@ -30,7 +30,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Mandate — give an agent a budget it cannot exceed",
   description:
-    "x402 pays per request and nobody checks the request was served. Mandate makes payment follow a verified result: it reads the receipt instead of trusting the status byte.",
+    "A deterministic spending authority for autonomous agents. Fifteen rules against a policy anchored on Sepolia and a budget the agent has no key to reach, enforced through KeeperHub, which holds the signer.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
