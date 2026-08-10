@@ -19,8 +19,14 @@ import { ChevronRight, Menu, X } from "lucide-react";
 import { OutcomeMark } from "@/components/logo";
 import { cn } from "@/lib/utils";
 
+/*
+ * Four, and the order is the argument: here is the authority actually running,
+ * here is how you check it, here is an agent paid without a key, here is the
+ * package. A fifth would make it a menu instead of a path -- so the x402 demo,
+ * which argues the older thesis, sits in the footer with the other evidence.
+ */
 const NAV = [
-  { href: "/demo", label: "Live demo" },
+  { href: "/authority", label: "The authority" },
   { href: "/verify", label: "Verify" },
   { href: "/agent", label: "Agent" },
   { href: "/docs", label: "Docs" },
@@ -62,9 +68,9 @@ export function Navbar() {
           </nav>
 
           <div className="ml-auto flex items-center gap-2">
-            <Link href="/demo" className="btn btn--brand shrink-0">
-              <span className="hidden sm:inline">Run the live demo</span>
-              <span className="sm:hidden">Live demo</span>
+            <Link href="/authority" className="btn btn--brand shrink-0">
+              <span className="hidden sm:inline">Spend it down</span>
+              <span className="sm:hidden">Try it</span>
               <span className="btn__dot">
                 <ChevronRight className="size-3.5" />
               </span>

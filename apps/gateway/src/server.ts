@@ -34,6 +34,7 @@ import {
 import { createFacilitator, type FacilitatorMode } from "./facilitator.ts";
 import { runPurchase } from "./flow.ts";
 import { runAgentCycle } from "./agent-run.ts";
+import { createAuthority, POLICY_ID, type Authority } from "./authority.ts";
 
 const PORT = Number(process.env.PORT ?? 4402);
 /** Where this server is reachable, for the self-call the demo endpoint makes. */
@@ -84,6 +85,32 @@ const outcome = new OutcomeClient({ provider, escrow: ESCROW, token: ASSET, chai
  */
 const auditReady: Promise<AuditStore> = auditFromEnv();
 const jobsReady: Promise<JobStore> = jobsFromEnv();
+
+/*
+ * The spending authority.
+ *
+ * Resolved lazily and cached, rather than at boot, because it needs Mongo and
+ * a chain read and this server must still start and serve /health when neither
+ * is reachable. A gateway that refuses to boot because one route's dependency
+ * is down takes every other route with it.
+ */
+let authorityReady: Promise<Authority> | null = null;
+function getAuthority(): Promise<Authority> {
+  const uri = process.env.MONGODB_URI;
+  if (!uri) return Promise.reject(new Error("MONGODB_URI is not configured on this gateway"));
+  if (!POLICY_ID) return Promise.reject(new Error("POLICY_ID is not configured on this gateway"));
+  authorityReady ??= createAuthority({
+    provider,
+    kh: kh ?? null,
+    mongoUri: uri,
+    mongoDb: process.env.OUTCOME_AUDIT_DB ?? "outcome",
+  }).catch((e) => {
+    // Do not cache a failed connection: the next request should try again.
+    authorityReady = null;
+    throw e;
+  });
+  return authorityReady;
+}
 
 /** The article, which is the thing being sold. */
 const ARTICLE = {
@@ -136,12 +163,42 @@ const json = (res: import("node:http").ServerResponse, code: number, body: unkno
 const DEMO_COOLDOWN_MS = 15_000;
 const lastDemoAt = new Map<string, number>();
 
+/**
+ * Read a request body, with a cap.
+ *
+ * The cap is not politeness: without one, an unauthenticated POST route lets
+ * anyone hold this process's memory open for as long as they keep sending.
+ */
+async function readBody(req: import("node:http").IncomingMessage, limit = 16_384): Promise<string> {
+  const chunks: Buffer[] = [];
+  let size = 0;
+  for await (const chunk of req) {
+    size += (chunk as Buffer).length;
+    if (size > limit) throw new Error("body too large");
+    chunks.push(chunk as Buffer);
+  }
+  return Buffer.concat(chunks).toString("utf8");
+}
+
 function clientIp(req: import("node:http").IncomingMessage): string {
   return (
     (req.headers["x-forwarded-for"] as string | undefined)?.split(",")[0]?.trim() ??
     req.socket.remoteAddress ??
     "unknown"
   );
+}
+
+/** The authority's own throttle: lease-fairness only, not a spend limit. */
+const SPEND_THROTTLE_MS = 1_500;
+const lastSpendAt = new Map<string, number>();
+
+function spendAllowed(ip: string): number {
+  const now = Date.now();
+  const last = lastSpendAt.get(ip) ?? 0;
+  const waitMs = last + SPEND_THROTTLE_MS - now;
+  if (waitMs > 0) return waitMs;
+  lastSpendAt.set(ip, now);
+  return 0;
 }
 
 function demoAllowed(ip: string): number {
@@ -161,7 +218,7 @@ const server = createServer(async (req, res) => {
     res.writeHead(204, {
       "access-control-allow-origin": "*",
       "access-control-allow-headers": "content-type, x-payment",
-      "access-control-allow-methods": "GET, OPTIONS",
+      "access-control-allow-methods": "GET, POST, OPTIONS",
     });
     return res.end();
   }
@@ -203,6 +260,105 @@ const server = createServer(async (req, res) => {
    * whole argument here is that you should not have to take a payment decision
    * on trust.
    */
+  /*
+   * The spending authority, live.
+   *
+   * GET  /authority        — the policy, its on-chain status, and what the
+   *                          persisted ledger currently holds.
+   * POST /authority/spend  — ask to spend. Judged against the anchored policy
+   *                          and the durable ledger; on approval the money
+   *                          actually moves through KeeperHub.
+   * GET  /authority/log    — every decision, approved and refused.
+   *
+   * The budget here is real in the sense that matters: it is in Mongo, so it
+   * does not reset when this container restarts and it is not per-replica. Ask
+   * for more than remains and the refusal is not a rendering -- it is the
+   * `budget.daily` rule reading a number that survived the last deploy.
+   */
+  if (url.pathname === "/authority") {
+    try {
+      return json(res, 200, await (await getAuthority()).state());
+    } catch (e: unknown) {
+      return json(res, 503, { error: e instanceof Error ? e.message : String(e) });
+    }
+  }
+
+  if (url.pathname === "/authority/log") {
+    const limit = Math.min(Number(url.searchParams.get("limit") ?? 25) || 25, 100);
+    try {
+      const entries = await (await getAuthority()).history(limit);
+      return json(res, 200, { returned: entries.length, entries });
+    } catch (e: unknown) {
+      return json(res, 503, { error: e instanceof Error ? e.message : String(e) });
+    }
+  }
+
+  if (url.pathname === "/authority/spend") {
+    if (req.method !== "POST") return json(res, 405, { error: "POST only" });
+
+    /*
+     * Deliberately not behind the /demo cooldown.
+     *
+     * This route already has a spend limiter, and it is the product: $5 a day,
+     * $1 a call, 20 calls an hour, enforced from a persisted ledger against a
+     * policy anchored on chain. Bolting an IP cooldown on top would rate-limit
+     * the refusals -- which are free, and are the thing a reader most wants to
+     * click through -- while adding nothing to the approvals the policy is
+     * already bounding. If the daily budget is not sufficient protection for
+     * this endpoint, then the whole claim being made here is wrong.
+     *
+     * The short throttle that remains is only to keep one client from holding
+     * the partition lease continuously and starving everyone else.
+     */
+    const waitMs = spendAllowed(clientIp(req));
+    if (waitMs > 0) {
+      return json(res, 429, {
+        error: "one decision at a time per client",
+        retryAfterSeconds: Math.ceil(waitMs / 1000),
+      });
+    }
+
+    let body: Record<string, unknown>;
+    try {
+      body = JSON.parse(await readBody(req));
+    } catch {
+      return json(res, 400, { error: "body must be JSON" });
+    }
+
+    const amount = Number(body.amount);
+    const category = String(body.category ?? "market-data");
+    const endpoint = String(body.endpoint ?? "https://api.example.com/v1/data");
+    const recipient = String(body.recipient ?? "0x000000000000000000000000000000000000dEaD");
+
+    // Validated here so a bad request is answered as a bad request, rather than
+    // reaching the engine and coming back as a policy refusal it did not earn.
+    if (!Number.isFinite(amount) || amount <= 0) {
+      return json(res, 400, { error: "amount must be a positive number of USDT" });
+    }
+    if (amount > 1_000_000) return json(res, 400, { error: "amount is implausible" });
+    if (!/^0x[0-9a-fA-F]{40}$/.test(recipient)) {
+      return json(res, 400, { error: "recipient must be a 20-byte address" });
+    }
+    if (!/^https?:\/\//.test(endpoint)) return json(res, 400, { error: "endpoint must be a URL" });
+
+    try {
+      const authority = await getAuthority();
+      const outcome = await authority.decide({
+        amount,
+        category,
+        endpoint,
+        recipient,
+        // The nonce is what makes two identical requests distinguishable. Taken
+        // from the clock rather than a counter so it survives a restart without
+        // colliding with an intent already inside its duplicate window.
+        nonce: Date.now(),
+      });
+      return json(res, 200, outcome);
+    } catch (e: unknown) {
+      return json(res, 500, { error: e instanceof Error ? e.message : String(e) });
+    }
+  }
+
   if (url.pathname === "/audit") {
     const limit = Math.min(Number(url.searchParams.get("limit") ?? 50) || 50, 200);
     try {

@@ -386,6 +386,50 @@ export class KeeperHubClient {
     }
   }
 
+  /**
+   * Accept an execution, waiting out our own in-flight attempt.
+   *
+   * A 409 `idempotency_in_progress` does not mean the call failed. It means an
+   * earlier attempt under the same key is still being processed -- which, for a
+   * key derived from the intent, is almost always a transaction on its way to
+   * the chain. The generic retry ladder in `request` gives that about seven
+   * seconds across three attempts, and an execution takes twenty or thirty. So
+   * the ladder ran out, the error surfaced, and the caller was told the payment
+   * failed.
+   *
+   * It did not fail. On 2026-08-10 this exact path reported a failed transfer
+   * while 0.50 tUSDC landed at 0xe022db60 -- the mirror image of the bug this
+   * whole project exists to catch. x402 reports success on a payment that moved
+   * nothing; this reported failure on a payment that moved.
+   *
+   * So an in-flight key is polled against the caller's own timeout budget
+   * rather than the transport's. Once KeeperHub finishes registering the
+   * original, the same key returns that original execution -- which is what
+   * idempotency is for -- and the caller gets the id it was always owed.
+   */
+  private async acceptIdempotent<T extends { executionId?: string }>(
+    send: () => Promise<T>,
+    opts: { timeoutMs?: number }
+  ): Promise<T> {
+    const deadline = Date.now() + (opts.timeoutMs ?? this.statusTimeoutMs);
+    for (;;) {
+      try {
+        return await send();
+      } catch (err) {
+        const inFlight = err instanceof KeeperHubError && err.kind === "in_flight";
+        if (!inFlight || Date.now() >= deadline) throw err;
+        this.onEvent({
+          type: "retry",
+          path: "accept",
+          attempt: 1,
+          delayMs: this.statusPollMs,
+          reason: "in_flight",
+        });
+        await sleep(this.statusPollMs);
+      }
+    }
+  }
+
   /** Broadcast and reconcile in one call. Throws if the transaction failed. */
   /**
    * Send a transfer and wait for it to reach a terminal state.
@@ -404,7 +448,10 @@ export class KeeperHubClient {
     input: TransferInput,
     opts: { idempotencyKey?: string; timeoutMs?: number } = {}
   ): Promise<ExecutionStatusResponse> {
-    const accepted = await this.executeTransfer(input, opts);
+    const accepted = await this.acceptIdempotent(
+      () => this.executeTransfer(input, opts),
+      opts
+    );
     if (!accepted?.executionId) {
       throw new KeeperHubError(
         "unknown",
@@ -428,7 +475,10 @@ export class KeeperHubClient {
     input: ContractCallInput,
     opts: { idempotencyKey?: string; timeoutMs?: number } = {}
   ): Promise<ExecutionStatusResponse> {
-    const accepted = await this.executeContractCall(input, opts);
+    const accepted = await this.acceptIdempotent(
+      () => this.executeContractCall(input, opts),
+      opts
+    );
     if (!accepted?.executionId) {
       throw new KeeperHubError(
         "unknown",

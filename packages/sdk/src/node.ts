@@ -28,6 +28,19 @@ export {
   type AuditEntry,
   type AuditStore,
 } from "./audit.ts";
+export {
+  mongoLedger,
+  utcDayKey,
+  toRuleTrace,
+  RULE_DETAIL_FIELDS,
+  LeaseUnavailable,
+  type SpendLedger,
+  type LedgerWindow,
+  type DecisionRecord,
+  type RuleTrace,
+  type EffectsToApply,
+  type StoredIntent,
+} from "./ledger.ts";
 export { settle, ESCROW_ABI, type SettleParams, type SettleResult } from "./settle.ts";
 export {
   work,
@@ -37,3 +50,28 @@ export {
   type AgentReport,
 } from "./agent.ts";
 export { KeeperHubClient } from "./keeperhub/client.ts";
+export {
+  executeIfAuthorised,
+  isApproved,
+  failedRules,
+  type AuthoriseResult,
+  type AuthorisedTransfer,
+  type PolicyDecisionLike,
+} from "./authority.ts";
+export {
+  readAnchoredPolicy,
+  assertAnchored,
+  statusFromAnchor,
+  PolicyAnchorMismatch,
+  PolicyNotUsable,
+  POLICY_STATUS,
+  type AnchoredPolicyRecord,
+} from "./policy-loader.ts";
+export {
+  anchorPolicy,
+  updateAnchoredPolicy,
+  pauseAnchoredPolicy,
+  POLICY_REGISTRY_ABI,
+  type AnchorConfig,
+  type AnchorResult,
+} from "./policy-anchor.ts";

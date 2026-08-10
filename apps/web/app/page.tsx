@@ -16,7 +16,7 @@ import { DEPLOYMENT, tx, address } from "@/lib/outcome";
  * of the same story links a transaction KeeperHub's relayer sent.
  */
 
-const REGISTRY = "0x13452fcA19819d37Fa4b01a0e64C8Fce60C5E304";
+const REGISTRY = DEPLOYMENT.registry;
 const RELAYER = "0xA17cb6adb58277E5b4A44B8c1ECB449BB6614E87";
 
 /*

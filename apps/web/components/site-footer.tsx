@@ -13,6 +13,7 @@ import { DEPLOYMENT, source } from "@/lib/outcome";
  */
 
 const MORE = [
+  { href: "/demo", label: "The x402 gap, live", note: "a settlement that pays nobody" },
   { href: "/ledger", label: "Decision ledger", note: "every verdict, and why" },
   { href: "/explorer", label: "Intent explorer", note: "read from the chain" },
   { href: "/inspect", label: "Execution record", note: "KeeperHub's own account" },

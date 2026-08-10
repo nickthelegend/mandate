@@ -17,6 +17,8 @@ export const DEPLOYMENT = {
   chainName: "Sepolia",
   rpcUrl: "https://ethereum-sepolia-rpc.publicnode.com",
   escrow: "0x0ED9d1235cB9FD080D687FD978a38d972a34dC3B",
+  /** PolicyRegistry: where a spend policy is anchored, and where a pause takes effect. */
+  registry: "0x13452fcA19819d37Fa4b01a0e64C8Fce60C5E304",
   token: "0x49C86277a91002c4943837bf20F6ED41976Db09F",
   tokenSymbol: "tUSDC",
   decimals: 6,
