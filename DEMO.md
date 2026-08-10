@@ -5,6 +5,11 @@ everything?*
 
 Everything below is live. Nothing is a recording.
 
+A recorded run of this script is at `apps/web/demo/outcome-demo.mp4` — two
+minutes, made by driving the deployed site against the live gateway, with every
+transaction in it landing on Sepolia as it recorded. Re-record any time with
+`node apps/web/record-demo.mjs`.
+
 ---
 
 ## Before you hit record
@@ -25,9 +30,8 @@ curl -s https://gateway-production-944e.up.railway.app/authority
 
 - `onChain.status` must be **ACTIVE**. If a rehearsal left the kill switch
   pulled, resume it (see 1:40 below) before recording.
-- `remaining` must be at least **$0.40**, or the approval beat will refuse. The
-  budget is $5 a day and resets at UTC midnight, not on demand. Rehearse using
-  the refusal buttons — those cost nothing.
+- The budget is per browser, so a rehearsal does not eat the live run's $5.
+  Clearing site data gives you a fresh agent and a visibly fresh budget.
 
 ---
 
@@ -92,7 +96,35 @@ be unkind about it, open the same URL in a private window.
 This is the beat that separates it from the room. Almost nothing at a hackathon
 persists. Give it a full three seconds of silence.
 
-## 1:40 — 2:10 · The kill switch
+## 1:40 — 2:05 · The third answer
+
+Click **Pay someone new**.
+
+This is a payee the system has never paid, generated fresh each click, so the
+bureau is scoring it from nothing at all.
+
+> "Look at the arithmetic. Score 38.5, minus 1.28 times a sigma of 16.6, gives a
+> lower bound of 17.2 against a floor of 20. It is not refused because we think
+> this address is bad — it is refused because we do not know, and three of the
+> seven signals have no honest source, so the uncertainty they carry drags the
+> bound under the floor. Missing evidence tightens the limit instead of relaxing
+> it."
+
+Then the part nobody else has:
+
+> "And it is not refused. It is *held*. Unknown is a question for a person, not a
+> verdict."
+
+Press **Release it**.
+
+> "Bound operator, single-use code the server only stores the hash of. And
+> releasing relaxes exactly the rule that escalated — the budget, the per-call
+> cap and the rate limit are all still enforced on the way out."
+
+The transfer that follows is real. The budget moves at *release*, not when the
+spend was held — so an escalation nobody answers costs nothing.
+
+## 2:05 — 2:30 · The kill switch
 
 Tab 3, the terminal:
 
@@ -115,7 +147,7 @@ Resume it before you move on, or the rest of the demo is refusals:
 node --experimental-strip-types apps/gateway/src/anchor-policy.ts --resume "$POLICY_ID"
 ```
 
-## 2:10 — 2:35 · The agent, with no key
+## 2:30 — 2:45 · The agent, with no key
 
 Tab 2. Click **Run the cycle**.
 
@@ -123,7 +155,7 @@ Tab 2. Click **Run the cycle**.
 > why a refusal is binding rather than advisory — the agent has nothing to route
 > around it with."
 
-## 2:35 — 2:55 · It is infrastructure
+## 2:45 — 2:55 · It is infrastructure
 
 Terminal:
 

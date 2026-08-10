@@ -131,10 +131,11 @@ the kill switch pulled — resume it before presenting:
 node --experimental-strip-types apps/gateway/src/anchor-policy.ts --resume "$POLICY_ID"
 ```
 
-**Check the remaining budget.** It is $5 a day and it does not reset until UTC
-midnight. If a rehearsal spent it down, the live run will only show refusals —
-which is a fine story, but not the one in the beat sheet. Rehearse with the
-refusal buttons, which cost nothing, and leave at least one approval's worth.
+**You do not have to ration the budget any more.** Every browser is its own
+agent under the shared policy, with its own $5 and its own duplicate window, so
+rehearsing does not spend the budget the live run will use — and two people
+opening the page at once do not collide. Clear site data if you want a visibly
+fresh $5.
 
 **Have these hashes on a sticky note.** If the live run fails for any reason,
 these are already on chain and prove the same things:
@@ -191,5 +192,8 @@ is documented as a known gap rather than glossed.
 
 ## Still outstanding
 
-- [ ] Record the demo video against [DEMO.md](DEMO.md)
+- [x] Demo video — `apps/web/demo/outcome-demo.mp4`, two minutes, recorded by
+      driving the deployed site against the live gateway. Every transaction in
+      it landed on Sepolia while it was recording. Re-record any time with
+      `node apps/web/record-demo.mjs`.
 - [ ] Rotate every credential that was pasted in plaintext during the build
