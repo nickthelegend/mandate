@@ -68,3 +68,13 @@ export {
   type SpendSnapshot,
   type SpendVerdict,
 } from "./spend-policy.ts";
+
+/* The gate between a policy decision and the execution it authorised. */
+export {
+  executeIfAuthorised,
+  failedRules,
+  isApproved,
+  type AuthorisedTransfer,
+  type AuthoriseResult,
+  type PolicyDecisionLike,
+} from "./authority.ts";
