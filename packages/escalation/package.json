@@ -1,0 +1,24 @@
+{
+  "name": "outcome-escalation",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "The lifecycle that carries a spend decision to a human and carries the answer back, without letting the channel decide.",
+  "main": "./dist/esm/index.js",
+  "types": "./dist/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/esm/index.js",
+      "default": "./dist/esm/index.js"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "rm -rf dist && tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "node --experimental-strip-types --test test/*.test.ts"
+  },
+  "dependencies": { "mongodb": "^7.5.0" },
+  "devDependencies": { "@types/node": "^22.20.1", "typescript": "^5.9.3" },
+  "engines": { "node": ">=22" }
+}

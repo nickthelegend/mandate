@@ -62,6 +62,11 @@ import {
 import { proposeDecision, ledgerPartitionKey } from "outcome-policy";
 import { hashCanonicalJson } from "outcome-policy/canon";
 import {
+  EscalationService,
+  mongoEscalations,
+  type EscalationRecord,
+} from "outcome-escalation";
+import {
   mongoBureau,
   mongoSnapshots,
   scoreFromSources,
@@ -82,6 +87,21 @@ const CHAIN_ID = 11155111;
 
 /** The owner wallet the policy is registered to, and the intent's declared owner. */
 const OWNER = process.env.AUTHORITY_OWNER ?? "0x7A2E11B3ECEBaB8Ea46966eDaDD4092583809b67";
+
+/**
+ * Who may resolve an escalation, and up to how much.
+ *
+ * The operator is the policy owner: the party whose money it is. Not the agent,
+ * which is the whole point -- an agent that could approve its own escalations
+ * has a spending limit it can lift by asking itself.
+ */
+const OPERATORS = (process.env.AUTHORITY_OPERATORS ?? OWNER)
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+/** The most one operator may release here. A ceiling on the ceiling. */
+const MAX_APPROVAL = Number(process.env.AUTHORITY_MAX_APPROVAL ?? 2);
+const ESCALATION_TIMEOUT_S = Number(process.env.AUTHORITY_ESCALATION_TIMEOUT ?? 900);
 
 /**
  * What the file on disk carries.
@@ -163,6 +183,17 @@ export type AuthorityOutcome = {
     epoch: number;
     features: { key: string; value: number; weightApplied: number; observed: boolean; note: string }[];
   };
+  /**
+   * Present when the decision escalated. The spend is held, not refused: a
+   * bound operator can release it with the code, and the code is returned
+   * exactly once, here.
+   */
+  escalation?: {
+    id: string;
+    code: string;
+    expiresAt: string;
+    resolveWith: string;
+  };
   executionId?: string;
   transactionHash?: string;
   executionError?: string;
@@ -227,6 +258,24 @@ export type Authority = {
   history(limit: number): Promise<DecisionRecord[]>;
   /** Score a payee on demand, from the same sources a decision would use. */
   score(payee: string): Promise<ScoreResult>;
+  /** An operator's answer to a held spend. */
+  resolveEscalation(args: {
+    id: string;
+    code: string;
+    operator: string;
+    action: "APPROVE" | "DENY";
+  }): Promise<{
+    outcome: string;
+    status: string | null;
+    detail: string;
+    executionId?: string;
+    transactionHash?: string;
+    executionError?: string;
+    budget?: { spentBefore: number; spentAfter: number; remaining: number };
+  }>;
+  escalations(limit: number, status?: string): Promise<EscalationRecord[]>;
+  /** Expire anything past its deadline. Silence defaults to denied. */
+  sweepEscalations(): Promise<{ expired: string[] }>;
   state(): Promise<{
     policyId: string;
     policyHash: string;
@@ -265,7 +314,51 @@ export async function createAuthority(args: {
   });
   const snapshots = await mongoSnapshots({ uri: args.mongoUri, db: args.mongoDb });
 
+  /*
+   * The escalation service. The approvals config is handed in once and
+   * snapshotted onto every escalation it opens, so raising the operator cap
+   * later cannot retroactively authorise anything already pending.
+   */
+  const escalations = new EscalationService(
+    await mongoEscalations({ uri: args.mongoUri, db: args.mongoDb }),
+    {
+      operators: OPERATORS,
+      maxApprovalAmount: MAX_APPROVAL,
+      timeoutSeconds: ESCALATION_TIMEOUT_S,
+    }
+  );
+
   const vendorFloor = (POLICY_DOC.rules as { vendors?: { minScoreLCB: number } }).vendors?.minScoreLCB;
+
+  /**
+   * Execute an authorised spend.
+   *
+   * Shared by the immediate path and the released-escalation path on purpose:
+   * a spend a human approved must move money through exactly the same code an
+   * automatically approved one does, or the two are different products with one
+   * name.
+   */
+  async function runTransfer(
+    decision: { decision: string; rules: readonly { rule: string; result: string }[]; intentHash?: string },
+    recipient: string,
+    amount: number
+  ): Promise<{ executionId?: string; transactionHash?: string; error?: string }> {
+    if (!args.kh) return { error: "no KeeperHub key configured on this gateway" };
+    try {
+      const r = await executeIfAuthorised(
+        args.kh,
+        decision as never,
+        { chainId: CHAIN_ID, tokenAddress: TOKEN, to: recipient, amount: amount.toFixed(6) },
+        { timeoutMs: 90_000 }
+      );
+      return {
+        ...(r.executionId ? { executionId: r.executionId } : {}),
+        ...(r.transactionHash ? { transactionHash: r.transactionHash } : {}),
+      };
+    } catch (e) {
+      return { error: e instanceof Error ? e.message : String(e) };
+    }
+  }
 
   async function scoreFor(payee: string, nowMs: number): Promise<ScoreResult> {
     const epoch = epochOf(nowMs);
@@ -358,38 +451,43 @@ export async function createAuthority(args: {
         let executionId: string | undefined;
         let transactionHash: string | undefined;
         let executionError: string | undefined;
+        let opened: { id: string; code: string; expiresAt: string } | undefined;
 
         if (approved && effects) {
           // Charge first. See the note at the top of this file on why this order.
           await ledger.apply(effects as never);
-
-          if (args.kh) {
-            try {
-              const result = await executeIfAuthorised(
-                args.kh,
-                decision as never,
-                {
-                  chainId: CHAIN_ID,
-                  tokenAddress: TOKEN,
-                  to: req.recipient,
-                  amount: req.amount.toFixed(6),
-                },
-                { timeoutMs: 90_000 }
-              );
-              executionId = result.executionId;
-              transactionHash = result.transactionHash;
-            } catch (e) {
-              /*
-               * The spend was authorised and the execution failed. The budget
-               * stays charged: un-charging here would let an agent burn the
-               * executor with requests that each fail and each cost nothing,
-               * which is a free retry loop around the rate limit.
-               */
-              executionError = e instanceof Error ? e.message : String(e);
-            }
-          } else {
-            executionError = "no KeeperHub key configured on this gateway";
-          }
+          const run = await runTransfer(decision, req.recipient, req.amount);
+          executionId = run.executionId;
+          transactionHash = run.transactionHash;
+          /*
+           * The spend was authorised and the execution failed. The budget stays
+           * charged: un-charging here would let an agent burn the executor with
+           * requests that each fail and each cost nothing, which is a free
+           * retry loop around the rate limit.
+           */
+          executionError = run.error;
+        } else if (decision.decision.startsWith("ESCALATED_")) {
+          /*
+           * The third answer. The engine did not approve this and did not
+           * refuse it either -- it asked for a person, and before this the
+           * distinction was thrown away and the spend recorded like a refusal.
+           *
+           * Nothing is charged and nothing moves. The request is held in full
+           * so that releasing it later spends exactly what was asked for, and
+           * the budget is charged at release rather than now: an escalation
+           * that expires unanswered must cost nothing.
+           */
+          opened = await escalations.create({
+            intentHash: decision.intentHash,
+            policyId,
+            decision: decision.decision,
+            reason: decision.reasons?.[0] ?? decision.decision,
+            failedRule: failed?.rule ?? null,
+            amount: req.amount,
+            token: TOKEN,
+            recipient: req.recipient,
+            heldSpend: { ...req },
+          });
         }
 
         const after = await ledger.read(partitionKey, now);
@@ -463,6 +561,17 @@ export async function createAuthority(args: {
                 },
               }
             : {}),
+          ...(opened
+            ? {
+                escalation: {
+                  id: opened.id,
+                  // Returned once, here. Only its hash is stored.
+                  code: opened.code,
+                  expiresAt: opened.expiresAt,
+                  resolveWith: `POST /authority/escalation/${opened.id}/resolve`,
+                },
+              }
+            : {}),
           ...(executionId ? { executionId } : {}),
           ...(transactionHash ? { transactionHash } : {}),
           ...(executionError ? { executionError } : {}),
@@ -476,6 +585,111 @@ export async function createAuthority(args: {
 
     async score(payee) {
       return scoreFor(payee, Date.now());
+    },
+
+    async resolveEscalation({ id, code, operator, action }) {
+      const verdict = await escalations.respond({
+        channel: "http",
+        senderHandle: operator,
+        action,
+        code,
+        escalationId: id,
+        receivedAtMs: Date.now(),
+      });
+
+      // Anything short of a clean approval changes no money.
+      if (verdict.outcome !== "APPROVED") {
+        return { outcome: verdict.outcome, status: verdict.status, detail: verdict.detail };
+      }
+
+      const rec = await escalations.get(id);
+      if (!rec) {
+        return { outcome: verdict.outcome, status: verdict.status, detail: "escalation vanished" };
+      }
+
+      /*
+       * The budget is charged HERE, not when the escalation was opened.
+       *
+       * A held spend has not happened. Charging at creation would let an agent
+       * exhaust the day's budget by raising escalations nobody ever answers --
+       * a denial-of-service against its own operator. Charging at release means
+       * an expired escalation costs nothing, and the release is still judged
+       * against the budget as it stands at that moment rather than as it stood
+       * when the request was made.
+       */
+      const now = Date.now();
+      const released = await ledger.withLease(partitionKey, async () => {
+        const before = await ledger.read(partitionKey, now);
+        const held = rec.heldSpend as unknown as SpendRequest;
+
+        const { decision, effects } = proposeDecision(
+          toIntent(held) as never,
+          {
+            ...POLICY_DOC,
+            id: policyId,
+            status: "ACTIVE",
+            policyHash: POLICY_HASH,
+            /*
+             * The rule that escalated is relaxed for this one release, and
+             * nothing else is. An operator answered exactly the question the
+             * vendor floor asked; they did not waive the daily budget, the
+             * per-call cap, the rate limit or the duplicate window, so those
+             * are all still enforced against current state.
+             */
+            rules: { ...POLICY_DOC.rules, vendors: undefined },
+          } as never,
+          before as never,
+          { nowMs: now }
+        );
+
+        if (decision.decision !== "APPROVED" || !effects) {
+          return {
+            blocked: decision.decision,
+            reason: decision.reasons?.[0] ?? decision.decision,
+            before,
+          } as const;
+        }
+
+        await ledger.apply(effects as never);
+        const run = await runTransfer(decision, rec.recipient, rec.amount);
+        const after = await ledger.read(partitionKey, now);
+        return { decision, run, before, after } as const;
+      });
+
+      if ("blocked" in released) {
+        await escalations.recordExecution(id, {
+          error: `approved by operator but ${released.blocked}: ${released.reason}`,
+        });
+        return {
+          outcome: "APPROVED",
+          status: "APPROVED",
+          detail: `operator approved, but the spend is now ${released.blocked}: ${released.reason}`,
+        };
+      }
+
+      await escalations.recordExecution(id, released.run);
+      const limit = dailyLimit;
+      return {
+        outcome: "APPROVED",
+        status: "APPROVED",
+        detail: "released by bound operator",
+        ...(released.run.executionId ? { executionId: released.run.executionId } : {}),
+        ...(released.run.transactionHash ? { transactionHash: released.run.transactionHash } : {}),
+        ...(released.run.error ? { executionError: released.run.error } : {}),
+        budget: {
+          spentBefore: released.before.budgetUsage.effectiveToday,
+          spentAfter: released.after.budgetUsage.effectiveToday,
+          remaining: Math.max(0, limit - released.after.budgetUsage.effectiveToday),
+        },
+      };
+    },
+
+    async escalations(limit, status) {
+      return escalations.list(limit, status as never);
+    },
+
+    async sweepEscalations() {
+      return escalations.sweep();
     },
 
     async state() {

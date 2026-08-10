@@ -21,8 +21,8 @@
     },
     "vendors": {
       "minScoreLCB": 20,
-      "onBelowFloor": "BLOCK",
-      "onScoreUnavailable": "BLOCK",
+      "onBelowFloor": "ESCALATE",
+      "onScoreUnavailable": "ESCALATE",
       "staleScoreMaxAgeH": 24
     },
     "agents": {

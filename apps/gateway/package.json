@@ -14,7 +14,8 @@
     "ethers": "^6.17.0",
     "outcome-sdk": "*",
     "outcome-policy": "*",
-    "outcome-bureau": "*"
+    "outcome-bureau": "*",
+    "outcome-escalation": "*"
   },
   "devDependencies": {
     "@types/node": "^22.20.1",

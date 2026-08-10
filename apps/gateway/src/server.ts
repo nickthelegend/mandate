@@ -283,6 +283,83 @@ const server = createServer(async (req, res) => {
     }
   }
 
+  /*
+   * The held spends, and the operator's answer to one.
+   *
+   * A refusal is final and needs no route. An escalation is the case where the
+   * engine declined to decide alone, so there has to be somewhere the person it
+   * asked can actually answer -- otherwise ESCALATED is just a refusal with a
+   * longer name.
+   */
+  if (url.pathname === "/authority/escalations") {
+    const limit = Math.min(Number(url.searchParams.get("limit") ?? 25) || 25, 100);
+    const status = url.searchParams.get("status") ?? undefined;
+    try {
+      const authority = await getAuthority();
+      // Sweeping on read keeps expiry honest without a scheduler: nothing can
+      // be listed as PENDING once its deadline has passed.
+      await authority.sweepEscalations();
+      const entries = await authority.escalations(limit, status);
+      return json(res, 200, {
+        returned: entries.length,
+        entries: entries.map((e) => ({
+          ...e,
+          // Never leave the process, even hashed.
+          approvalCodeHash: undefined,
+        })),
+      });
+    } catch (e: unknown) {
+      return json(res, 503, { error: e instanceof Error ? e.message : String(e) });
+    }
+  }
+
+  {
+    const m = url.pathname.match(/^\/authority\/escalation\/([A-Za-z0-9_]+)\/resolve$/);
+    if (m) {
+      if (req.method !== "POST") return json(res, 405, { error: "POST only" });
+      let body: Record<string, unknown>;
+      try {
+        body = JSON.parse(await readBody(req));
+      } catch {
+        return json(res, 400, { error: "body must be JSON" });
+      }
+      const code = String(body.code ?? "");
+      const operator = String(body.operator ?? "");
+      const action = String(body.action ?? "").toUpperCase();
+      if (action !== "APPROVE" && action !== "DENY") {
+        return json(res, 400, { error: "action must be APPROVE or DENY" });
+      }
+      if (!/^[0-9a-f]{24}$/.test(code)) return json(res, 400, { error: "code is 24 hex characters" });
+      if (!/^0x[0-9a-fA-F]{40}$/.test(operator)) {
+        return json(res, 400, { error: "operator must be a 20-byte address" });
+      }
+      try {
+        const authority = await getAuthority();
+        const out = await authority.resolveEscalation({ id: m[1], code, operator, action });
+        /*
+         * 200 for every verified outcome, including the ignored ones. They are
+         * not transport failures -- the service processed the response and
+         * declined to honour it, and the body says which check refused.
+         */
+        return json(res, 200, out);
+      } catch (e: unknown) {
+        return json(res, 500, { error: e instanceof Error ? e.message : String(e) });
+      }
+    }
+  }
+
+  if (url.pathname.startsWith("/authority/score/")) {
+    const payee = url.pathname.slice("/authority/score/".length);
+    if (!/^0x[0-9a-fA-F]{40}$/.test(payee)) {
+      return json(res, 400, { error: "not a 20-byte address" });
+    }
+    try {
+      return json(res, 200, await (await getAuthority()).score(payee));
+    } catch (e: unknown) {
+      return json(res, 503, { error: e instanceof Error ? e.message : String(e) });
+    }
+  }
+
   if (url.pathname === "/authority/log") {
     const limit = Math.min(Number(url.searchParams.get("limit") ?? 25) || 25, 100);
     try {
