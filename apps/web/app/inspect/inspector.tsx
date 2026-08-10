@@ -23,6 +23,9 @@ import { tx } from "@/lib/outcome";
 import { cn } from "@/lib/utils";
 import { PageHead } from "@/components/page-head";
 
+/** The gateway's own shape for an execution id, mirrored so it can be checked locally. */
+const EXECUTION_ID = /^[a-z0-9]{6,64}$/i;
+
 const GATEWAY =
   process.env.NEXT_PUBLIC_GATEWAY_URL ?? "https://gateway-production-944e.up.railway.app";
 
@@ -56,12 +59,27 @@ export function Inspector() {
   const [error, setError] = useState<string | null>(null);
 
   const lookup = useCallback(async (executionId: string) => {
-    if (!executionId.trim()) return;
+    const id = executionId.trim();
+    if (!id) return;
+
+    /*
+     * Checked here before the request, against the same shape the gateway
+     * enforces. The server would answer 400 either way and the message would
+     * read the same, but a round trip to be told the id was never plausible is
+     * a slower answer and a red 400 in the console of anyone with devtools
+     * open. Malformed input is knowable locally, so it is answered locally.
+     */
+    if (!EXECUTION_ID.test(id)) {
+      setData(null);
+      setError("An execution id is 6-64 letters and digits. Run the demo and it will link you here with its own.");
+      return;
+    }
+
     setLoading(true);
     setError(null);
     setData(null);
     try {
-      const res = await fetch(`${GATEWAY}/execution/${executionId.trim()}`);
+      const res = await fetch(`${GATEWAY}/execution/${id}`);
       const body = await res.json();
       if (!res.ok) {
         setError(body.error ?? `gateway returned ${res.status}`);
