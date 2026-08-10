@@ -62,6 +62,13 @@ import {
 import { proposeDecision, ledgerPartitionKey } from "mandate-policy";
 import { hashCanonicalJson } from "mandate-policy/canon";
 import {
+  ReceiptWriter,
+  mongoReceipts,
+  keeperHubAnchorer,
+  type AnchorProof,
+  type Receipt,
+} from "mandate-receipts";
+import {
   EscalationService,
   mongoEscalations,
   type EscalationRecord,
@@ -81,6 +88,13 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 export const REGISTRY = process.env.POLICY_REGISTRY ?? "0x13452fcA19819d37Fa4b01a0e64C8Fce60C5E304";
 /** The on-chain policy id this gateway enforces. Set once the document is anchored. */
 export const POLICY_ID = process.env.POLICY_ID ?? "";
+/**
+ * Where receipt batch roots are anchored.
+ *
+ * A separate contract from the registry: that one gates spending, this one
+ * records what was decided, and they should not share a blast radius.
+ */
+export const RECEIPTS = process.env.MANDATE_RECEIPTS ?? "0x64AE971Fda589E4C878F66452b8CE0533032f60d";
 /** tUSDC on Sepolia -- what an approved spend actually moves. */
 const TOKEN = process.env.MANDATE_TOKEN ?? "0x49C86277a91002c4943837bf20F6ED41976Db09F";
 const CHAIN_ID = 11155111;
@@ -324,6 +338,11 @@ export type Authority = {
     budget?: { spentBefore: number; spentAfter: number; remaining: number };
   }>;
   escalations(limit: number, status?: string, agent?: string): Promise<EscalationRecord[]>;
+  /** Move queued receipts along: batch, anchor, confirm. */
+  tickReceipts(): Promise<{ batched: number; submitted: number; confirmed: number; degraded: number }>;
+  receipts(limit: number): Promise<Receipt[]>;
+  /** The merkle proof a holder can check for themselves. */
+  receiptProof(receiptId: string): Promise<AnchorProof | null>;
   /** Expire anything past its deadline. Silence defaults to denied. */
   sweepEscalations(): Promise<{ expired: string[] }>;
   state(agent?: string): Promise<{
@@ -370,6 +389,27 @@ export async function createAuthority(args: {
    * snapshotted onto every escalation it opens, so raising the operator cap
    * later cannot retroactively authorise anything already pending.
    */
+  /*
+   * The receipt writer.
+   *
+   * Every decision, approved or refused, becomes a receipt: durable
+   * immediately, batched under a merkle root, anchored on chain through
+   * KeeperHub afterwards. Anchoring is deliberately downstream -- if it were on
+   * the decision's path, an RPC outage would stop the authority deciding, and
+   * an authority that stops deciding stops refusing.
+   */
+  const receipts = new ReceiptWriter(
+    await mongoReceipts({ uri: args.mongoUri, db: args.mongoDb }),
+    args.kh
+      ? keeperHubAnchorer({
+          kh: args.kh as never,
+          provider: args.provider,
+          registry: RECEIPTS,
+          chainId: CHAIN_ID,
+        })
+      : null
+  );
+
   const escalations = new EscalationService(
     await mongoEscalations({ uri: args.mongoUri, db: args.mongoDb }),
     {
@@ -581,6 +621,29 @@ export async function createAuthority(args: {
           ...(transactionHash ? { transactionHash } : {}),
         };
         await ledger.record(record);
+
+        /*
+         * The receipt, after the decision is already recorded. A failure here
+         * must not turn a completed decision into an error for the caller --
+         * the ledger is the operative record and the receipt is the evidence
+         * trail on top of it.
+         */
+        void receipts
+          .enqueue({
+            intentHash: decision.intentHash,
+            policyId,
+            policyVersion: POLICY_DOC.version,
+            policyHash: POLICY_HASH,
+            decision: decision.decision,
+            failedRule: failed?.rule ?? null,
+            amountBase: String(Math.round(req.amount * 1_000_000)),
+            recipient: req.recipient,
+            token: TOKEN,
+            agent: req.agent,
+            decidedAt: new Date(now).toISOString(),
+            ...(transactionHash ? { transactionHash } : {}),
+          })
+          .catch(() => {});
 
         return {
           decision: decision.decision,
@@ -846,6 +909,18 @@ export async function createAuthority(args: {
 
     async sweepEscalations() {
       return escalations.sweep();
+    },
+
+    async tickReceipts() {
+      return receipts.tick();
+    },
+
+    async receipts(limit) {
+      return receipts.recent(limit);
+    },
+
+    async receiptProof(receiptId) {
+      return receipts.proof(receiptId);
     },
 
     async state(agent) {

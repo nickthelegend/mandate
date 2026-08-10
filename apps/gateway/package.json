@@ -15,7 +15,8 @@
     "mandate-sdk": "*",
     "mandate-policy": "*",
     "mandate-bureau": "*",
-    "mandate-escalation": "*"
+    "mandate-escalation": "*",
+    "mandate-receipts": "*"
   },
   "devDependencies": {
     "@types/node": "^22.20.1",

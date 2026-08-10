@@ -7,9 +7,9 @@
     "apps/*"
   ],
   "scripts": {
-    "build": "npm run build -w mandate-policy && npm run build -w mandate-bureau && npm run build -w mandate-escalation && npm run build -w mandate-sdk && npm run build -w mandate-mcp",
-    "test": "npm run test -w mandate-policy && npm run test -w mandate-bureau && npm run test -w mandate-escalation && npm run test -w mandate-sdk && npm run test -w mandate-mcp",
-    "typecheck": "npm run typecheck -w mandate-policy && npm run typecheck -w mandate-bureau && npm run typecheck -w mandate-escalation && npm run typecheck -w mandate-sdk && npm run typecheck -w mandate-mcp && npm run typecheck -w mandate-gateway",
+    "build": "npm run build -w mandate-policy && npm run build -w mandate-bureau && npm run build -w mandate-escalation && npm run build -w mandate-receipts && npm run build -w mandate-sdk && npm run build -w mandate-mcp",
+    "test": "npm run test -w mandate-policy && npm run test -w mandate-bureau && npm run test -w mandate-escalation && npm run test -w mandate-receipts && npm run test -w mandate-sdk && npm run test -w mandate-mcp",
+    "typecheck": "npm run typecheck -w mandate-policy && npm run typecheck -w mandate-bureau && npm run typecheck -w mandate-escalation && npm run typecheck -w mandate-receipts && npm run typecheck -w mandate-sdk && npm run typecheck -w mandate-mcp && npm run typecheck -w mandate-gateway",
     "test:contracts": "cd contracts && npx hardhat test",
     "start": "node --experimental-strip-types apps/gateway/src/server.ts"
   },

@@ -294,6 +294,42 @@ const server = createServer(async (req, res) => {
     }
   }
 
+  /*
+   * The receipts, and the proof for one.
+   *
+   * A receipt is durable the instant a decision is made; the anchor arrives
+   * afterwards, and `anchored` is only true once the batch is confirmed on
+   * chain AND the merkle proof recomputes the root. A holder does not have to
+   * take that on trust -- the proof is in the response and the check is a pure
+   * function they can run themselves.
+   */
+  if (url.pathname === "/authority/receipts") {
+    const limit = Math.min(Number(url.searchParams.get("limit") ?? 20) || 20, 100);
+    try {
+      const authority = await getAuthority();
+      // Advance the ladder on read: no scheduler, and nothing sits queued
+      // indefinitely just because the process is quiet.
+      const moved = await authority.tickReceipts();
+      const entries = await authority.receipts(limit);
+      return json(res, 200, { moved, returned: entries.length, entries });
+    } catch (e: unknown) {
+      return json(res, 503, { error: e instanceof Error ? e.message : String(e) });
+    }
+  }
+
+  if (url.pathname.startsWith("/authority/receipt/")) {
+    const id = url.pathname.slice("/authority/receipt/".length);
+    if (!/^0x[0-9a-f]{64}$/i.test(id)) return json(res, 400, { error: "not a receipt id" });
+    try {
+      const authority = await getAuthority();
+      const proof = await authority.receiptProof(id);
+      if (!proof) return json(res, 404, { error: "no receipt, or it is not batched yet" });
+      return json(res, 200, proof);
+    } catch (e: unknown) {
+      return json(res, 503, { error: e instanceof Error ? e.message : String(e) });
+    }
+  }
+
   if (url.pathname === "/authority/log") {
     const limit = Math.min(Number(url.searchParams.get("limit") ?? 25) || 25, 100);
     try {
