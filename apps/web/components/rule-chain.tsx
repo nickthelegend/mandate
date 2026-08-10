@@ -5,49 +5,71 @@
  *
  * The product's whole mechanism is an ordered chain that short-circuits: rules
  * run in sequence, and the first to fail decides. Rendering it as a list of
- * chips makes that legible in a way a verdict string cannot — you can see how
+ * chips makes that legible in a way a verdict string cannot -- you can see how
  * far a spend got before something stopped it, and that everything after the
  * refusal was never consulted.
  *
  * Three states, and the shape carries each so it survives greyscale: passed
  * rules are filled, the refusing rule is ringed in the refusal colour, and
  * everything downstream is dimmed to say "not reached" rather than "passed".
+ *
+ * THE LIST COMES FROM THE ENGINE, NOT FROM HERE
+ *
+ * This component used to hold its own copy of the fifteen names, and six of
+ * them were wrong -- `category` where the engine says `category.allow`,
+ * `duplicate` where it says `duplicate.taskHash_endpoint_paramsHash`, and so
+ * on. The failure was silent and total: the lookup missed, so nothing was
+ * marked passed, nothing was marked failed, and the caption read "the 15 rules
+ * after it were never consulted" on a chain of fifteen. A component that
+ * renders a system's ordered pipeline must read that order from the system.
  */
 
 import { useEffect, useRef, useState } from "react";
+import { IMPLEMENTED_RULES } from "outcome-policy";
 
 import { cn } from "@/lib/utils";
 
-/** The chain, in the order the engine runs it. */
-export const RULES = [
-  "policy.active",
-  "duplicate",
-  "cooldown",
-  "replay.contextBinding",
-  "recipient",
-  "agent.worker",
-  "category",
-  "vendor.lcbFloor",
-  "intent.maxAmountBound",
-  "hardCap",
-  "perCall.cap",
-  "budget.daily",
-  "rate.limit",
-  "proof.tierRequired",
-  "escalate.aboveThreshold",
-] as const;
+/** The chain, in the order the engine runs it. Its list, not a transcription. */
+export const RULES = IMPLEMENTED_RULES;
+
+/**
+ * A rule id, shortened for display.
+ *
+ * `duplicate.taskHash_endpoint_paramsHash` is the honest id -- it names the
+ * exact tuple the rule compared -- and it is also four times the width of every
+ * other chip. The full id stays in the `title`, so hovering gives you the
+ * thing the trace actually recorded.
+ */
+function label(rule: string): string {
+  if (rule.startsWith("duplicate.")) return "duplicate";
+  if (rule === "recipient.allowDeny") return "recipient";
+  if (rule === "agent.workerAllowDeny") return "agent.worker";
+  if (rule === "cooldown.sameService") return "cooldown";
+  if (rule === "hardCap.absolute") return "hardCap";
+  return rule;
+}
 
 export function RuleChain({
   failedAt,
   decision,
   className,
 }: {
-  /** The rule that refused, or null when every rule passed. */
+  /** The rule that refused, exactly as the engine named it, or null when none did. */
   failedAt: string | null;
   decision: string;
   className?: string;
 }) {
-  const stopIndex = failedAt ? RULES.indexOf(failedAt as (typeof RULES)[number]) : RULES.length;
+  const stopIndex = failedAt
+    ? // Exact first. The prefix fallback covers the one rule whose id carries its
+      // configuration (`duplicate.<the tuple it compared>`), which a caller may
+      // reasonably hand over either whole or as the family name.
+      (() => {
+        const exact = RULES.indexOf(failedAt as (typeof RULES)[number]);
+        if (exact >= 0) return exact;
+        const family = RULES.findIndex((r) => r.split(".")[0] === failedAt.split(".")[0]);
+        return family >= 0 ? family : RULES.length;
+      })()
+    : RULES.length;
 
   /*
    * The chain fills rule by rule rather than appearing at once, because the
@@ -74,6 +96,8 @@ export function RuleChain({
     return () => clearInterval(t);
   }, [failedAt, decision]);
 
+  const notReached = RULES.length - stopIndex - 1;
+
   return (
     <div className={className}>
       <div className="flex flex-wrap gap-1.5">
@@ -84,15 +108,25 @@ export function RuleChain({
           return (
             <span
               key={rule}
+              title={rule}
+              /*
+               * The transition names opacity and transform, which are the only
+               * things this animates. `transition-all` also interpolated the
+               * background, so a refusal spent 200ms fading out of the pass
+               * colour on its way to red -- a chip that is briefly the wrong
+               * verdict. Colour here is a state, not a movement.
+               */
               className={cn(
-                "rounded-full px-2.5 py-1 text-[11px] transition-all duration-200",
+                "rounded-full px-2.5 py-1 text-[11px] transition-[opacity,transform] duration-200",
                 !visible && "opacity-0 translate-y-1",
                 visible && passed && "bg-[var(--brand-wash)] text-[var(--brand-ink)]",
-                visible && failed && "bg-[var(--refused-wash)] text-[var(--refused)] ring-1 ring-[var(--refused-line)] font-semibold",
+                visible &&
+                  failed &&
+                  "bg-[var(--refused-wash)] text-[var(--refused)] ring-1 ring-[var(--refused-line)] font-semibold",
                 visible && !passed && !failed && "bg-[var(--panel)] text-[var(--ink-4)]"
               )}
             >
-              {rule}
+              {label(rule)}
             </span>
           );
         })}
@@ -101,8 +135,16 @@ export function RuleChain({
       <p className="mt-3 text-[12px] text-[var(--ink-3)]">
         {failedAt ? (
           <>
-            Refused at <span className="font-semibold text-[var(--refused)]">{failedAt}</span>. The{" "}
-            {RULES.length - stopIndex - 1} rules after it were never consulted.
+            Refused at <span className="font-semibold text-[var(--refused)]">{failedAt}</span>.
+            {notReached > 0 ? (
+              <>
+                {" "}
+                The {notReached} rule{notReached === 1 ? "" : "s"} after it{" "}
+                {notReached === 1 ? "was" : "were"} never consulted.
+              </>
+            ) : (
+              <> It is the last rule in the chain, so every other one had already passed.</>
+            )}
           </>
         ) : (
           <>All fifteen passed. Only then does the money move.</>

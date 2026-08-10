@@ -12,7 +12,8 @@
   },
   "dependencies": {
     "ethers": "^6.17.0",
-    "outcome-sdk": "^0.5.1"
+    "outcome-sdk": "^0.5.1",
+    "outcome-policy": "*"
   },
   "devDependencies": {
     "@types/node": "^22.20.1",

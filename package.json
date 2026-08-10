@@ -7,15 +7,16 @@
     "apps/*"
   ],
   "scripts": {
-    "build": "npm run build -w outcome-sdk && npm run build -w outcome-mcp",
-    "test": "npm run test -w outcome-sdk && npm run test -w outcome-mcp",
+    "build": "npm run build -w outcome-policy && npm run build -w outcome-sdk && npm run build -w outcome-mcp",
+    "test": "npm run test -w outcome-policy && npm run test -w outcome-sdk && npm run test -w outcome-mcp",
     "typecheck": "npm run typecheck -w outcome-sdk && npm run typecheck -w outcome-mcp && npm run typecheck -w outcome-gateway",
-    "test:contracts": "cd contracts && npx hardhat test"
+    "test:contracts": "cd contracts && npx hardhat test",
+    "start": "node --experimental-strip-types apps/gateway/src/server.ts"
   },
   "devDependencies": {
     "typescript": "^5.9.3"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=22"
   }
 }
