@@ -219,22 +219,23 @@ await check("/demo honest facilitator: serves the article", async () => {
   // The gateway paces these routes at 15s and the UI now counts down. Wait it
   // out rather than reporting the gateway doing its job as a defect.
   await waitOutCooldown();
-  const txBefore2 = await page.evaluate(() => document.querySelectorAll('a[href*="/tx/"]').length);
   await press("honest").catch(async () => press("Pay honestly"));
+  /*
+   * Wait for the ARTICLE, not for a count to change. Watching the transaction
+   * links broke instantly: starting a run clears the previous result, so the
+   * count drops 1 -> 0 and a "has it changed" check fires before anything has
+   * happened. The article body only exists once the settlement was proven and
+   * the resource released, which is the thing being asserted.
+   */
   const t0 = Date.now();
+  let served = false;
   for (;;) {
-    const n = await page.evaluate(() => document.querySelectorAll('a[href*="/tx/"]').length);
-    if (n !== txBefore2) break;
-    if (Date.now() - t0 > 240000) {
-      fail("no result", "the honest run never produced a transaction");
-      break;
-    }
+    served = /status byte is not evidence/i.test(await text());
+    if (served) break;
+    if (Date.now() - t0 > 240000) break;
     await page.waitForTimeout(2000);
   }
-  // An honest settlement must actually release the goods.
-  if (!/status byte is not evidence/i.test(await text())) {
-    fail("article not served", "an honest settlement did not release the resource");
-  }
+  if (!served) fail("article not served", "an honest settlement did not release the resource");
   return `${Math.round((Date.now() - t0) / 1000)}s, article served`;
 });
 
