@@ -1,3 +1,130 @@
+---
+name: Outcome
+description: Give an agent a budget it cannot exceed — an on-chain spending authority
+colors:
+  brand: "#ef4d23"
+  brand-ink: "#d13d16"
+  brand-wash: "#fdefe9"
+  dark: "#0b0f1a"
+  page: "#ededed"
+  hero: "#d9d9d9"
+  tray: "#f5f2ee"
+  card: "#ffffff"
+  panel: "#fafafa"
+  ink: "#0b0f1a"
+  ink-2: "#404040"
+  ink-3: "#737373"
+  ink-4: "#a3a3a3"
+  line: "#e5e5e5"
+  line-2: "#d4d4d4"
+  proven: "#0b7a55"
+  proven-wash: "#e9f6f0"
+  proven-line: "#a7ddc7"
+  refused: "#c0362a"
+  refused-wash: "#fdefed"
+  refused-line: "#f2c0ba"
+typography:
+  hero:
+    fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif"
+    fontSize: "clamp(36px, 8vw, 72px)"
+    fontWeight: 500
+    lineHeight: 1.05
+    letterSpacing: "-0.02em"
+  title:
+    fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif"
+    fontSize: "clamp(28px, 5.5vw, 52px)"
+    fontWeight: 500
+    lineHeight: 1.08
+    letterSpacing: "-0.02em"
+  section:
+    fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif"
+    fontSize: "clamp(26px, 4vw, 40px)"
+    fontWeight: 500
+    lineHeight: 1.15
+    letterSpacing: "-0.02em"
+  body:
+    fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif"
+    fontSize: "clamp(13px, 3.5vw, 16px)"
+    fontWeight: 400
+    lineHeight: 1.6
+    letterSpacing: "normal"
+  accent:
+    fontFamily: "Instrument Serif, ui-serif, Georgia, serif"
+    fontSize: "inherit"
+    fontWeight: 400
+    lineHeight: 1
+    letterSpacing: "normal"
+  figure:
+    fontFamily: "Geist Mono, ui-monospace, monospace"
+    fontSize: "0.9em"
+    fontWeight: 400
+    lineHeight: 1.5
+    letterSpacing: "normal"
+  label:
+    fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif"
+    fontSize: "12px"
+    fontWeight: 500
+    lineHeight: 1.4
+    letterSpacing: "normal"
+rounded:
+  sm: "8px"
+  md: "12px"
+  lg: "16px"
+  xl: "24px"
+  pill: "999px"
+spacing:
+  xs: "6px"
+  sm: "8px"
+  md: "16px"
+  lg: "24px"
+  xl: "40px"
+components:
+  button-primary:
+    backgroundColor: "{colors.dark}"
+    textColor: "#ffffff"
+    typography: "{typography.label}"
+    rounded: "{rounded.pill}"
+    padding: "8px 8px 8px 24px"
+  button-primary-hover:
+    backgroundColor: "#161d2e"
+  button-brand:
+    backgroundColor: "{colors.brand}"
+    textColor: "#ffffff"
+    rounded: "{rounded.pill}"
+    padding: "8px 8px 8px 18px"
+  button-brand-hover:
+    backgroundColor: "{colors.brand-ink}"
+  button-outline:
+    backgroundColor: "{colors.card}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.pill}"
+    padding: "8px 20px"
+  eyebrow:
+    backgroundColor: "{colors.card}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.pill}"
+    padding: "6px 16px"
+  card:
+    backgroundColor: "{colors.card}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.lg}"
+  field:
+    backgroundColor: "{colors.card}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.sm}"
+    padding: "8px 12px"
+  verdict-proven:
+    backgroundColor: "{colors.proven-wash}"
+    textColor: "{colors.proven}"
+    rounded: "{rounded.pill}"
+    padding: "2px 8px 2px 6px"
+  verdict-refused:
+    backgroundColor: "{colors.refused-wash}"
+    textColor: "{colors.refused}"
+    rounded: "{rounded.pill}"
+    padding: "2px 8px 2px 6px"
+---
+
 # Design System: Outcome
 
 ## Overview
@@ -97,6 +224,21 @@ Shadows are nearly invisible and separate rather than lift.
 
 - `--shadow-sm: 0 1px 2px rgba(11,15,26,0.05)` — cards, the navbar pill, fields.
 - `--shadow-md` / `--shadow-lg` for the rare floating panel.
+
+## Shapes
+
+Two radii and nothing between them. **Pills** (`999px`) for anything you press
+or that reports a state — buttons, the navbar, the eyebrow, verdict badges, rule
+chips. **Rounded rectangles** for anything that holds content: `16px` for the
+frame and cards, `10px` for fields, code blocks, and bordered rows.
+
+The split is a rule, not a preference: a pill in this interface means *this is a
+control or a verdict*, and a rectangle means *this is a container*. A pill-shaped
+container reads as a button nobody can press.
+
+Borders are hairlines — `1px` of `--line`, or `--line-2` where a field needs to
+sit forward of the card behind it. There is no 2px rule anywhere; weight is
+carried by fill and type, never by stroke.
 
 ## Components
 
