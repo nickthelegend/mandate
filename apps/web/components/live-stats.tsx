@@ -24,8 +24,12 @@ import { useEffect, useState } from "react";
 import { GATEWAY } from "@/lib/mandate";
 
 type Totals = {
-  decisions: { total: number; approved: number; refused: number };
-  spentToday: number;
+  /*
+   * The system-wide count, not this browser's. A visitor asking what this
+   * authority has done wants everything it has ever decided; the per-agent
+   * figure belongs on /authority, where it is your own budget being spent.
+   */
+  totals: { total: number; approved: number; refused: number; escalated: number };
   rules: { budgets: { daily: number } };
 };
 
@@ -51,13 +55,10 @@ export function LiveStats() {
   const dash = (v: string | number) => (t ? String(v) : "—");
 
   const stats = [
-    { label: "Decisions", value: dash(t?.decisions.total ?? 0) },
-    { label: "Refused", value: dash(t?.decisions.refused ?? 0) },
-    { label: "Approved", value: dash(t?.decisions.approved ?? 0) },
-    {
-      label: "Spent today",
-      value: t ? `$${t.spentToday.toFixed(2)} / $${t.rules.budgets.daily.toFixed(2)}` : "—",
-    },
+    { label: "Decisions", value: dash(t?.totals.total ?? 0) },
+    { label: "Refused", value: dash(t?.totals.refused ?? 0) },
+    { label: "Held for a human", value: dash(t?.totals.escalated ?? 0) },
+    { label: "Approved", value: dash(t?.totals.approved ?? 0) },
   ];
 
   return (

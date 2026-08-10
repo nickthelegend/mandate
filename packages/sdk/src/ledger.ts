@@ -211,6 +211,15 @@ export type SpendLedger = {
     spentToday: number;
     dayKey: string;
   }>;
+  /**
+   * Every decision this authority has made, across all agents.
+   *
+   * Separate from `stats`, which is per partition. A visitor asking "what has
+   * this thing done" wants the total; an agent asking "what have I spent"
+   * wants its own — and answering the first with the second reads as an
+   * authority that has never decided anything.
+   */
+  totals(): Promise<{ total: number; approved: number; refused: number; escalated: number }>;
   /** Run `task` holding the cross-process lease for this partition. */
   withLease<T>(partitionKey: string, task: () => Promise<T>): Promise<T>;
   close(): Promise<void>;
@@ -382,6 +391,15 @@ export async function mongoLedger(opts: {
         spentToday: w.budgetUsage.effectiveToday,
         dayKey: today,
       };
+    },
+
+    async totals() {
+      const [total, approved, escalated] = await Promise.all([
+        log.countDocuments({}),
+        log.countDocuments({ decision: "APPROVED" }),
+        log.countDocuments({ decision: { $regex: "^ESCALATED_" } }),
+      ]);
+      return { total, approved, escalated, refused: total - approved - escalated };
     },
 
     async withLease(partitionKey, task) {

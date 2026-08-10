@@ -355,6 +355,8 @@ export type Authority = {
     remaining: number;
     callsInLastHour: number;
     decisions: { total: number; approved: number; refused: number };
+    /** Across every agent, for a reader asking what this authority has done. */
+    totals: { total: number; approved: number; refused: number; escalated: number };
     /** The floor a payee's bound must clear, and what it is compared against. */
     vendorFloor: number | null;
   }>;
@@ -926,9 +928,10 @@ export async function createAuthority(args: {
     async state(agent) {
       const now = Date.now();
       const part = partitionFor(policyId, agent ?? DEFAULT_AGENT);
-      const [w, s] = await Promise.all([
+      const [w, s, totals] = await Promise.all([
         ledger.read(part, now),
         ledger.stats(part, now),
+        ledger.totals(),
       ]);
 
       let onChain: Awaited<ReturnType<Authority["state"]>>["onChain"];
@@ -950,6 +953,7 @@ export async function createAuthority(args: {
         remaining: Math.max(0, dailyLimit - w.budgetUsage.effectiveToday),
         callsInLastHour: w.callsInLastHour,
         decisions: { total: s.total, approved: s.approved, refused: s.refused },
+        totals,
         vendorFloor: vendorFloor ?? null,
       };
     },
