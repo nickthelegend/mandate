@@ -147,10 +147,14 @@ await item("4.3", async () => {
 await item("4.4", async () => {
   await go("/ledger/");
   const t = await text();
-  const rows = (t.match(/BLOCKED_\w+|APPROVED|ESCALATED_\w+/g) ?? []).length;
+  /*
+   * Count the TABLE's rows, not decision strings anywhere on the page. The
+   * receipts section below the table names each receipt's decision too, so
+   * scanning the whole page counted those as ledger rows and reported the
+   * header as lying when it was telling the truth.
+   */
+  const rows = await page.evaluate(() => document.querySelectorAll("table tbody tr").length);
   if (rows === 0) return fail("no decisions", "the ledger shows no decision on any row");
-  // The count in the header must match what is actually on the page, or the
-  // page is asserting a number it did not render.
   const claimed = Number(t.match(/the last (\d+) decisions?/)?.[1] ?? -1);
   if (claimed !== rows) fail("count disagrees", `header claims ${claimed}, ${rows} rows rendered`);
   // Three states, in this product's vocabulary — not the removed one's.

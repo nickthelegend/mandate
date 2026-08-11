@@ -156,13 +156,72 @@ const server = createServer(async (req, res) => {
     return res.end();
   }
 
+  /*
+   * Health, meaning what this can actually reach.
+   *
+   * The old answer was `ok: true` and a list of what had been configured, which
+   * says nothing: a gateway with a Mongo URI it cannot connect to and an RPC
+   * that times out reported exactly the same thing as a working one. A health
+   * check that cannot go red is decoration.
+   *
+   * Each dependency is probed with its own short deadline and reported
+   * separately, and the aggregate is DOWN only when something the authority
+   * genuinely cannot decide without is unreachable. KeeperHub being absent is
+   * DEGRADED rather than DOWN — refusals still work without it, and refusing is
+   * the half that matters.
+   */
   if (url.pathname === "/health") {
-    return json(res, 200, {
-      ok: true,
+    const started = Date.now();
+    const probe = async (name: string, fn: () => Promise<string>) => {
+      const t0 = Date.now();
+      try {
+        return { name, up: true, detail: await fn(), ms: Date.now() - t0 };
+      } catch (e: unknown) {
+        return { name, up: false, detail: e instanceof Error ? e.message.slice(0, 120) : String(e), ms: Date.now() - t0 };
+      }
+    };
+    const deadline = <T,>(p: Promise<T>, ms: number): Promise<T> =>
+      Promise.race([p, new Promise<T>((_, rej) => setTimeout(() => rej(new Error(`no answer in ${ms}ms`)), ms))]);
+
+    const checks = await Promise.all([
+      probe("mongo", async () => {
+        // A read, not a ping: a connection that is up but cannot serve the
+        // ledger is not a working authority.
+        const a = await deadline(getAuthority(), 8000);
+        const n = (await a.history(1)).length;
+        return `readable, ${n} decision${n === 1 ? "" : "s"} in the last page`;
+      }),
+      probe("sepolia", async () => {
+        const b = await deadline(provider.getBlockNumber(), 8000);
+        return `block ${b}`;
+      }),
+      probe("policy-anchor", async () => {
+        const a = await deadline(getAuthority(), 8000);
+        const s = await a.state();
+        if ("error" in s.onChain) throw new Error(s.onChain.error);
+        return `${s.onChain.status}, v${s.onChain.version}`;
+      }),
+      probe("keeperhub", async () => {
+        if (!kh) throw new Error("no API key configured — refusals still work, approvals cannot move money");
+        return "credential present";
+      }),
+    ]);
+
+    const down = checks.filter((c) => !c.up).map((c) => c.name);
+    // KeeperHub alone is degraded; anything else the decision depends on is down.
+    const fatal = down.filter((n) => n !== "keeperhub");
+    const status = fatal.length ? "DOWN" : down.length ? "DEGRADED" : "UP";
+
+    return json(res, fatal.length ? 503 : 200, {
+      ok: fatal.length === 0,
+      status,
+      // Kept for the callers that already read these two.
+      keeperhub: Boolean(kh),
+      policyId: POLICY_ID || null,
       chainId: CHAIN_ID,
       token: process.env.MANDATE_TOKEN ?? "0x49C86277a91002c4943837bf20F6ED41976Db09F",
-      policyId: POLICY_ID || null,
-      keeperhub: Boolean(kh),
+      checks,
+      tookMs: Date.now() - started,
     });
   }
 
