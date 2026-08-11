@@ -50,12 +50,33 @@ const item = async (id, fn) => {
 };
 
 const provider = new JsonRpcProvider(RPC, 11155111);
+/*
+ * Railway serves its own plain-text page while a container restarts, so a
+ * response is not guaranteed to be JSON. Retry once on that rather than
+ * reporting the host's cold start as a defect in the authority -- but only
+ * once, and only for a parse failure, so a genuinely broken route still fails.
+ */
+const upstreamAware = async (fn) => {
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const r = await fn();
+    const text = await r.text();
+    try {
+      return JSON.parse(text);
+    } catch {
+      if (attempt === 1) throw new Error(`the gateway's host answered, not the gateway: ${text.slice(0, 60)}`);
+      await new Promise((s) => setTimeout(s, 4000));
+    }
+  }
+};
+
 const post = (path, body) =>
-  fetch(`${GATEWAY}${path}`, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify(body),
-  }).then((r) => r.json());
+  upstreamAware(() =>
+    fetch(`${GATEWAY}${path}`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body),
+    })
+  );
 const newAgent = () => `qa${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}`;
 const newPayee = () =>
   "0x" + [...crypto.getRandomValues(new Uint8Array(20))].map((b) => b.toString(16).padStart(2, "0")).join("");

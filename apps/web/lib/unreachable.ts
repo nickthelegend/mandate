@@ -22,5 +22,17 @@ export function unreachable(e: unknown, opts: { stale?: boolean } = {}): string 
   if (/Failed to fetch|NetworkError|Load failed|ERR_/i.test(detail)) {
     return `The authority is not answering. It sleeps when idle, so the first request after a quiet spell can take a moment — try again.${caveat}`;
   }
+  /*
+   * A JSON parse failure means the host answered instead of the authority.
+   *
+   * Railway serves its own plain-text page while a container is starting or
+   * restarting, so `r.json()` throws `Unexpected token 'u', "upstream error"`
+   * — and quoting a parser at a reader tells them nothing about what happened.
+   * Seen for real: a suite run caught it mid-restart, which is exactly when a
+   * judge would hit it too.
+   */
+  if (/JSON|Unexpected token|Unexpected end of/i.test(detail)) {
+    return `The authority is restarting — its host answered instead of it. Give it a few seconds and try again.${caveat}`;
+  }
   return `The authority answered with something unexpected: ${detail}`;
 }
