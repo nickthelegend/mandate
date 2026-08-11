@@ -118,6 +118,8 @@ type Escalation = {
   recipient: string;
   expiresAt: string;
   transactionHash?: string;
+  /** Whether anyone was actually told, and how. Absent on older records. */
+  notified?: { via: string; at: string; to?: string; deliveryId?: string | null; error?: string };
 };
 
 type LogRow = {
@@ -184,6 +186,107 @@ function randomPayee(): string {
   const b = new Uint8Array(20);
   crypto.getRandomValues(b);
   return `0x${[...b].map((x) => x.toString(16).padStart(2, "0")).join("")}`;
+}
+
+/**
+ * KeeperHub's own account of an approved spend.
+ *
+ * The transaction hash proves money moved. This proves *who moved it*, which is
+ * the claim the whole product rests on: the agent holds no key and no ETH, and
+ * a relayer that is not the deployer signed the transfer with gas sponsored.
+ * A reader can check every part of it — the execution id resolves at /inspect
+ * and the relayer address is on Etherscan.
+ *
+ * Read after the decision has already rendered, so a slow executor never
+ * delays a verdict. Absent until it answers; never a placeholder claiming
+ * something it has not been told.
+ */
+function ExecutionDetail({ executionId }: { executionId: string }) {
+  const [rec, setRec] = useState<{
+    status?: string;
+    sponsored?: boolean;
+    type?: string;
+    receipts?: { chainId?: number; gasUsedWei?: string; from?: string }[];
+  } | null>(null);
+
+  useEffect(() => {
+    let live = true;
+    fetch(`${GATEWAY}/execution/${executionId}`)
+      .then((r) => r.json())
+      .then((d) => live && !d.error && setRec(d))
+      .catch(() => {});
+    return () => {
+      live = false;
+    };
+  }, [executionId]);
+
+  if (!rec) return null;
+  const from = rec.receipts?.[0]?.from;
+  return (
+    <div className="mt-4 rounded-[10px] border border-[var(--line)] bg-[var(--surface)] p-3">
+      <p className="field-label">Who actually signed it</p>
+      <p className="mt-1 text-[12px] leading-relaxed text-[var(--ink-3)]">
+        KeeperHub executed this as{" "}
+        <span className="figure text-[var(--ink)]">{rec.type ?? "transfer"}</span>
+        {rec.sponsored && (
+          <>
+            {" "}
+            with <span className="font-medium text-[var(--proven)]">gas sponsored</span>
+          </>
+        )}
+        {from && (
+          <>
+            , signed by{" "}
+            <a
+              href={addressUrl(from)}
+              target="_blank"
+              rel="noopener"
+              className="figure underline-offset-4 hover:text-[var(--ink)] hover:underline"
+            >
+              {short(from, 6, 4)}
+            </a>
+          </>
+        )}
+        . The agent holds no key and no ETH — this address is KeeperHub&rsquo;s, not the
+        deployer&rsquo;s, which is why a refusal here has nothing to route around it.
+      </p>
+      <a
+        href={`/mandate/inspect/?id=${executionId}`}
+        className="figure mt-2 inline-block text-[11px] text-[var(--ink-3)] underline-offset-4 hover:text-[var(--ink)] hover:underline"
+      >
+        read the full execution record →
+      </a>
+    </div>
+  );
+}
+
+/**
+ * How long is left to answer.
+ *
+ * An escalation that expires unanswered defaults to denied and the money never
+ * moves, so the deadline is not decoration — it is the thing that decides if
+ * nobody acts. A static timestamp makes a reader do arithmetic; this counts.
+ *
+ * Recomputed from `expiresAt` each tick rather than decremented, so a tab that
+ * was backgrounded comes back correct instead of however far behind it drifted.
+ */
+function Countdown({ expiresAt }: { expiresAt: string }) {
+  const left = () => Math.max(0, Math.floor((Date.parse(expiresAt) - Date.now()) / 1000));
+  const [s, setS] = useState(left);
+
+  useEffect(() => {
+    const t = setInterval(() => setS(left()), 1000);
+    return () => clearInterval(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [expiresAt]);
+
+  if (s <= 0) return <span className="text-[11px] text-[var(--ink-4)]">expired — denied by silence</span>;
+  const m = Math.floor(s / 60);
+  return (
+    <span className={cn("figure text-[11px]", s < 60 ? "text-[var(--refused)]" : "text-[var(--ink-4)]")}>
+      {m}:{String(s % 60).padStart(2, "0")} left to answer
+    </span>
+  );
 }
 
 export function AuthorityConsole() {
@@ -533,6 +636,31 @@ export function AuthorityConsole() {
                     {money(h.amount)} to <span className="figure">{short(h.recipient, 6, 4)}</span>
                   </p>
                   <p className="text-[12px] text-[var(--ink-3)]">{h.reason}</p>
+                  <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
+                    <Countdown expiresAt={h.expiresAt} />
+                    {/*
+                      * Whether a person was actually reached.
+                      *
+                      * "Held for a human" is only true if a human can find out,
+                      * so a delivery that failed is stated rather than left to
+                      * look like silence. `via: none` is its own answer: no
+                      * notifier is configured, which is different from one that
+                      * tried and could not.
+                      */}
+                    {h.notified?.error ? (
+                      <span className="text-[11px] text-[var(--refused)]">
+                        operator not reached — {h.notified.error}
+                      </span>
+                    ) : h.notified?.via === "none" ? (
+                      <span className="text-[11px] text-[var(--ink-4)]">
+                        no notifier configured — nobody was told
+                      </span>
+                    ) : h.notified ? (
+                      <span className="text-[11px] text-[var(--proven)]">
+                        operator notified{h.notified.deliveryId ? ` · ${h.notified.deliveryId}` : ""}
+                      </span>
+                    ) : null}
+                  </div>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
                   {resolving === h.id ? (
@@ -634,6 +762,10 @@ export function AuthorityConsole() {
               stays charged — un-charging a failed execution would make retries free.
             </p>
           ) : null}
+
+          {mandate.executionId && mandate.transactionHash && (
+            <ExecutionDetail executionId={mandate.executionId} />
+          )}
 
           {/*
             * What the vendor floor actually compared.
