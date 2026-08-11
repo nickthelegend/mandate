@@ -207,6 +207,32 @@ const run = await executeIfAuthorised(kh, decision, {
   tokenAddress: MANDATE_TOKEN,
 });
 
+/*
+ * Record the approval too.
+ *
+ * This file charged the budget and executed and wrote nothing, so an approved
+ * spend left no trace in the decision log while every refusal did — which is
+ * precisely the audit hole this project objects to, arriving in the file that
+ * teaches people how to build one. The gateway records on both paths; so does
+ * this now.
+ */
+await ledger.record({
+  at: new Date().toISOString(),
+  partitionKey: partition,
+  policyId: POLICY_ID,
+  intentHash: decision.intentHash,
+  decision: decision.decision,
+  failedRule: null,
+  reason: decision.reasons?.[0] ?? "within every limit",
+  amount,
+  recipient: PAYEE,
+  endpoint: intent.endpoint,
+  category,
+  rules: decision.rules,
+  ...(run.executionId ? { executionId: run.executionId } : {}),
+  ...(run.transactionHash ? { transactionHash: run.transactionHash } : {}),
+});
+
 const after = await ledger.read(partition);
 console.log(`\nexecuted via KeeperHub`);
 console.log(`  execution ${run.executionId}`);

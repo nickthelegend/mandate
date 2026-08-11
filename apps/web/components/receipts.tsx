@@ -166,7 +166,13 @@ export function Receipts() {
   const [open, setOpen] = useState<string | null>(null);
   const [proof, setProof] = useState<Proof | null>(null);
   const [checking, setChecking] = useState(false);
-  const [onChain, setOnChain] = useState<{ recomputed: string; agrees: boolean; chain: boolean | null } | null>(null);
+  const [onChain, setOnChain] = useState<{
+    recomputed: string;
+    agrees: boolean;
+    chain: boolean | null;
+    /** Which path produced the chain answer. The reader is told, not assumed. */
+    via: "browser" | "gateway" | null;
+  } | null>(null);
 
   const load = useCallback(async () => {
     setError(null);
@@ -216,6 +222,7 @@ export function Receipts() {
        */
       const data = `${IS_ANCHORED}${word(p.batchId)}${word(p.root)}`;
       let chain: boolean | null = null;
+      let via: "browser" | "gateway" | null = null;
       for (const url of DEPLOYMENT.rpcUrls) {
         try {
           const rpc = await fetch(url, {
@@ -234,12 +241,36 @@ export function Receipts() {
           if (out.error || !out.result) continue;
           // A bool comes back as a 32-byte word: all zeroes is false.
           chain = BigInt(out.result) === 1n;
+          via = "browser";
           break;
         } catch {
-          // Try the next one. Only exhausting the list means "could not ask".
+          // Try the next one.
         }
       }
-      setOnChain({ recomputed, agrees, chain });
+
+      /*
+       * Every public endpoint refused. Ask the gateway rather than reporting
+       * "could not ask" — two of these hosts changed their CORS policy in a
+       * single day, and a verification that fails because somebody else's
+       * endpoint moved is not a verification. The answer is labelled, so the
+       * weaker guarantee never arrives wearing the stronger one's name.
+       */
+      if (via === null) {
+        try {
+          const r = await fetch(
+            `${GATEWAY}/chain/is-anchored?batchId=${p.batchId}&root=${p.root}`,
+            { signal: AbortSignal.timeout(10000) }
+          );
+          const out = (await r.json()) as { anchored?: boolean };
+          if (r.ok && typeof out.anchored === "boolean") {
+            chain = out.anchored;
+            via = "gateway";
+          }
+        } catch {
+          // Genuinely could not ask. Rendered as exactly that.
+        }
+      }
+      setOnChain({ recomputed, agrees, chain, via });
     } finally {
       setChecking(false);
     }
@@ -377,10 +408,14 @@ export function Receipts() {
                           }
                         >
                           {onChain.chain === true
-                            ? "MandateReceipts confirms this exact root under this batch id"
+                            ? `MandateReceipts confirms this exact root under this batch id${
+                                onChain.via === "gateway"
+                                  ? " — asked through the gateway, because no public RPC would answer this browser"
+                                  : " — asked from this browser, with no server in the path"
+                              }`
                             : onChain.chain === false
                               ? "the contract does NOT hold this root — the anchor claim is false"
-                              : "the public RPC did not answer, so the chain was not asked"}
+                              : "no public RPC and not the gateway answered, so the chain was not asked"}
                         </p>
                         {proof.transactionHash && (
                           <a

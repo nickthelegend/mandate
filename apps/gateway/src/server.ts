@@ -344,6 +344,39 @@ const server = createServer(async (req, res) => {
     }
   }
 
+  /*
+   * One contract read, for the proof check on /ledger.
+   *
+   * That check asks the chain from the visitor's own browser, which is the
+   * strong version of the claim — no server in the path. It also depends on
+   * free public RPCs allowing browser origins, and two of them changed their
+   * CORS policy in a single day. A verification that reports "could not ask"
+   * because somebody else's endpoint moved is not much of a verification.
+   *
+   * So this exists as the fallback, and the page says which path answered.
+   * Verified-in-your-browser is a stronger claim than verified-by-us, and the
+   * reader is told which one they got rather than being handed the weaker one
+   * wearing the stronger one's name.
+   */
+  if (url.pathname === "/chain/is-anchored") {
+    const batchId = url.searchParams.get("batchId") ?? "";
+    const root = url.searchParams.get("root") ?? "";
+    if (!/^0x[0-9a-f]{64}$/i.test(batchId) || !/^0x[0-9a-f]{64}$/i.test(root)) {
+      return json(res, 400, { error: "batchId and root must each be 32 bytes of hex" });
+    }
+    try {
+      const { Contract } = await import("ethers");
+      const c = new Contract(
+        process.env.MANDATE_RECEIPTS ?? "0x64AE971Fda589E4C878F66452b8CE0533032f60d",
+        ["function isAnchored(bytes32,bytes32) view returns (bool)"],
+        provider
+      );
+      return json(res, 200, { anchored: Boolean(await c.isAnchored(batchId, root)), via: "gateway" });
+    } catch (e: unknown) {
+      return json(res, 503, { error: e instanceof Error ? e.message : String(e) });
+    }
+  }
+
   if (url.pathname === "/authority/deliveries") {
     const limit = Math.min(Number(url.searchParams.get("limit") ?? 20) || 20, 100);
     try {

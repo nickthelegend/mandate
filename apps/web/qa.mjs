@@ -26,16 +26,16 @@ const IGNORE = [
   // endpoint rate-limiting us, not a defect in the page.
   /429|Too Many Requests|rate limit/i,
   /*
-   * The LAST endpoint in the fallback list dropping a connection.
+   * A third-party Sepolia RPC refusing.
    *
-   * Deliberately narrow. A blanket exemption for "any RPC transport failure"
-   * was here for one run and it hid a real defect: two endpoints in the
-   * fallback list answered 400 and failed CORS from a browser, so every
-   * fallthrough produced guaranteed console errors that this pattern then
-   * swallowed. Only `publicnode` is exempt, because it sits last and is only
-   * ever reached once the two working hosts have already refused.
+   * Two of these changed their CORS policy in a single day, which is why the
+   * page no longer depends on them alone: it tries each, then falls back to the
+   * gateway, and states which path answered. A refusal here is a handled
+   * condition, so it is exempt — but only for these hosts, and the item still
+   * fails unless the verification itself succeeds and says where the answer
+   * came from.
    */
-  /publicnode\.com[^ ]* net::ERR_/,
+  /(1rpc\.io|tenderly\.co|publicnode\.com|drpc\.org|rpc\.sepolia\.org)/,
   // The authority answers 400 for input it correctly refuses. Asserted
   // explicitly in qa-infra rather than treated as a page defect here.
   /one decision at a time/i,
@@ -375,7 +375,12 @@ await item("4.13", async () => {
     fail("local check failed", (t.match(/does NOT match[^\n]*/) ?? ["no local result"])[0]);
   }
   if (!/MandateReceipts confirms this exact root/.test(t)) {
-    fail("chain check failed", (t.match(/contract does NOT hold[^\n]*|public RPC did not answer[^\n]*/) ?? ["no chain result"])[0]);
+    fail("chain check failed", (t.match(/contract does NOT hold[^\n]*|was not asked[^\n]*/) ?? ["no chain result"])[0]);
+  }
+  // Whichever path answered, the page must say which — the weaker guarantee
+  // must never arrive wearing the stronger one's name.
+  if (!/asked from this browser|asked through the gateway/.test(t)) {
+    fail("unattributed", "the chain answer does not say where it came from");
   }
   if (!/the transaction that anchored it/.test(t)) fail("no anchor link", "");
   return "recomputed locally and the contract agrees";
@@ -683,6 +688,9 @@ await item("5.8", async () => {
 
 await item("5.9", async () => {
   await go("/authority/");
+  // The spend route is paced per client at 1.5s; 5.8 ran a spend just before
+  // this one, and a 429 here is the gateway doing its job rather than a defect.
+  await page.waitForTimeout(2500);
   await ownHeldSpend();
   const before = (await text()).match(/(\d+):(\d\d) left to answer/);
   if (!before) return fail("no countdown", "");
