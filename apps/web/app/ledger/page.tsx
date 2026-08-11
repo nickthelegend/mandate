@@ -13,7 +13,7 @@
  */
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { Fragment, useCallback, useEffect, useState } from "react";
 
 import { PageHead } from "@/components/page-head";
 import { VerdictMark, stateOf } from "@/components/verdict";
@@ -31,6 +31,14 @@ const GATEWAY =
  * decision record: what was asked for, what was decided, and which rule decided
  * it, refusals included.
  */
+type RuleTrace = {
+  rule: string;
+  result: string;
+  observed?: string | number;
+  limit?: string | number;
+  note?: string;
+};
+
 type Entry = {
   at: string;
   decision: string;
@@ -39,6 +47,9 @@ type Entry = {
   amount: number;
   recipient: string;
   category: string;
+  intentHash: string;
+  policyVersion: number;
+  rules: RuleTrace[];
   transactionHash?: string;
 };
 
@@ -46,6 +57,15 @@ const money = (n: number) => `$${n.toFixed(2)}`;
 
 export default function LedgerPage() {
   const [entries, setEntries] = useState<Entry[]>([]);
+  /*
+   * Which decision is opened out, kept in the URL rather than in state alone.
+   *
+   * "Why was that one refused" is the question this page exists to answer, and
+   * until now the answer was a one-line reason with the full trace only
+   * available to whoever happened to be at the console when it happened. A
+   * decision that cannot be linked to cannot be cited.
+   */
+  const [open, setOpen] = useState<string | null>(null);
   const [total, setTotal] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -78,6 +98,25 @@ export default function LedgerPage() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  // Deep link: /ledger?intent=0x… opens that decision's trace on arrival.
+  useEffect(() => {
+    const want = new URLSearchParams(window.location.search).get("intent");
+    if (want) setOpen(want);
+  }, []);
+
+  const toggle = useCallback((hash: string) => {
+    setOpen((cur) => {
+      const next = cur === hash ? null : hash;
+      const url = new URL(window.location.href);
+      if (next) url.searchParams.set("intent", next);
+      else url.searchParams.delete("intent");
+      // replaceState, not push: expanding a row is not a navigation, and a back
+      // button that walks through every row a reader opened is a worse page.
+      window.history.replaceState(null, "", url);
+      return next;
+    });
+  }, []);
 
   return (
     <>
@@ -141,7 +180,11 @@ export default function LedgerPage() {
             </thead>
             <tbody>
               {entries.map((e, i) => (
-                <tr key={`${e.at}-${i}`} className="border-b border-[var(--line)] align-top">
+                <Fragment key={`${e.at}-${i}`}>
+                <tr
+                  className="cursor-pointer border-b border-[var(--line)] align-top hover:bg-[var(--surface)]"
+                  onClick={() => toggle(e.intentHash)}
+                >
                   <td className="figure whitespace-nowrap px-3 py-4 text-xs text-[var(--ink-3)]">
                     {e.at.replace("T", " ").slice(0, 19)}
                   </td>
@@ -158,8 +201,58 @@ export default function LedgerPage() {
                   <td className="figure whitespace-nowrap px-3 py-4 text-xs">{e.failedRule ?? "—"}</td>
                   <td className="max-w-[46ch] px-3 py-4 font-mono text-xs leading-relaxed text-[var(--ink-3)]">
                     {e.reason}
+                    <span className="mt-1 block text-[10px] text-[var(--ink-4)]">
+                      {open === e.intentHash ? "hide the trace" : "show every rule it consulted"}
+                    </span>
                   </td>
                 </tr>
+
+                {open === e.intentHash && (
+                  <tr className="border-b border-[var(--line)] bg-[var(--surface)]">
+                    <td colSpan={5} className="px-3 py-4">
+                      <p className="text-[11px] text-[var(--ink-4)]">
+                        intent <span className="figure text-[var(--ink-3)]">{e.intentHash}</span> ·
+                        policy v{e.policyVersion} · {e.rules.length} of 15 rules consulted
+                      </p>
+                      <div className="mt-2 grid gap-x-6 gap-y-1 sm:grid-cols-2 lg:grid-cols-3">
+                        {e.rules.map((r, ri) => (
+                          <div key={`${r.rule}-${ri}`} className="flex items-baseline gap-2 text-[11px]">
+                            <span
+                              className={
+                                r.result === "FAIL"
+                                  ? "text-[var(--refused)] font-semibold"
+                                  : "text-[var(--proven)]"
+                              }
+                            >
+                              {r.result === "FAIL" ? "✕" : "✓"}
+                            </span>
+                            <span className="figure text-[var(--ink-3)]">{r.rule}</span>
+                            {r.observed !== undefined && (
+                              <span className="figure text-[var(--ink-4)]">
+                                {String(r.observed)}
+                                {r.limit !== undefined ? ` / ${r.limit}` : ""}
+                              </span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                      {/*
+                        * The rules AFTER the refusal are absent, not passing.
+                        * Saying the count out loud stops a reader assuming a
+                        * short trace means a short policy.
+                        */}
+                      {e.rules.length < 15 && (
+                        <p className="mt-2 text-[11px] text-[var(--ink-4)]">
+                          The chain stopped at{" "}
+                          <span className="figure">{e.failedRule}</span>; the remaining{" "}
+                          {15 - e.rules.length} rule{15 - e.rules.length === 1 ? "" : "s"} were never
+                          consulted.
+                        </p>
+                      )}
+                    </td>
+                  </tr>
+                )}
+                </Fragment>
               ))}
             </tbody>
           </table>
