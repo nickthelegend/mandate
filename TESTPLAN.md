@@ -148,6 +148,53 @@ pages, eleven endpoints, three contracts, six packages.
 
 ---
 
+## Results — 2026-08-11
+
+Executed against the live deployment, not a local build.
+
+| Section | Runner | Result |
+|---|---|---|
+| 1. Contracts | `node apps/web/qa-infra.mjs` | 10 / 10 |
+| 2. Endpoints | `node apps/web/qa-infra.mjs` | 27 / 27 |
+| 3. The authority | `node apps/web/qa-live.mjs` | 21 / 21 |
+| 4. Pages | `node apps/web/qa.mjs` | 11 / 11 |
+| 5. Interaction edges | `node apps/web/qa.mjs` | 7 / 7 |
+| 6. Integrations | `node apps/web/qa-infra.mjs` | 9 / 10 |
+| 7. Hygiene | `node apps/web/qa-infra.mjs` | 6 / 6 |
+| | | **91 / 92** |
+
+Zero console errors, zero uncaught exceptions, zero failed requests and no
+unexpected HTTP ≥ 400 across every page in sections 4 and 5. 216 unit and
+contract tests pass, 0 fail. 0 typecheck errors. Both CI workflows green on the
+head commit. No mock, stub or fixture stands in for anything on any of these
+paths: every transaction is on Sepolia, every budget figure comes out of Mongo,
+every KeeperHub call is a real API call.
+
+**Open: 6.9.** `mandate-sdk`, `mandate-policy` and `mandate-mcp` are built,
+packable and tested, but not published — the stored npm token answers 401, and
+re-authenticating is not something this side can do. Until they are published,
+`npm i mandate-sdk` in the docs is a promise the registry does not keep.
+
+### What the first run caught
+
+The plan was written before it was run, and the first pass was 47/53 with six
+genuine defects behind it — recorded here because a plan that only ever passes
+is not evidence that it was executed.
+
+- CI had been red on every push: `contracts/test` still exercised
+  `OutcomeEscrow` and `USDCx`, both deleted, and the entry-point guard still
+  asserted a `./react` build that no longer exists.
+- CI ran two of six package suites. The rule engine, the bureau, the escalation
+  state machine and the receipt tree — 112 tests — were never run on a push.
+- `mandate-mcp` shipped with no tests at all.
+- `/ledger` showed every visitor an empty table: the public log defaulted to the
+  `shared` partition while every real decision is written per agent.
+- The ledger rendered proven / not proven / awaiting, and `/inspect` invited a
+  sceptic to "check this one yourself" through a link to a deleted route.
+- The npm descriptions, both package READMEs and the marketplace listing all
+  still sold the escrow product; the listing was public and priced, and its
+  workflow errored on an unresolved input reference.
+
 ## Explicitly untestable here
 
 Recorded rather than marked PASS.
@@ -157,6 +204,6 @@ Recorded rather than marked PASS.
 - **Buying a paid marketplace listing.** Settles in Base **mainnet** USDC.
   Discovery, challenge parsing, binding and signature are verified; the
   purchase is not.
-- **npm publish under the new names.** `mandate-sdk` and the rest are not
-  published; the previous names are. Publishing is outward-facing and the
-  names are new, so it is left for a deliberate release.
+- **A user rejecting a real wallet prompt.** Nothing on this site asks a
+  visitor to sign; the authority holds no key of theirs. There is no flow to
+  reject.
