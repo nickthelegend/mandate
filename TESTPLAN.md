@@ -65,6 +65,11 @@ pages, eleven endpoints, three contracts, six packages.
 | 2.25 | Resolve an unknown escalation | 200, `outcome == "IGNORED_NOT_FOUND"` |
 | 2.26 | A route that does not exist | 404 naming the path |
 | 2.27 | The removed product's routes are gone | `/demo`, `/agent`, `/article`, `/audit` all 404 |
+| 2.28 | `GET /health` names each dependency | four checks — mongo, sepolia, policy-anchor, keeperhub — each with `up` and a timing; aggregate `UP` |
+| 2.29 | `POST /hook/operator` | 200 with a delivery id, and the body appears at `/authority/deliveries` |
+| 2.30 | `POST /hook/operator` malformed | 400, "body must be JSON" |
+| 2.31 | `GET /hook/operator` | 405, "POST only" |
+| 2.32 | `GET /authority/deliveries` | 200, names the destination notices are sent to |
 
 ## 3. The authority, end to end
 
@@ -91,6 +96,10 @@ pages, eleven endpoints, three contracts, six packages.
 | 3.19 | A decision produces a receipt | a spend appears in `/authority/receipts` |
 | 3.20 | Receipts climb the ladder | QUEUED → BATCHED/SUBMITTED → CONFIRMED |
 | 3.21 | A receipt proof verifies independently | recomputes the root **and** the contract agrees |
+| 3.22 | A held spend notifies the operator | the escalation carries `notified` with a delivery id, and the notice is in `/authority/deliveries` |
+| 3.23 | The notice never blocks the decision | the verdict returns before delivery; a held spend with an unreachable operator still holds correctly |
+| 3.24 | Simulation runs on the approval path only | an approved spend carries 15 rules; a refusal carries no `execution.simulated` |
+| 3.25 | The simulator would catch a revert | a transfer to the zero address returns `ERC20InvalidReceiver`; over-balance returns `ERC20InsufficientBalance` |
 
 ## 4. Pages
 
@@ -107,6 +116,12 @@ pages, eleven endpoints, three contracts, six packages.
 | 4.9 | Every page | no horizontal overflow at 375 / 768 / 1440 |
 | 4.10 | Every page | no stray `console.log` |
 | 4.11 | Every internal link resolves | no `href` points at a deleted route |
+| 4.12 | `/ledger` receipts | the ladder renders per receipt, with what the last tick moved |
+| 4.13 | A receipt proof, checked in the browser | recomputed locally **and** `MandateReceipts confirms this exact root` |
+| 4.14 | The proof is exportable | leaf, proof, root and batchId available as JSON |
+| 4.15 | An approved spend shows who signed it | "gas sponsored", the signing address linked, and it is not the deployer |
+| 4.16 | A held spend counts down | `M:SS left to answer`, decreasing |
+| 4.17 | A held spend says whether anyone was told | notified / not reached / no notifier — never silence |
 
 ## 5. Interaction edges
 
@@ -119,6 +134,8 @@ pages, eleven endpoints, three contracts, six packages.
 | 5.5 | Back then forward | the page still works |
 | 5.6 | Click Release the instant it appears | the request is sent, not silently dropped |
 | 5.7 | Held spend from another session | explains why it cannot be released; no dead button |
+| 5.8 | Checking a proof twice | the second check re-runs and agrees; no stale panel from the first |
+| 5.9 | The countdown across a reload | continues from the real deadline, not from where it was |
 
 ## 6. External integrations
 

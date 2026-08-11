@@ -398,6 +398,49 @@ await item("2.27", async () => {
   return "demo, agent, article, audit, verify, settle all 404";
 });
 
+await item("2.28", async () => {
+  const b = await jget("/health");
+  const names = (b.checks ?? []).map((c) => c.name).sort();
+  must(
+    JSON.stringify(names) === JSON.stringify(["keeperhub", "mongo", "policy-anchor", "sepolia"]),
+    `checks are ${names.join(", ")}`
+  );
+  for (const c of b.checks) {
+    must(typeof c.up === "boolean" && typeof c.ms === "number", `${c.name} reports no verdict or timing`);
+    must(c.detail, `${c.name} says nothing about what it found`);
+  }
+  must(b.status === "UP", `aggregate is ${b.status}`);
+  return b.checks.map((c) => `${c.name} ${c.up ? "up" : "DOWN"}`).join(", ");
+});
+
+const HOOK_MARK = `qa-${Date.now().toString(36)}`;
+await item("2.29", async () => {
+  const b = await jpost("/hook/operator", { kind: "held-spend", escalationId: HOOK_MARK }, 200);
+  must(b.received === true && /^dlv_/.test(b.id ?? ""), `unexpected: ${JSON.stringify(b).slice(0, 80)}`);
+  // It must be readable back — a hook that 200s and discards the body is not a
+  // delivery record, which is the only reason this endpoint exists.
+  const list = await jget("/authority/deliveries?limit=25");
+  const mine = list.entries.find((e) => e.body?.escalationId === HOOK_MARK);
+  must(mine, "the delivery was accepted and is not in the record");
+  return `${b.id}, readable back`;
+});
+await item("2.30", async () => {
+  const b = await jpost("/hook/operator", "{nope", 400);
+  must(/body must be JSON/.test(b.error), b.error);
+  return b.error;
+});
+await item("2.31", async () => {
+  const r = await fetch(`${G}/hook/operator`);
+  must(r.status === 405, `expected 405, got ${r.status}`);
+  return "405 POST only";
+});
+await item("2.32", async () => {
+  const b = await jget("/authority/deliveries?limit=3");
+  must(/^https?:\/\//.test(b.destination ?? ""), `destination is ${b.destination}`);
+  must(Array.isArray(b.entries), "no entries array");
+  return `notices go to ${b.destination}`;
+});
+
 // ── 6. External integrations ────────────────────────────────────────────────
 console.log("\n6. EXTERNAL INTEGRATIONS");
 await item("6.1", async () => {

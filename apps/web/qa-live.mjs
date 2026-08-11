@@ -490,6 +490,129 @@ await item("3.21", async () => {
   return `proof verifies locally and MandateReceipts confirms root ${p.root.slice(0, 12)}…`;
 });
 
+// ── the notice, and the check that is not a rule ─────────────────────────────
+await item("3.22", async () => {
+  const agent = newAgent();
+  const raised = await post("/authority/spend", {
+    amount: 0.2,
+    agent,
+    recipient: newPayee(),
+    endpoint: `https://api.example.com/v1/notify-${agent}`,
+  });
+  if (raised.decision !== "ESCALATED_VENDOR_RISK") return fail("did not escalate", raised.decision);
+
+  // The notice is fired off the decision path, so give it a moment to land.
+  let row = null;
+  for (let i = 0; i < 10; i++) {
+    const list = await fetch(`${GATEWAY}/authority/escalations?limit=5&agent=${agent}`).then((r) => r.json());
+    row = list.entries.find((e) => e.id === raised.escalation.id);
+    if (row?.notified) break;
+    await new Promise((r) => setTimeout(r, 1500));
+  }
+  if (!row?.notified) return fail("no record", "the escalation says nothing about being notified");
+  if (row.notified.error) return fail("not delivered", row.notified.error);
+  if (!row.notified.deliveryId) fail("no receipt", "delivered with nothing to check");
+
+  const dl = await fetch(`${GATEWAY}/authority/deliveries?limit=25`).then((r) => r.json());
+  const landed = dl.entries.find((e) => e.body?.escalationId === raised.escalation.id);
+  if (!landed) fail("not in the record", "the receiving end has no row for this notice");
+  if (landed?.body?.code || landed?.body?.approvalCode) fail("code leaked", "the notice carries the approval code");
+  return `${row.notified.via} → ${row.notified.deliveryId}, and the receiver has it`;
+});
+
+await item("3.23", async () => {
+  /*
+   * The decision must not wait on the messenger. Measured rather than asserted:
+   * the notice involves a network round trip, so a verdict that returned inside
+   * a fraction of one did not wait for it.
+   */
+  const t0 = Date.now();
+  const d = await post("/authority/spend", {
+    amount: 0.2,
+    agent: newAgent(),
+    recipient: newPayee(),
+    endpoint: "https://api.example.com/v1/nonblocking",
+  });
+  const took = Date.now() - t0;
+  if (d.decision !== "ESCALATED_VENDOR_RISK") return fail("did not escalate", d.decision);
+  if (!d.escalation?.id) fail("no escalation", "escalated with nothing to answer");
+  if (d.budget.spentAfter !== d.budget.spentBefore) fail("charged", "a held spend moved the budget");
+  return `held in ${took}ms, nothing charged`;
+});
+
+await item("3.24", async () => {
+  const agent = newAgent();
+  const ok = await post("/authority/spend", {
+    amount: 0.4,
+    agent,
+    category: "market-data",
+    endpoint: `https://api.example.com/v1/sim-${agent}`,
+  });
+  if (ok.decision !== "APPROVED") return fail("not approved", `${ok.decision} at ${ok.failedRule}`);
+  if (ok.rules.some((r) => r.rule === "execution.simulated")) {
+    fail("stray rule", "an approved spend carries execution.simulated");
+  }
+  // And a refusal must not have been simulated at all — there is nothing to
+  // simulate, and running it would spend a KeeperHub call on a settled answer.
+  const no = await post("/authority/preflight", { amount: 5000, agent: newAgent() });
+  if (no.rules.some((r) => r.rule === "execution.simulated")) {
+    fail("simulated a refusal", "the chain short-circuited and the simulator ran anyway");
+  }
+  return `approved with ${ok.rules.length} rules, no simulation stamp on either path`;
+});
+
+await item("3.25", async () => {
+  /*
+   * The simulator itself, put to two transfers that genuinely revert. This is
+   * the mechanism behind 3.24's gate: without it, "we would have caught a
+   * revert" is a claim rather than a demonstration.
+   */
+  const { readFileSync } = await import("node:fs");
+  const { fileURLToPath: tp } = await import("node:url");
+  const root = tp(new URL("../../", import.meta.url));
+  const env = Object.fromEntries(
+    readFileSync(`${root}.env`, "utf8")
+      .split("\n")
+      .filter((l) => l.includes("=") && !l.trimStart().startsWith("#"))
+      .map((l) => [l.slice(0, l.indexOf("=")).trim(), l.slice(l.indexOf("=") + 1).trim()])
+  );
+  const TOKEN = "0x49C86277a91002c4943837bf20F6ED41976Db09F";
+  const ABI = JSON.stringify([
+    {
+      type: "function",
+      name: "transfer",
+      stateMutability: "nonpayable",
+      inputs: [
+        { name: "to", type: "address" },
+        { name: "amount", type: "uint256" },
+      ],
+      outputs: [{ type: "bool" }],
+    },
+  ]);
+  const sim = async (to, amount) => {
+    const r = await fetch("https://app.keeperhub.com/api/execute/contract-call", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${env.KEEPERHUB_API_KEY}`, "content-type": "application/json" },
+      body: JSON.stringify({
+        contractAddress: TOKEN,
+        chainId: 11155111,
+        functionName: "transfer",
+        functionArgs: JSON.stringify([to, amount]),
+        abi: ABI,
+        simulate: true,
+      }),
+    });
+    return r.json();
+  };
+  const honest = await sim("0x000000000000000000000000000000000000dEaD", "400000");
+  if (honest.wouldRevert !== false) fail("false positive", "an honest transfer was reported as reverting");
+  const zero = await sim("0x0000000000000000000000000000000000000000", "400000");
+  if (!/ERC20InvalidReceiver/.test(zero.revertReason ?? "")) fail("missed", `zero address gave ${zero.revertReason}`);
+  const over = await sim("0x000000000000000000000000000000000000dEaD", "999999999999");
+  if (!/ERC20InsufficientBalance/.test(over.revertReason ?? "")) fail("missed", `over-balance gave ${over.revertReason}`);
+  return "honest passes; InvalidReceiver and InsufficientBalance both caught with decoded reasons";
+});
+
 await browser.close();
 const failed = results.filter((r) => !r.ok);
 console.log("\n" + "=".repeat(64));

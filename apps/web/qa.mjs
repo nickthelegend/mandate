@@ -25,6 +25,14 @@ const IGNORE = [
   // Public RPCs push back under a burst of automated loads. That is the
   // endpoint rate-limiting us, not a defect in the page.
   /429|Too Many Requests|rate limit/i,
+  /*
+   * A free RPC host dropping a connection, which the page now survives by
+   * trying the next endpoint. Scoped to the transport failure against a
+   * third-party RPC — anything from our own origin or the gateway still fails
+   * the item, and so does the verification itself not succeeding.
+   */
+  /(publicnode\.com|drpc\.org|rpc\.sepolia\.org|1rpc\.io)[^ ]* net::ERR_/,
+  /^Failed to load resource: net::ERR_CONNECTION_CLOSED$/,
   // The authority answers 400 for input it correctly refuses. Asserted
   // explicitly in qa-infra rather than treated as a page defect here.
   /one decision at a time/i,
@@ -278,6 +286,112 @@ await item("4.11", async () => {
   return `${seen.size} internal links, all resolve`;
 });
 
+/*
+ * The receipts surface. Uses its own page so the ledger items above are not
+ * disturbed by the panels these open.
+ */
+await item("4.12", async () => {
+  await go("/ledger/");
+  const t = await text();
+  if (!/WHAT BACKS THE RECORD/i.test(t)) return fail("no receipts section", "the evidence layer is invisible");
+  if (!/last tick: \d+ batched, \d+ submitted, \d+ confirmed/.test(t)) {
+    fail("no tick report", "the page does not say what the last tick moved");
+  }
+  const statuses = (t.match(/QUEUED|BATCHED|SUBMITTED|CONFIRMED|DEGRADED_UNANCHORED/g) ?? []).length;
+  if (statuses === 0) return fail("no receipts", "the ladder renders nothing");
+  // The ladder is drawn, not just named: four segments per receipt.
+  const segs = await page.evaluate(
+    () => [...document.querySelectorAll("span[title]")].filter((s) => s.querySelectorAll("span").length === 4).length
+  );
+  if (segs === 0) fail("no ladder", "statuses are listed but the ladder is not drawn");
+  return `${statuses} receipts, ${segs} ladders drawn`;
+});
+
+await item("4.13", async () => {
+  const btn = page.locator("button", { hasText: "Check the proof" });
+  if ((await btn.count()) === 0) return fail("nothing checkable", "no CONFIRMED receipt offers a proof");
+  await btn.first().click();
+  await page.waitForTimeout(8000);
+  const t = await text();
+  if (!/computed in this browser, and it matches/.test(t)) {
+    fail("local check failed", (t.match(/does NOT match[^\n]*/) ?? ["no local result"])[0]);
+  }
+  if (!/MandateReceipts confirms this exact root/.test(t)) {
+    fail("chain check failed", (t.match(/contract does NOT hold[^\n]*|public RPC did not answer[^\n]*/) ?? ["no chain result"])[0]);
+  }
+  if (!/the transaction that anchored it/.test(t)) fail("no anchor link", "");
+  return "recomputed locally and the contract agrees";
+});
+
+await item("4.14", async () => {
+  // The proof must be takeable elsewhere, or "check it yourself" is a slogan.
+  await page.evaluate(() => {
+    const d = [...document.querySelectorAll("details")].find((x) => /the proof itself/.test(x.textContent ?? ""));
+    if (d) d.open = true;
+  });
+  await page.waitForTimeout(600);
+  const json = await page.evaluate(() => document.querySelector("details pre")?.textContent ?? "");
+  let parsed = null;
+  try {
+    parsed = JSON.parse(json);
+  } catch {
+    return fail("not JSON", json.slice(0, 80));
+  }
+  for (const k of ["leaf", "proof", "root", "batchId"]) {
+    if (!(k in parsed)) fail("incomplete", `the export has no ${k}`);
+  }
+  if (!Array.isArray(parsed.proof)) fail("bad shape", "proof is not an array");
+  return `leaf, proof(${parsed.proof.length}), root, batchId`;
+});
+
+await item("4.15", async () => {
+  await go("/authority/");
+  await page.locator("button", { hasText: "Buy market data" }).first().click();
+  await page.waitForSelector("text=Who actually signed it", { timeout: 180000 }).catch(() => {});
+  await page.waitForTimeout(5000);
+  const t = await text();
+  const line = (t.match(/KeeperHub executed this as[^\n]*/) ?? [null])[0];
+  if (!line) return fail("no execution detail", "an approval does not say who signed it");
+  if (!/gas sponsored/.test(line)) fail("no sponsorship", line.slice(0, 90));
+  const signer = await page.evaluate(() => {
+    const a = [...document.querySelectorAll("a")].find((x) => /\/address\//.test(x.getAttribute("href") ?? ""));
+    return a?.getAttribute("href") ?? null;
+  });
+  if (!signer) fail("no signer link", "the signing address is stated and not checkable");
+  if (/0x7A2E11B3ECEBaB8Ea46966eDaDD4092583809b67/i.test(signer ?? "")) {
+    fail("the deployer signed", "the whole claim is that it does not");
+  }
+  return `sponsored, signer linked, not the deployer`;
+});
+
+/** A held spend of this browser's own, for the two items below. */
+async function ownHeldSpend() {
+  await page.locator("button", { hasText: "Pay someone new" }).first().click();
+  await page.waitForSelector("text=Waiting on you", { timeout: 120000 });
+  await page.waitForTimeout(4000);
+}
+
+await item("4.16", async () => {
+  await ownHeldSpend();
+  const first = (await text()).match(/(\d+):(\d\d) left to answer/);
+  if (!first) return fail("no countdown", "a held spend shows no deadline");
+  await page.waitForTimeout(3000);
+  const second = (await text()).match(/(\d+):(\d\d) left to answer/);
+  if (!second) return fail("countdown vanished", "");
+  const a = Number(first[1]) * 60 + Number(first[2]);
+  const b = Number(second[1]) * 60 + Number(second[2]);
+  if (b >= a) fail("not counting", `${first[0]} then ${second[0]}`);
+  return `${first[0]} → ${second[0]}`;
+});
+
+await item("4.17", async () => {
+  const t = await text();
+  const said = (t.match(/operator notified[^\n]*|operator not reached[^\n]*|no notifier configured[^\n]*/) ?? [null])[0];
+  if (!said) return fail("silence", "the page does not say whether anyone was told");
+  if (/not reached/.test(said)) fail("not delivered", said);
+  return said.slice(0, 70);
+});
+
 // ── 5. Interaction edges ────────────────────────────────────────────────────
 console.log("\n5. INTERACTION EDGES");
 
@@ -418,6 +532,39 @@ await item("5.7", async () => {
   } finally {
     await c.close();
   }
+});
+
+await item("5.8", async () => {
+  // A second check must re-run, not show the first one's panel.
+  await go("/ledger/");
+  const btns = page.locator("button", { hasText: "Check the proof" });
+  if ((await btns.count()) < 2) return fail("not enough receipts", "need two to check twice");
+  await btns.nth(0).click();
+  await page.waitForTimeout(7000);
+  const firstRoot = (await text()).match(/→ (0x[0-9a-f]{6}…[0-9a-f]{8})/i)?.[1] ?? null;
+  await btns.nth(1).click();
+  await page.waitForTimeout(7000);
+  const t = await text();
+  if (!/computed in this browser, and it matches/.test(t)) fail("second check failed", "");
+  const panels = (t.match(/computed in this browser/g) ?? []).length;
+  if (panels !== 1) fail("stale panel", `${panels} result panels open at once`);
+  return `checked twice, ${firstRoot ? "roots differ per receipt" : "single panel"}`;
+});
+
+await item("5.9", async () => {
+  await go("/authority/");
+  await ownHeldSpend();
+  const before = (await text()).match(/(\d+):(\d\d) left to answer/);
+  if (!before) return fail("no countdown", "");
+  await page.reload({ waitUntil: "networkidle" });
+  await page.waitForTimeout(6000);
+  const after = (await text()).match(/(\d+):(\d\d) left to answer/);
+  if (!after) return fail("countdown lost", "the deadline does not survive a reload");
+  const a = Number(before[1]) * 60 + Number(before[2]);
+  const b = Number(after[1]) * 60 + Number(after[2]);
+  // It must continue from the real deadline, not restart.
+  if (b > a) fail("restarted", `${before[0]} → ${after[0]}, which is longer`);
+  return `${before[0]} → ${after[0]}, continued from the real deadline`;
 });
 
 // ── done ────────────────────────────────────────────────────────────────────

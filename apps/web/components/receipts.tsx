@@ -140,30 +140,36 @@ export function Receipts() {
        * server in this path — if the contract disagreed with the gateway, this
        * is where a reader would find out, which is the only reason to show the
        * two answers apart.
+       *
+       * Tried across several endpoints. A free RPC dropping a connection is
+       * common and says nothing about the contract, so one host refusing must
+       * not read as a failed verification — the answer only becomes "could not
+       * ask" when every endpoint has been tried.
        */
+      const data = `${IS_ANCHORED}${word(p.batchId)}${word(p.root)}`;
       let chain: boolean | null = null;
-      try {
-        const rpc = await fetch(DEPLOYMENT.rpcUrl, {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({
-            jsonrpc: "2.0",
-            id: 1,
-            method: "eth_call",
-            params: [
-              { to: RECEIPTS_ADDRESS, data: `${IS_ANCHORED}${word(p.batchId)}${word(p.root)}` },
-              "latest",
-            ],
-          }),
-        });
-        const out = (await rpc.json()) as { result?: string; error?: unknown };
-        if (out.error || !out.result) throw new Error("rpc");
-        // A bool comes back as a 32-byte word: all zeroes is false.
-        chain = BigInt(out.result) === 1n;
-      } catch {
-        // A public RPC refusing is not the contract disagreeing. Left null and
-        // rendered as "could not ask" rather than as a failed verification.
-        chain = null;
+      for (const url of DEPLOYMENT.rpcUrls) {
+        try {
+          const rpc = await fetch(url, {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({
+              jsonrpc: "2.0",
+              id: 1,
+              method: "eth_call",
+              params: [{ to: RECEIPTS_ADDRESS, data }, "latest"],
+              // A dead endpoint must not hold the panel open indefinitely.
+            }),
+            signal: AbortSignal.timeout(8000),
+          });
+          const out = (await rpc.json()) as { result?: string; error?: unknown };
+          if (out.error || !out.result) continue;
+          // A bool comes back as a 32-byte word: all zeroes is false.
+          chain = BigInt(out.result) === 1n;
+          break;
+        } catch {
+          // Try the next one. Only exhausting the list means "could not ask".
+        }
       }
       setOnChain({ recomputed, agrees, chain });
     } finally {

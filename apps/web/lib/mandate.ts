@@ -15,6 +15,25 @@ export const DEPLOYMENT = {
   chainId: 11155111,
   chainName: "Sepolia",
   rpcUrl: "https://ethereum-sepolia-rpc.publicnode.com",
+  /**
+   * More than one, in preference order.
+   *
+   * The proof check on /ledger is the page's "don't take our word for it"
+   * affordance, and it was pointed at a single free endpoint — which closed the
+   * connection under two calls in quick succession, turning a working
+   * verification into a red console error and an "the RPC did not answer" that
+   * had nothing to do with the contract. A claim a reader is invited to check
+   * must not hinge on one host being up.
+   *
+   * All public and keyless on purpose: the check has to run in a visitor's own
+   * browser with nothing configured, or it is not independent verification.
+   */
+  rpcUrls: [
+    "https://ethereum-sepolia-rpc.publicnode.com",
+    "https://sepolia.drpc.org",
+    "https://rpc.sepolia.org",
+    "https://1rpc.io/sepolia",
+  ],
   /** PolicyRegistry: where a spend policy is anchored, and where a pause takes effect. */
   registry: "0x13452fcA19819d37Fa4b01a0e64C8Fce60C5E304",
   token: "0x49C86277a91002c4943837bf20F6ED41976Db09F",
