@@ -165,52 +165,63 @@ pages, eleven endpoints, three contracts, six packages.
 
 ---
 
-## Results — 2026-08-11
+## Results — 2026-08-11, second full pass
 
-Executed against the live deployment, not a local build.
+Every item executed against the live deployment. Browser items run in a real
+Chromium against `nickthelegend.github.io/mandate`; endpoint items against the
+live Railway gateway; contract items against Sepolia over a public RPC.
 
 | Section | Runner | Result |
 |---|---|---|
-| 1. Contracts | `node apps/web/qa-infra.mjs` | 10 / 10 |
-| 2. Endpoints | `node apps/web/qa-infra.mjs` | 27 / 27 |
-| 3. The authority | `node apps/web/qa-live.mjs` | 21 / 21 |
-| 4. Pages | `node apps/web/qa.mjs` | 11 / 11 |
-| 5. Interaction edges | `node apps/web/qa.mjs` | 7 / 7 |
-| 6. Integrations | `node apps/web/qa-infra.mjs` | 9 / 10 |
-| 7. Hygiene | `node apps/web/qa-infra.mjs` | 6 / 6 |
-| | | **91 / 92** |
+| 1. Contracts | `qa-infra.mjs` | 10 / 10 |
+| 2. Endpoints | `qa-infra.mjs` | 32 / 32 |
+| 3. The authority | `qa-live.mjs` | 25 / 25 |
+| 4. Pages | `qa.mjs` | 17 / 17 |
+| 5. Interaction edges | `qa.mjs` | 9 / 9 |
+| 6. Integrations | `qa-infra.mjs` | 9 / 10 |
+| 7. Hygiene | `qa-infra.mjs` | 6 / 6 |
+| | | **108 / 109** |
 
-Zero console errors, zero uncaught exceptions, zero failed requests and no
-unexpected HTTP ≥ 400 across every page in sections 4 and 5. 216 unit and
-contract tests pass, 0 fail. 0 typecheck errors. Both CI workflows green on the
-head commit. No mock, stub or fixture stands in for anything on any of these
-paths: every transaction is on Sepolia, every budget figure comes out of Mongo,
-every KeeperHub call is a real API call.
+**Zero mocks, zero stubs, zero fallback data** in the tested surface — asserted
+by 7.1, which greps every shipped `.ts`/`.tsx`/`.sol` and allows only comments
+about past bugs. **Zero console errors, zero uncaught exceptions, zero failed
+requests and no unexpected HTTP ≥ 400** across every page — the watchers in
+`qa.mjs` fail an item on any of them, and all 26 passed. Every transaction is on
+Sepolia, every budget figure comes from Mongo, every KeeperHub call is real.
 
-**Open: 6.9.** `mandate-sdk`, `mandate-policy` and `mandate-mcp` are built,
-packable and tested, but not published — the stored npm token answers 401, and
-re-authenticating is not something this side can do. Until they are published,
-`npm i mandate-sdk` in the docs is a promise the registry does not keep.
+### The one that is not green
 
-### What the first run caught
+**6.9 — npm publish. FAIL, blocked on a credential.** `mandate-sdk`,
+`mandate-policy` and `mandate-mcp` are built, packable and tested, and the site
+tells a reader to install them. The registry 404s. The stored npm token answers
+401 and re-authenticating is not something this side can do:
 
-The plan was written before it was run, and the first pass was 47/53 with six
-genuine defects behind it — recorded here because a plan that only ever passes
-is not evidence that it was executed.
+```
+npm login
+npm publish -w mandate-policy -w mandate-sdk -w mandate-mcp
+```
 
-- CI had been red on every push: `contracts/test` still exercised
-  `OutcomeEscrow` and `USDCx`, both deleted, and the entry-point guard still
-  asserted a `./react` build that no longer exists.
-- CI ran two of six package suites. The rule engine, the bureau, the escalation
-  state machine and the receipt tree — 112 tests — were never run on a push.
-- `mandate-mcp` shipped with no tests at all.
-- `/ledger` showed every visitor an empty table: the public log defaulted to the
-  `shared` partition while every real decision is written per agent.
-- The ledger rendered proven / not proven / awaiting, and `/inspect` invited a
-  sceptic to "check this one yourself" through a link to a deleted route.
-- The npm descriptions, both package READMEs and the marketplace listing all
-  still sold the escrow product; the listing was public and priced, and its
-  workflow errored on an unresolved input reference.
+Not marked untested — it was tested and it failed. It is recorded as a real
+outstanding defect rather than softened into a pass.
+
+### What this pass caught and fixed
+
+- **5.8 — the proof check hinged on one public RPC.** Two checks in quick
+  succession got `ERR_CONNECTION_CLOSED`, turning a working verification into a
+  red console error and a "the RPC did not answer" that had nothing to do with
+  the contract. It now tries four keyless endpoints in order with an 8s timeout
+  each, and only says "could not ask" once all of them refuse. Still no key and
+  no server in the path.
+
+### The pass before this one
+
+The plan's first execution was 47/53, with six real defects behind it: CI red on
+every push (contract tests for two deleted contracts, and an entry-point guard
+defending an entry that no longer exists), four of six package suites never run
+in CI, `mandate-mcp` shipping with no tests at all, `/ledger` showing every
+visitor an empty table, the ledger speaking the removed product's vocabulary,
+and a public priced marketplace listing whose workflow errored on an unresolved
+input. All fixed and re-verified.
 
 ## Explicitly untestable here
 
