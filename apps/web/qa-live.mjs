@@ -172,14 +172,23 @@ await item("3.5", async () => {
 
 await item("3.6", async () => {
   const before = await budget();
+  /*
+   * Ask about this decision, not about the page.
+   *
+   * The header carries the policy's anchor transaction and the log carries
+   * every earlier approval, so "are there any /tx/ links on screen" is always
+   * true by now and reports a correct refusal as a payment. `[data-moved]` is
+   * the block the console renders only when a decision produced a hash.
+   */
+  const txInPanel = () => page.evaluate(() => document.querySelectorAll("[data-moved]").length);
   await page.waitForTimeout(2500);
   await press("Buy GPU time");
   const { v } = await waitVerdict();
   if (v !== "BLOCKED_CATEGORY") return fail("wrong verdict", v ?? "none");
   const after = await budget();
   if (after !== before) fail("budget moved on a refusal", `${before} → ${after}`);
-  const tx = await page.evaluate(() => document.querySelectorAll('a[href*="/tx/"]').length);
-  if (tx > 0) fail("a refusal produced a transaction", `${tx} links`);
+  const tx = await txInPanel();
+  if (tx !== 0) fail("a refusal produced a transaction", `${tx} links in the decision panel`);
   return `BLOCKED_CATEGORY, no transaction, budget held at $${after}`;
 });
 

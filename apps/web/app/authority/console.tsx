@@ -606,7 +606,10 @@ export function AuthorityConsole() {
 
           {/* Only an approval moved money, and only a hash proves it did. */}
           {mandate.transactionHash ? (
-            <div className="settlement mt-4">
+            <div
+              data-moved
+              className="mt-4 grid gap-4 rounded-[10px] border border-[var(--proven-line)] bg-[var(--surface)] p-4 sm:grid-cols-2"
+            >
               <div>
                 <p className="field-label">Budget after this spend</p>
                 <p className="figure mt-1">
