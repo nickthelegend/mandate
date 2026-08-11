@@ -72,7 +72,7 @@ export function Inspector() {
      */
     if (!EXECUTION_ID.test(id)) {
       setData(null);
-      setError("An execution id is 6-64 letters and digits. Run the demo and it will link you here with its own.");
+      setError("An execution id is 6-64 letters and digits. Every approved spend on the authority carries one.");
       return;
     }
 
@@ -94,7 +94,7 @@ export function Inspector() {
     }
   }, []);
 
-  // Deep link from the demo page, so a settlement leads straight to its record.
+  // Deep link, so an approved spend can lead straight to its execution record.
   useEffect(() => {
     const fromUrl = params.get("id");
     if (fromUrl) {
@@ -200,12 +200,22 @@ export function Inspector() {
               That <code className="font-mono text-[var(--ink)]">status: completed</code> means
               KeeperHub sent the transaction and it mined. It does not mean value moved — a
               transaction can mine, emit no <code className="font-mono text-[var(--ink)]">Transfer</code>,
-              and pay nobody. That is the gap this project fills, and why the settlement is checked
-              against the receipt before anything is released.
+              and pay nobody. Nor does it say whether the spend was <em>allowed</em>: that decision
+              was made before this record existed, and it is the one worth reading.
             </p>
+            {/*
+              * Straight to Etherscan's own log view.
+              *
+              * This used to point at an internal /verify page that was deleted
+              * with the product it belonged to — so the button inviting a
+              * sceptic to check for themselves was a 404, which is the worst
+              * possible link to have broken.
+              */}
             {data.transactionHash && (
               <Button asChild variant="outline" size="sm" className="mt-4">
-                <a href={`/mandate/verify/?hash=${data.transactionHash}`}>Check this one yourself</a>
+                <a href={tx(data.transactionHash)} target="_blank" rel="noreferrer">
+                  Read the logs on Etherscan
+                </a>
               </Button>
             )}
           </div>

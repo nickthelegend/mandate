@@ -619,6 +619,8 @@ await item("7.2", async () => {
     (l) =>
       // A comment recording what was removed is the opposite of a leftover.
       !/^\S+:\d+:\s*(\*|\/\/|\/\*)/.test(l) &&
+      // Nor is prose that says, in as many words, that it is describing the past.
+      !/\b(was|were) removed|used to be|no longer exists?|none of which exist|previous version/i.test(l) &&
       // The marketplace listing slug is a name registered with KeeperHub, not a
       // code path; it is checked for real by 6.6.
       !/escrow-intent-status/.test(l)
