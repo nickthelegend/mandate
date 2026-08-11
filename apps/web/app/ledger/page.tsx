@@ -17,6 +17,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import { PageHead } from "@/components/page-head";
 import { VerdictMark, stateOf } from "@/components/verdict";
+import { Receipts } from "@/components/receipts";
 
 const GATEWAY =
   process.env.NEXT_PUBLIC_GATEWAY_URL ?? "https://gateway-production-944e.up.railway.app";
@@ -164,6 +165,8 @@ export default function LedgerPage() {
           </table>
         </div>
       )}
+
+      <Receipts />
 
       <div className="mt-16 border-t border-[var(--line)] pt-8">
         <h2 className="text-[11px] font-medium uppercase tracking-wide text-neutral-500">Why this is public</h2>
