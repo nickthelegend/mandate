@@ -343,8 +343,8 @@ const server = createServer(async (req, res) => {
        * agent and still gets only its own rows.
        */
       const asked = url.searchParams.get("agent");
-      const agent = asked === null ? undefined : agentOf(url);
-      if (asked !== null && !agent) return json(res, 400, { error: "bad agent id" });
+      if (asked !== null && !AGENT_ID.test(asked)) return json(res, 400, { error: "bad agent id" });
+      const agent = asked ?? undefined;
       const entries = await (await getAuthority()).history(limit, agent);
       return json(res, 200, { returned: entries.length, scope: agent ?? "all", entries });
     } catch (e: unknown) {
