@@ -183,6 +183,31 @@ valid signature produced that recovers to the signer. It refuses over-cap and
 off-allowlist purchases *before a signature exists*, because a signed
 authorisation is bearer-spendable the moment it leaves the process.
 
+## Check it yourself, without our code
+
+```bash
+node scripts/verify-a-receipt.mjs
+```
+
+No install, no key, no dependency — not even ethers, and deliberately none of
+our own packages, because a verifier that imports the code it is checking proves
+only that the code agrees with itself. It pulls one decision receipt from the
+live authority, recomputes the merkle path with a keccak256 written out in the
+file, and asks `MandateReceipts` on Sepolia whether it holds that root:
+
+```
+recomputed 0xc2960c48dbf189a98b08330affbac5cf3f088de1a453ab73b16e3d27e32e2f0f
+claimed    0xc2960c48dbf189a98b08330affbac5cf3f088de1a453ab73b16e3d27e32e2f0f
+  the proof is internally consistent
+  the chain holds this exact root under this batch id
+
+VERIFIED
+```
+
+The two checks print separately on purpose. If the path recomputes and the chain
+disagrees, the authority is claiming an anchor it does not have — and you would
+see exactly that rather than one merged verdict.
+
 ## Install
 
 ```bash
