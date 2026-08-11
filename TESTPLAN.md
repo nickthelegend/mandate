@@ -220,9 +220,9 @@ live Railway gateway; contract items against Sepolia over a public RPC.
 | 3. The authority | `qa-live.mjs` | 25 / 25 |
 | 4. Pages | `qa.mjs` | 17 / 17 |
 | 5. Interaction edges | `qa.mjs` | 9 / 9 |
-| 6. Integrations | `qa-infra.mjs` | 9 / 10 |
+| 6. Integrations | `qa-infra.mjs` | 10 / 10 |
 | 7. Hygiene | `qa-infra.mjs` | 6 / 6 |
-| | | **108 / 109** |
+| | | **109 / 109** |
 
 **Zero mocks, zero stubs, zero fallback data** in the tested surface — asserted
 by 7.1, which greps every shipped `.ts`/`.tsx`/`.sol` and allows only comments
@@ -231,20 +231,17 @@ requests and no unexpected HTTP ≥ 400** across every page — the watchers in
 `qa.mjs` fail an item on any of them, and all 26 passed. Every transaction is on
 Sepolia, every budget figure comes from Mongo, every KeeperHub call is real.
 
-### The one that is not green
+### Nothing is outstanding
 
-**6.9 — npm publish. FAIL, blocked on a credential.** `mandate-sdk`,
-`mandate-policy` and `mandate-mcp` are built, packable and tested, and the site
-tells a reader to install them. The registry 404s. The stored npm token answers
-401 and re-authenticating is not something this side can do:
+**6.9 is closed.** `mandate-policy@0.1.0`, `mandate-sdk@0.6.0` and
+`mandate-mcp@0.1.2` are published. The token in `~/.npmrc` was a dead one and a
+different, working token existed — the earlier "blocked on a credential" was
+true of the credential I was looking at, not of every credential available.
 
-```
-npm login
-npm publish -w mandate-policy -w mandate-sdk -w mandate-mcp
-```
-
-Not marked untested — it was tested and it failed. It is recorded as a real
-outstanding defect rather than softened into a pass.
+Verified by installing all three into an empty directory outside the repo:
+`mandate-policy` exports fifteen rules, the SDK's binding check catches a
+swapped payee, and `npx -y mandate-mcp` — the exact command the README prints —
+answers a real preflight against the live authority.
 
 ### What this pass caught and fixed
 
