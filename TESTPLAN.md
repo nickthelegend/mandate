@@ -180,54 +180,49 @@ pages, eleven endpoints, three contracts, six packages.
 
 ---
 
-## Executed through Claude in Chrome — 2026-08-11
+## Executed — 2026-08-11, third pass
 
-Every item run against the live deployed app. Browser items driven through the
-Chrome extension and, for the exhaustive sweeps, headless Chromium; endpoint
-items against the live Railway gateway; contract items against Sepolia.
+Every item run against the live deployed app. Browser items in real Chromium
+driven through the Chrome extension and the Playwright suite; endpoint items
+against the live Railway gateway; contract items against Sepolia.
 
 | Section | Runner | Result |
 |---|---|---|
 | 1. Contracts | `qa-infra.mjs` | 10 / 10 |
-| 2. Endpoints | `qa-infra.mjs` | 33 / 33 |
+| 2. Endpoints | `qa-infra.mjs` | 37 / 37 |
 | 3. The authority | `qa-live.mjs` | 25 / 25 |
-| 4. Pages | `qa.mjs` | 21 / 21 |
-| 5. Interaction edges | `qa.mjs` | 11 / 11 |
-| 6. Integrations | `qa-infra.mjs` | 10 / 10 |
+| 4. Pages | `qa.mjs` | 22 / 22 |
+| 5. Interaction edges | `qa.mjs` | 13 / 13 |
+| 6. Integrations | `qa-infra.mjs` | 11 / 11 |
 | 7. Hygiene | `qa-infra.mjs` | 6 / 6 |
-| | | **116 / 116** |
+| | | **124 / 124** |
 
-Confirmed in Chrome with the console read and the network list checked on every
-page: the hero video at `readyState 4` and playing, an approved spend moving
-tUSDC with KeeperHub named as signer, the rule chain resolving 10 pass / 1
-refused / 4 unreached with its caption agreeing, an escalation held and
-released, a merkle proof recomputed in the browser and confirmed by the
-contract, and the bound bar's marks sitting at `17.2001%`, `38.4615%` and `20%`
-for a bound of 17.2, a score of 38.5 and a floor of 20.
+**Zero mocks, zero stubs, zero fallback data** in the tested surface — 7.1
+greps every shipped `.ts`, `.tsx` and `.sol`, and its only hit is a comment
+describing a bug that was fixed. **Zero console errors, zero uncaught
+exceptions, zero failed requests** on every page. Every transaction is on
+Sepolia, every budget figure comes from MongoDB, every KeeperHub call is real.
 
-**Zero mocks, zero stubs, zero fallback data** in the tested surface — asserted
-by 7.1 across every shipped `.ts`, `.tsx` and `.sol`. **Zero console errors and
-zero failed requests** on every page. Every transaction is on Sepolia, every
-budget figure comes from Mongo, every KeeperHub call is real.
+### What this pass caught
 
-### What this pass caught and fixed
-
-- **3.8 — `18 chips, expected 15`.** Selecting "a span with a title" meant "a
-  rule chip" until the bound bar added titled marks to the same panel. The
-  chain and the receipt ladder are named things now (`data-rule`,
-  `data-ladder`) and are selected as such; the ladder check had been matching
-  on "a span with exactly four children", which describes an implementation
-  detail rather than a ladder.
-- **The gas figure was fabricated.** `/authority/costs` read `gasCostWei` as
-  money and rendered `0.000000 ETH` under a sentence claiming gas was paid.
-  KeeperHub returns `gasCostWei` and `gasUsedWei` byte-identical — 96519,
-  73859 — which are gas units. It reports units now and states why it will not
-  quote a price; the test asserts no ETH figure can come back.
-- **The RPC fallback list was written from Node.** Two of four entries fail
-  from a browser (`sepolia.drpc.org` 400, `rpc.sepolia.org` no CORS), so every
-  fallthrough produced console errors. Measured all seven candidates from the
-  real origin; only two answer. A blanket "any RPC failure is fine" test
-  exemption had hidden it for one run and is now narrowed to one host.
+- **The suite was reading a stale database.** A local `.env` said
+  `MANDATE_AUDIT_DB=outcome` — this project's former name — while production
+  says `mandate`. Both databases exist and both answer, so nothing failed: the
+  direct-database checks were simply measuring a copy holding 115 decisions, 6
+  receipts and 1 batch against the live 379, 275 and 78, and zero notification
+  deliveries against 110. A test that reads the wrong database is not a weaker
+  test, it is a test of something else. `/health` now names its database and
+  2.37 asserts the two agree — the only check that could have caught it.
+- **`.env.example` described the deleted product** and omitted `MONGODB_URI`,
+  `POLICY_ID` and `MANDATE_AUDIT_DB` — the three things the gateway cannot
+  start without. Anyone cloning the repo could not have configured it.
+- **`examples/authority.mjs` recorded refusals and not approvals**, which is the
+  precise audit hole this project objects to, in the file that teaches people
+  how to build one.
+- **A public RPC began CORS-blocking mid-run.** The second host in that list to
+  degrade in a day, which made it a dependency problem rather than a list
+  problem. The proof check now falls back to a read-only call on the gateway
+  and **states which path answered**, and 4.24 asserts the attribution is there.
 
 ## Explicitly untestable here
 
