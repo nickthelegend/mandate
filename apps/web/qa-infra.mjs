@@ -441,6 +441,27 @@ await item("2.32", async () => {
   return `notices go to ${b.destination}`;
 });
 
+await item("2.33", async () => {
+  const b = await jget("/authority/costs");
+  must(typeof b.direct === "number" && b.direct > 0, `no direct executions counted (${b.direct})`);
+  must(BigInt(b.gasUnits) > 0n, "KeeperHub reports zero gas across every execution");
+  must(b.gasReportedBy > 0, "no run reported a gas figure");
+  /*
+   * Units, never a currency. KeeperHub returns gasCostWei and gasUsedWei with
+   * identical values, so neither is a price — an ETH figure here would be a gas
+   * price this code invented, which is exactly the shape of claim the product
+   * refuses to make.
+   */
+  must(b.gasEth === undefined, "an ETH cost is being reported from a units field");
+  must(b.succeeded + b.failed === b.direct, "the counts do not add up");
+  must(/analytics\/runs$/.test(b.source ?? ""), `source is ${b.source}`);
+  // Twice in a row must be identical: the route caches, and a cache that does
+  // not cache means every page load is a burst against a third party.
+  const again = await jget("/authority/costs");
+  must(again.gasUnits === b.gasUnits, "the cache is not caching");
+  return `${b.direct} direct, ${Number(b.gasUnits).toLocaleString()} gas units, median ${b.medianMs}ms, ${b.failed} failed`;
+});
+
 // ── 6. External integrations ────────────────────────────────────────────────
 console.log("\n6. EXTERNAL INTEGRATIONS");
 await item("6.1", async () => {

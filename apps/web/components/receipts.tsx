@@ -106,7 +106,7 @@ function rootFrom(leaf: string, proof: readonly string[]): string {
 function Costs() {
   const [c, setC] = useState<{
     direct: number; succeeded: number; failed: number;
-    gasEth: string; medianMs: number | null;
+    gasUnits: string; gasReportedBy: number; medianMs: number | null;
     failures: Record<string, number>; source: string;
   } | null>(null);
 
@@ -127,9 +127,15 @@ function Costs() {
   return (
     <p className="mt-4 max-w-[68ch] text-[11px] leading-relaxed text-[var(--ink-4)]">
       KeeperHub has executed{" "}
-      <span className="figure text-[var(--ink-3)]">{c.direct}</span> of these directly and paid{" "}
-      <span className="figure text-[var(--ink-3)]">{c.gasEth} ETH</span> in gas for them — the agent
-      holds none, which is why it cannot send anything the policy refused.
+      <span className="figure text-[var(--ink-3)]">{c.direct}</span> of these directly, burning{" "}
+      <span className="figure text-[var(--ink-3)]">
+        {Number(c.gasUnits).toLocaleString()}
+      </span>{" "}
+      units of gas it paid for — the agent holds none, which is why it cannot send anything the
+      policy refused. Units and not ETH on purpose: KeeperHub returns{" "}
+      <span className="figure">gasCostWei</span> and <span className="figure">gasUsedWei</span> with
+      identical values, so neither is a price, and quoting one would mean inventing a gas price
+      nobody supplied.
       {c.medianMs !== null && (
         <> A median execution takes <span className="figure text-[var(--ink-3)]">{(c.medianMs / 1000).toFixed(1)}s</span>.</>
       )}{" "}

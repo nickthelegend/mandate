@@ -9,9 +9,13 @@
  *
  * That is the reason to read it rather than compute something similar. A
  * project that claims "the agent holds no ETH and gas is sponsored" should be
- * able to say by whom and how much, sourced from the party that paid.
+ * able to say by whom, sourced from the party that paid.
  *
- * Two deliberate limits. Only direct executions are counted — the marketplace
+ * What it will not say is the cost in ETH, because KeeperHub does not report
+ * one — see `gasUnits`. Stating a price would mean inventing a gas price, and
+ * a fabricated figure is worse here than an absent one.
+ *
+ * Two further limits. Only direct executions are counted — the marketplace
  * workflow runs through the same account and its runs are somebody else's
  * story. And a failure is reported under KeeperHub's own `errorCategory`
  * rather than a label of ours, because the whole point is that this is their
@@ -40,10 +44,23 @@ export type Costs = {
   direct: number;
   succeeded: number;
   failed: number;
-  /** Total gas KeeperHub paid, in wei, across the sample. */
-  gasWei: string;
-  /** The same, as ETH, so it is readable without counting zeroes. */
-  gasEth: string;
+  /**
+   * Total gas **units** consumed across the sample.
+   *
+   * Units, not wei, and the distinction is not pedantry. KeeperHub returns
+   * `gasCostWei` and `gasUsedWei` with byte-identical values — 96519, 73859,
+   * 56555 — which are plausible gas amounts for an ERC-20 transfer and absurd
+   * as wei (96519 wei is 9.7e-14 ETH). The field is named for a cost and
+   * carries a count.
+   *
+   * So this reports the count. Converting it to ETH would have meant
+   * multiplying by a gas price nothing here was given, and the first version of
+   * this code did exactly that and rendered "0.000000 ETH" under a sentence
+   * claiming gas had been paid — a number that is worse than no number.
+   */
+  gasUnits: string;
+  /** How many runs actually reported a gas figure, so the total is scopeable. */
+  gasReportedBy: number;
   /** Median rather than mean: one slow confirmation should not set the figure. */
   medianMs: number | null;
   /** KeeperHub's own classification of what went wrong, not ours. */
@@ -51,14 +68,6 @@ export type Costs = {
   /** Where these numbers come from, so the claim is checkable. */
   source: string;
 };
-
-/** Wei to ETH with six decimals, without pulling in a formatting library. */
-function toEth(wei: bigint): string {
-  const unit = 10n ** 18n;
-  const whole = wei / unit;
-  const frac = (wei % unit).toString().padStart(18, "0").slice(0, 6);
-  return `${whole}.${frac}`;
-}
 
 export async function readCosts(apiKey: string, limit = 100): Promise<Costs> {
   const res = await fetch(`${KH_API}/api/analytics/runs?limit=${limit}`, {
@@ -76,10 +85,17 @@ export async function readCosts(apiKey: string, limit = 100): Promise<Costs> {
   const direct = runs.filter((r) => r.source === "direct");
 
   let gas = 0n;
+  let reported = 0;
   for (const r of direct) {
-    // gasCostWei is what was actually paid; gasUsedWei is units, not cost. Only
-    // the first is money, and it is null on runs that never reached the chain.
-    if (r.gasCostWei) gas += BigInt(r.gasCostWei);
+    /*
+     * `gasUsedWei` deliberately, and only as a count. The sibling `gasCostWei`
+     * holds the identical value, so neither is a price — taking either as money
+     * would be reading the field name instead of the field.
+     */
+    if (r.gasUsedWei) {
+      gas += BigInt(r.gasUsedWei);
+      reported += 1;
+    }
   }
 
   const durations = direct
@@ -104,8 +120,8 @@ export async function readCosts(apiKey: string, limit = 100): Promise<Costs> {
     direct: direct.length,
     succeeded: direct.filter((r) => r.status === "success").length,
     failed: direct.filter((r) => r.status !== "success").length,
-    gasWei: gas.toString(),
-    gasEth: toEth(gas),
+    gasUnits: gas.toString(),
+    gasReportedBy: reported,
     medianMs,
     failures,
     source: `${KH_API}/api/analytics/runs`,
