@@ -34,10 +34,10 @@ reason. Blank means not reached.
 | 14 | Budget window boundary: show when the UTC day rolls and what resets |  |
 | 15 | Rate-limit rule surfaced as a live counter, not just a refusal |  |
 | 16 | Cooldown rule: show time remaining against a service | |
-| 17 | Duplicate window: show the prior intent and how long its lock has left |  |
+| 17 | Duplicate window: show the prior intent and how long its lock has left | already shipped — the refusal panel already showed the prior intent and TTL remaining |
 | 18 | Vendor score history — a payee's LCB over time, from the epoch snapshots | |
-| 19 | Explain the renormalization: which weights moved when a signal was missing |  |
-| 20 | σ visualised — the gap between score and bound, drawn to scale |  |
+| 19 | Explain the renormalization: which weights moved when a signal was missing | BUILT — verified live: `3 of 7 signals have no honest source … each observed signal now carries 25.0% instead of its nominal 14.3%`, computed from `weightApplied` |
+| 20 | σ visualised — the gap between score and bound, drawn to scale | BUILT — verified live: `floor 20 · bound 17.2 · score 38.5`, drawn to scale, with the score-clears-bound-does-not case firing |
 
 ## Tier C — KeeperHub, past the minimum
 
@@ -67,7 +67,7 @@ reason. Blank means not reached.
 | 37 | Anchor transaction linked from every confirmed receipt | BUILT — the anchoring transaction is linked from a confirmed receipt |
 | 38 | Show what the receipt body deliberately omits, and why | BUILT — what the body omits, and why, is stated under the list |
 | 39 | Receipt id derivation explained — same decision twice is one receipt | |
-| 40 | A standalone verifier snippet a judge can paste into node | |
+| 40 | A standalone verifier snippet a judge can paste into node | BUILT — `scripts/verify-a-receipt.mjs`, zero dependencies, verified running from /tmp |
 
 ## Tier E — design and motion
 
@@ -133,7 +133,7 @@ reason. Blank means not reached.
 | 88 | Provenance stated: what was ported, what was written here |  |
 | 89 | Latency shown honestly — 20-40s is the chain, not the app |  |
 | 90 | The MCP tools listed with what each returns |  |
-| 91 | A single command that reproduces the whole verification |  |
+| 91 | A single command that reproduces the whole verification | BUILT — same script; one command, no install, no key, none of our packages |
 | 92 | Contract source linked, verified, from the page that uses it |  |
 | 93 | The policy document itself, readable, next to its hash |  |
 | 94 | What happens if you edit the policy — shown, not described |  |
@@ -148,7 +148,7 @@ reason. Blank means not reached.
 
 ## What actually happened
 
-**16 built and verified running against the live deployment.** Each was checked
+**21 built and verified running against the live deployment.** Each was checked
 by triggering it, not by compiling it: a real escalation delivered a real
 notice, the simulator was fed transfers that do and do not revert, the proof was
 recomputed in a browser and put to the contract.
