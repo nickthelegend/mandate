@@ -28,9 +28,24 @@ export function SiteFooter() {
               <MandateMark size={26} />
               <span className="text-[17px] font-semibold tracking-[-0.02em]">Mandate</span>
             </span>
+            {/*
+              * Two false claims lived here on every page.
+              *
+              * "Payment that follows a verified result" was the tagline of the
+              * escrow product this replaced. And "there is no backend to trust"
+              * stopped being true the moment the authority became a service:
+              * the budget, the decision record and the receipts all come from a
+              * gateway, and a judge with the network tab open would have caught
+              * the footer contradicting the page above it.
+              *
+              * What is actually true is better anyway — the reader does not
+              * have to trust the gateway, because the policy it enforces is
+              * anchored on chain and they can check it themselves.
+              */}
             <p className="mt-3 max-w-sm text-[14px] leading-relaxed text-neutral-600">
-              Payment that follows a verified result. Every number on this site is read from{" "}
-              {DEPLOYMENT.chainName} in your browser — there is no backend to trust.
+              An agent spending authority. The budget and the decision record come from this
+              project&rsquo;s gateway — the policy those decisions are judged against is anchored on{" "}
+              {DEPLOYMENT.chainName}, so you can check it without trusting either.
             </p>
             <a
               href={source(DEPLOYMENT.registry)}

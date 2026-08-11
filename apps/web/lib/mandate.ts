@@ -6,8 +6,18 @@
  * the SDK would not be worth publishing, and a dashboard reading the chain
  * through a bespoke backend route would prove nothing about either.
  *
- * All of it runs in the visitor's browser against a public RPC. There is no
- * server here to trust.
+ * Two sources, and the distinction is the point rather than a caveat. Chain
+ * reads happen in the visitor's browser against a public RPC — the receipt
+ * proof check on /ledger is the one that matters, and it asks the contract
+ * directly with no server in the path. Everything the authority decides comes
+ * from the gateway, because a durable ledger is the whole reason the budget is
+ * a budget.
+ *
+ * This comment used to say "there is no server here to trust", which was true
+ * of the product this replaced and false the moment the authority became a
+ * service. What is true is better: the gateway does not have to be trusted,
+ * because the policy it enforces is anchored on chain and a reader can check
+ * both the anchor and the receipts themselves.
  */
 
 
