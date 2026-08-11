@@ -25,6 +25,7 @@ import { Loader2, RotateCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { RuleChain } from "@/components/rule-chain";
 import { stateOf } from "@/components/verdict";
+import { BoundBar, Renormalization } from "@/components/bound";
 import { DEPLOYMENT, tx as txUrl, address as addressUrl, short } from "@/lib/mandate";
 import { cn } from "@/lib/utils";
 
@@ -798,6 +799,9 @@ export function AuthorityConsole() {
                 <span className="text-[var(--ink-4)]">vs floor {mandate.vendor.floor}</span>
               </p>
 
+              {/* The same arithmetic, to scale. The comparison is spatial. */}
+              <BoundBar v={mandate.vendor} />
+
               <div className="mt-3 space-y-1">
                 {mandate.vendor.features.map((f) => (
                   <div key={f.key} className="flex items-center gap-3 text-[11px]">
@@ -826,11 +830,14 @@ export function AuthorityConsole() {
                 ))}
               </div>
 
-              <p className="mt-3 text-[11px] leading-relaxed text-[var(--ink-4)]">
-                Three signals have no honest source here, so they are carried as priors: they
-                contribute nothing to the score and widen σ instead. Missing evidence tightens the
-                floor rather than relaxing it.
-              </p>
+              {/*
+                * Was a hardcoded sentence saying "three signals". Now computed
+                * from the features the decision actually returned, including
+                * what each observed signal ends up carrying once the missing
+                * weight is redistributed — the half of renormalization that was
+                * described and never shown.
+                */}
+              <Renormalization v={mandate.vendor} />
             </div>
           )}
 
