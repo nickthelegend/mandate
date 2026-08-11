@@ -26,3 +26,5 @@ apps/web/out/
 recording/video/
 recording/frames/
 recording/audio/*.wav
+recording/*.gif
+recording/*.cast

@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "rules": {
+    "budgets": { "daily": 3, "token": "USDT" },
+    "perCallCap": 0.5,
+    "onPerCallCapExceeded": "BLOCK",
+    "escalateAbove": 1000,
+    "categories": { "allow": ["market-data", "research"], "deny": [] },
+    "recipients": { "allow": [], "deny": [] },
+    "vendors": {
+      "minScoreLCB": 25,
+      "onBelowFloor": "ESCALATE",
+      "onScoreUnavailable": "ESCALATE",
+      "staleScoreMaxAgeH": 24
+    },
+    "agents": { "allowWorkerIds": [], "denyWorkerIds": [] },
+    "duplicates": { "ttlMin": 30, "keys": ["taskHash", "endpoint", "paramsHash"] },
+    "cooldowns": { "sameServiceMin": 0 },
+    "rateLimit": { "callsPerHour": 12 },
+    "expiry": "2026-09-30T00:00:00Z"
+  }
+}
