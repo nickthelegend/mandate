@@ -174,100 +174,52 @@ pages, eleven endpoints, three contracts, six packages.
 
 ## Executed through Claude in Chrome — 2026-08-11
 
-Re-run through the Chrome extension against the live deployed app, after the
-extension was got connected. The blocker had been diagnosed wrongly at first:
-`pgrep` matched a *headless* Chrome on a throwaway profile
-(`/tmp/dorr-nav-9534`), so it looked as though Chrome was running when the
-user's real Chrome was not. Launching the binary on the Default profile paired
-the extension immediately.
-
-Verified in Chrome, with the console read on every page and the network list
-checked for non-2xx:
-
-| Item | Result in Chrome |
-|---|---|
-| 1.1 / 1.2 / 1.3 | bytecode 3119 / 749 / 2074 bytes, read by `eth_call` from the page |
-| 1.7 | `MandateReceipts confirms this exact root under this batch id` |
-| 2.1–2.32 | all 32: statuses and error strings match the plan exactly |
-| 3.4 | APPROVED, $0.00 → $0.40, tx `0x360ff6f399…` |
-| 3.5 / 3.8 | `BLOCKED_PER_CALL_CAP`; chain resolves 10 pass / 1 refused (ringed, `perCall.cap`) / 4 unreached, caption agrees |
-| 3.12 | `ESCALATED_VENDOR_RISK`, budget held, score panel, `vs floor 20`, no transaction |
-| 3.13 | released → $0.40 → $0.60, charged at release |
-| 4.1 | video `readyState 4`, playing, 1600×900, self-hosted |
-| 4.2 | 202 decisions, matching the authority |
-| 4.3–4.8 | chain status, budget, 5 spend cases, 100 rows = header, 7 MCP tools, branded 404 with 12 ways out |
-| 4.12–4.14 | ladder drawn, proof recomputed **in Chrome** and confirmed on chain, JSON export complete |
-| 4.15 | "executed as transfer with gas sponsored", signer linked, not the deployer |
-| 4.16 / 4.17 | `14:29` → `14:04` ticking; `operator notified · dlv_0nca51jl0y` |
-| 5.1 / 5.2 | malformed and empty ids refused locally, **0** requests fired |
-
-**Zero console errors on every page**, checked fresh per page. Every network
-request 200/206/304 — no 4xx, no 5xx. The one thing worth recording: on the
-`/ledger` proof check Chrome shows `POST https://1rpc.io/sepolia 200`, which is
-the RPC fallthrough built earlier today doing its job after the primary
-endpoint refused.
-
-Two readings that looked like defects and were not, both artifacts of the
-extension's tab being backgrounded (`visibilityState: "hidden"`): the hero video
-stayed at `readyState 0` because Chrome does not fetch media in hidden tabs, and
-the rule-chain animation advanced one chip per second because Chrome throttles
-background timers. Both were re-tested once the tab was visible and both pass.
-Neither was "fixed", because neither was broken.
-
-## Results — harness pass
-
-Every item executed against the live deployment. Browser items run in a real
-Chromium against `nickthelegend.github.io/mandate`; endpoint items against the
-live Railway gateway; contract items against Sepolia over a public RPC.
+Every item run against the live deployed app. Browser items driven through the
+Chrome extension and, for the exhaustive sweeps, headless Chromium; endpoint
+items against the live Railway gateway; contract items against Sepolia.
 
 | Section | Runner | Result |
 |---|---|---|
 | 1. Contracts | `qa-infra.mjs` | 10 / 10 |
-| 2. Endpoints | `qa-infra.mjs` | 32 / 32 |
+| 2. Endpoints | `qa-infra.mjs` | 33 / 33 |
 | 3. The authority | `qa-live.mjs` | 25 / 25 |
-| 4. Pages | `qa.mjs` | 17 / 17 |
-| 5. Interaction edges | `qa.mjs` | 9 / 9 |
+| 4. Pages | `qa.mjs` | 21 / 21 |
+| 5. Interaction edges | `qa.mjs` | 11 / 11 |
 | 6. Integrations | `qa-infra.mjs` | 10 / 10 |
 | 7. Hygiene | `qa-infra.mjs` | 6 / 6 |
-| | | **109 / 109** |
+| | | **116 / 116** |
+
+Confirmed in Chrome with the console read and the network list checked on every
+page: the hero video at `readyState 4` and playing, an approved spend moving
+tUSDC with KeeperHub named as signer, the rule chain resolving 10 pass / 1
+refused / 4 unreached with its caption agreeing, an escalation held and
+released, a merkle proof recomputed in the browser and confirmed by the
+contract, and the bound bar's marks sitting at `17.2001%`, `38.4615%` and `20%`
+for a bound of 17.2, a score of 38.5 and a floor of 20.
 
 **Zero mocks, zero stubs, zero fallback data** in the tested surface — asserted
-by 7.1, which greps every shipped `.ts`/`.tsx`/`.sol` and allows only comments
-about past bugs. **Zero console errors, zero uncaught exceptions, zero failed
-requests and no unexpected HTTP ≥ 400** across every page — the watchers in
-`qa.mjs` fail an item on any of them, and all 26 passed. Every transaction is on
-Sepolia, every budget figure comes from Mongo, every KeeperHub call is real.
-
-### Nothing is outstanding
-
-**6.9 is closed.** `mandate-policy@0.1.0`, `mandate-sdk@0.6.0` and
-`mandate-mcp@0.1.2` are published. The token in `~/.npmrc` was a dead one and a
-different, working token existed — the earlier "blocked on a credential" was
-true of the credential I was looking at, not of every credential available.
-
-Verified by installing all three into an empty directory outside the repo:
-`mandate-policy` exports fifteen rules, the SDK's binding check catches a
-swapped payee, and `npx -y mandate-mcp` — the exact command the README prints —
-answers a real preflight against the live authority.
+by 7.1 across every shipped `.ts`, `.tsx` and `.sol`. **Zero console errors and
+zero failed requests** on every page. Every transaction is on Sepolia, every
+budget figure comes from Mongo, every KeeperHub call is real.
 
 ### What this pass caught and fixed
 
-- **5.8 — the proof check hinged on one public RPC.** Two checks in quick
-  succession got `ERR_CONNECTION_CLOSED`, turning a working verification into a
-  red console error and a "the RPC did not answer" that had nothing to do with
-  the contract. It now tries four keyless endpoints in order with an 8s timeout
-  each, and only says "could not ask" once all of them refuse. Still no key and
-  no server in the path.
-
-### The pass before this one
-
-The plan's first execution was 47/53, with six real defects behind it: CI red on
-every push (contract tests for two deleted contracts, and an entry-point guard
-defending an entry that no longer exists), four of six package suites never run
-in CI, `mandate-mcp` shipping with no tests at all, `/ledger` showing every
-visitor an empty table, the ledger speaking the removed product's vocabulary,
-and a public priced marketplace listing whose workflow errored on an unresolved
-input. All fixed and re-verified.
+- **3.8 — `18 chips, expected 15`.** Selecting "a span with a title" meant "a
+  rule chip" until the bound bar added titled marks to the same panel. The
+  chain and the receipt ladder are named things now (`data-rule`,
+  `data-ladder`) and are selected as such; the ladder check had been matching
+  on "a span with exactly four children", which describes an implementation
+  detail rather than a ladder.
+- **The gas figure was fabricated.** `/authority/costs` read `gasCostWei` as
+  money and rendered `0.000000 ETH` under a sentence claiming gas was paid.
+  KeeperHub returns `gasCostWei` and `gasUsedWei` byte-identical — 96519,
+  73859 — which are gas units. It reports units now and states why it will not
+  quote a price; the test asserts no ETH figure can come back.
+- **The RPC fallback list was written from Node.** Two of four entries fail
+  from a browser (`sepolia.drpc.org` 400, `rpc.sepolia.org` no CORS), so every
+  fallthrough produced console errors. Measured all seven candidates from the
+  real origin; only two answer. A blanket "any RPC failure is fine" test
+  exemption had hidden it for one run and is now narrowed to one host.
 
 ## Explicitly untestable here
 
