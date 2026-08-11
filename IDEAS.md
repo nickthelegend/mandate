@@ -112,7 +112,7 @@ reason. Blank means not reached.
 | 72 | Long payee addresses never break the layout |  |
 | 73 | A decision with no rules consulted still renders honestly |  |
 | 74 | Escalation resolved in another tab reconciles here |  |
-| 75 | Health endpoint reports what it cannot reach, not just ok |  |
+| 75 | Health endpoint reports what it cannot reach, not just ok | BUILT — verified live: `UP — mongo 133ms, sepolia 34ms, policy-anchor 250ms, keeperhub 0ms`; 503 when a dependency the decision needs is down |
 | 76 | Receipt tick failure never blocks a decision |  |
 | 77 | A malformed policy document fails at boot, loudly |  |
 | 78 | Mongo unavailable is a 503 with a reason, not a crash |  |
@@ -170,5 +170,13 @@ TOCTOU window the way the idea assumed.
 list than time, and the ranking is what decided the order. Nothing below is
 marked done that is not.
 
-Regression after every change: TESTPLAN sections 4 and 5, 18/18, zero console
-errors.
+**Final regression, everything green except one pre-existing block.** Sections
+1, 2, 6, 7: **52/53** — the only failure is 6.9, npm publish, blocked on an
+expired token since before this work started. Sections 4 and 5: **18/18**, zero
+console errors. 216 unit and contract tests, 0 typecheck errors, both CI
+workflows green.
+
+One regression was introduced and caught by the sweep: the new receipts section
+names each receipt's decision, so the ledger row-count check read 112 rows
+against a header claiming 100 and reported a correct page as lying. The check
+now counts table rows. Nothing that worked before this session is broken.
