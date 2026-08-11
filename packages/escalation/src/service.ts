@@ -311,6 +311,32 @@ export class EscalationService {
     );
   }
 
+  /**
+   * Record whether the operator was actually reached.
+   *
+   * Written after the decision has already been returned, so a slow or broken
+   * notifier can never delay a verdict. The failure is stored as loudly as the
+   * success: an escalation whose notice never went out is one nobody is coming
+   * to answer, and the console has to be able to say so.
+   */
+  async recordNotification(
+    id: string,
+    n: { via: string; at: string; to?: string; deliveryId?: string | null; error?: string }
+  ): Promise<void> {
+    await this.store.update(
+      id,
+      { updatedAt: nowIso(this.clock()), notified: n },
+      {
+        at: n.at,
+        channel: n.via,
+        kind: "SYSTEM",
+        detail: n.error
+          ? `operator NOT reached: ${n.error}`
+          : `operator notified via ${n.via}${n.to ? ` → ${n.to}` : ""}${n.deliveryId ? ` (${n.deliveryId})` : ""}`,
+      }
+    );
+  }
+
   async get(id: string): Promise<EscalationRecord | null> {
     return this.store.byId(id);
   }

@@ -223,6 +223,49 @@ const server = createServer(async (req, res) => {
    * asked can actually answer -- otherwise ESCALATED is just a refusal with a
    * longer name.
    */
+  /*
+   * Where a held-spend notice lands, and the record of what landed.
+   *
+   * The gateway asks KeeperHub to deliver the notice; KeeperHub posts it to the
+   * operator's endpoint; by default that endpoint is this one. So the delivery
+   * is written down by the receiving end rather than asserted by the sender,
+   * and "the operator was notified" becomes a row anyone can read instead of a
+   * claim from the party who was supposed to do the notifying.
+   *
+   * Unauthenticated on purpose, and it stores exactly what arrived with no
+   * interpretation. It grants nothing: a notice carries no approval code, and
+   * writing to this log cannot release a spend.
+   */
+  if (url.pathname === "/hook/operator") {
+    if (req.method !== "POST") return json(res, 405, { error: "POST only" });
+    let body: Record<string, unknown>;
+    try {
+      body = JSON.parse(await readBody(req));
+    } catch {
+      return json(res, 400, { error: "body must be JSON" });
+    }
+    try {
+      const from = (req.headers["user-agent"] as string | undefined) ?? null;
+      const { id } = await (await getAuthority()).recordDelivery(body, { from });
+      return json(res, 200, { received: true, id });
+    } catch (e: unknown) {
+      return json(res, 503, { error: e instanceof Error ? e.message : String(e) });
+    }
+  }
+
+  if (url.pathname === "/authority/deliveries") {
+    const limit = Math.min(Number(url.searchParams.get("limit") ?? 20) || 20, 100);
+    try {
+      const authority = await getAuthority();
+      return json(res, 200, {
+        destination: authority.notifyDestination(),
+        entries: await authority.deliveries(limit),
+      });
+    } catch (e: unknown) {
+      return json(res, 503, { error: e instanceof Error ? e.message : String(e) });
+    }
+  }
+
   if (url.pathname === "/authority/escalations") {
     const limit = Math.min(Number(url.searchParams.get("limit") ?? 25) || 25, 100);
     const status = url.searchParams.get("status") ?? undefined;

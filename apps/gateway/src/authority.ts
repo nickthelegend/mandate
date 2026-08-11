@@ -73,6 +73,7 @@ import {
   mongoEscalations,
   type EscalationRecord,
 } from "mandate-escalation";
+import { notifierFromEnv } from "./notify.ts";
 import {
   mongoBureau,
   mongoSnapshots,
@@ -345,6 +346,18 @@ export type Authority = {
   receiptProof(receiptId: string): Promise<AnchorProof | null>;
   /** Expire anything past its deadline. Silence defaults to denied. */
   sweepEscalations(): Promise<{ expired: string[] }>;
+  /**
+   * A notice that actually arrived somewhere.
+   *
+   * The default operator endpoint points back here, so the delivery KeeperHub
+   * performed lands in the record and can be read by anyone. That is the whole
+   * difference between "we sent a notification" and "the notification arrived":
+   * the second one has a row in a database written by the receiving end.
+   */
+  recordDelivery(body: Record<string, unknown>, meta: { from: string | null }): Promise<{ id: string }>;
+  deliveries(limit: number): Promise<Record<string, unknown>[]>;
+  /** Where held-spend notices are sent, or null when none is configured. */
+  notifyDestination(): string | null;
   state(agent?: string): Promise<{
     agent: string;
     policyId: string;
@@ -420,6 +433,25 @@ export async function createAuthority(args: {
       timeoutSeconds: ESCALATION_TIMEOUT_S,
     }
   );
+
+  /*
+   * Null when unconfigured, and that stays null rather than degrading into a
+   * local `fetch`. A delivery this process performs itself has no receipt
+   * anyone else can check, which is the property the notice is for.
+   */
+  const notifier = notifierFromEnv();
+
+  /*
+   * Where an arriving notice is written down.
+   *
+   * Its own collection rather than a field on the escalation, because a
+   * delivery is a separate event with a separate author: the escalation is
+   * what this authority decided, and this is what the outside world observed
+   * arriving. Keeping them apart is what lets the two be compared.
+   */
+  const { MongoClient } = await import("mongodb");
+  const deliveryClient = await new MongoClient(args.mongoUri, { serverSelectionTimeoutMS: 15000 }).connect();
+  const deliveryLog = deliveryClient.db(args.mongoDb).collection("authority_deliveries");
 
   const vendorFloor = (POLICY_DOC.rules as { vendors?: { minScoreLCB: number } }).vendors?.minScoreLCB;
 
@@ -593,6 +625,38 @@ export async function createAuthority(args: {
             recipient: req.recipient,
             heldSpend: { ...req },
           });
+
+          /*
+           * Tell somebody. Deliberately not awaited.
+           *
+           * The spend is already correctly held and the money already
+           * correctly unmoved; waiting on a notifier here would let an outage
+           * at the messenger become an outage at the authority, and that
+           * failure points the wrong way. The outcome — including the failure —
+           * is written to the escalation when it lands, so the console can say
+           * whether anyone was actually reached rather than assuming.
+           */
+          if (notifier) {
+            const held = opened;
+            void notifier
+              .heldSpend({
+                escalationId: held.id,
+                amount: req.amount,
+                recipient: req.recipient,
+                reason: decision.reasons?.[0] ?? decision.decision,
+                expiresAt: held.expiresAt,
+              })
+              .then((out) => escalations.recordNotification(held.id, out))
+              .catch(() => {});
+          } else {
+            void escalations
+              .recordNotification(opened.id, {
+                via: "none",
+                at: new Date(now).toISOString(),
+                error: "no notifier configured on this gateway",
+              })
+              .catch(() => {});
+          }
         }
 
         const after = await ledger.read(part, now);
@@ -915,6 +979,26 @@ export async function createAuthority(args: {
 
     async sweepEscalations() {
       return escalations.sweep();
+    },
+
+    async recordDelivery(body, meta) {
+      const at = new Date().toISOString();
+      const id = `dlv_${Math.random().toString(36).slice(2, 12)}`;
+      await deliveryLog.insertOne({ _id: id, at, from: meta.from, body } as never);
+      return { id };
+    },
+
+    async deliveries(limit) {
+      const rows = await deliveryLog
+        .find({}, { projection: { _id: 0 } })
+        .sort({ at: -1 })
+        .limit(Math.min(Math.max(limit, 1), 100))
+        .toArray();
+      return rows as Record<string, unknown>[];
+    },
+
+    notifyDestination() {
+      return notifier?.destination ?? null;
     },
 
     async tickReceipts() {

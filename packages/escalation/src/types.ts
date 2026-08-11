@@ -94,6 +94,25 @@ export interface EscalationRecord {
   /** Set once an approved escalation's spend has actually executed. */
   readonly executionId?: string;
   readonly transactionHash?: string;
+  /**
+   * Whether anyone was actually told, and how.
+   *
+   * Recorded whether it worked or not. An escalation nobody was notified about
+   * is still correctly held and still charges nothing — but "held for a human"
+   * is only true if a human can find out, so the failure is kept rather than
+   * swallowed. `via: "none"` means no notifier was configured, which is a
+   * different and more honest statement than an absent field.
+   */
+  readonly notified?: {
+    /** The transport that was used, or `none` when none is configured. */
+    readonly via: string;
+    readonly at: string;
+    /** Where it went, so a reader can check the other end. */
+    readonly to?: string;
+    /** Whatever id the receiving end returned, when it returns one. */
+    readonly deliveryId?: string | null;
+    readonly error?: string;
+  };
   readonly createdAt: string;
   readonly updatedAt: string;
 }
