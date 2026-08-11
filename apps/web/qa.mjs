@@ -527,6 +527,26 @@ await item("4.21", async () => {
   return line.slice(0, 74);
 });
 
+await item("4.24", async () => {
+  /*
+   * A verified proof must say which path produced the chain answer.
+   *
+   * "Asked from this browser, with no server in the path" is a stronger claim
+   * than "asked through the gateway", and the second must never arrive wearing
+   * the first one's name. Whichever fired, the provenance has to be on screen.
+   */
+  await go("/ledger/");
+  const btn = page.locator("button", { hasText: "Check the proof" });
+  if ((await btn.count()) === 0) return fail("nothing checkable", "no CONFIRMED receipt offers a proof");
+  await btn.first().click();
+  await page.waitForTimeout(9000);
+  const t = await text();
+  const said = (t.match(/asked from this browser[^\n]*|asked through the gateway[^\n]*/) ?? [null])[0];
+  if (!said) return fail("unattributed", "the chain answer does not say where it came from");
+  if (!/MandateReceipts confirms this exact root/.test(t)) fail("not confirmed", "");
+  return said.slice(0, 74);
+});
+
 // ── 5. Interaction edges ────────────────────────────────────────────────────
 console.log("\n5. INTERACTION EDGES");
 

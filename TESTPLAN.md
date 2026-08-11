@@ -71,6 +71,10 @@ pages, eleven endpoints, three contracts, six packages.
 | 2.31 | `GET /hook/operator` | 405, "POST only" |
 | 2.32 | `GET /authority/deliveries` | 200, names the destination notices are sent to |
 | 2.33 | `GET /authority/costs` | 200, gas as **units** with a count of reporting runs, no ETH figure, and cached between calls |
+| 2.34 | `GET /chain/is-anchored` with a real batch and root | 200, `anchored: true`, `via: "gateway"` |
+| 2.35 | `GET /chain/is-anchored` with junk | 400, "batchId and root must each be 32 bytes of hex" |
+| 2.36 | `GET /chain/is-anchored` with a root the chain does not hold | 200, `anchored: false` — a wrong root is answered, not errored |
+| 2.37 | `/health` names its database | `database` present, and equal to the one this suite reads directly |
 
 ## 3. The authority, end to end
 
@@ -129,6 +133,7 @@ pages, eleven endpoints, three contracts, six packages.
 | 4.21 | `/ledger` states the cost of enforcement | KeeperHub's own figures — executions, gas **units**, median duration — and never an ETH price it was not given |
 | 4.22 | The footer claims only what is true | no "no backend to trust", no removed-product tagline, and one checkable claim — on every page |
 | 4.23 | The authority unreachable | a readable sentence, never `Failed to fetch`; the state marked `LAST KNOWN — NOT CONFIRMED`; and it recovers when the gateway returns |
+| 4.24 | A verified proof says where the answer came from | either "asked from this browser, with no server in the path" or "asked through the gateway" — never an unattributed claim |
 
 ## 5. Interaction edges
 
@@ -160,6 +165,7 @@ pages, eleven endpoints, three contracts, six packages.
 | 6.8 | An MCP tool answers for real | `mandate_can_spend` returns a verdict from the live authority |
 | 6.9 | npm | `mandate-*` names resolve, or are recorded as not yet published |
 | 6.10 | x402 challenge binding | honest binds; swapped payee and raised price both caught |
+| 6.11 | The SDK composes into a working authority | `examples/authority.mjs`, importing only from npm, refuses over the cap and approves into a real transaction |
 
 ## 7. Repository hygiene
 

@@ -473,6 +473,43 @@ await item("2.33", async () => {
   return `${b.direct} direct, ${Number(b.gasUnits).toLocaleString()} gas units, median ${b.medianMs}ms, ${b.failed} failed`;
 });
 
+/*
+ * The read-only chain proxy. It exists as the fallback for the proof check on
+ * /ledger, because two public RPCs changed their CORS policy in a single day
+ * and a verification that dies with somebody else's endpoint is not one.
+ */
+await item("2.34", async () => {
+  must(confirmedBatch, "no CONFIRMED batch to check");
+  const b = await jget(`/chain/is-anchored?batchId=${confirmedBatch.batchId}&root=${confirmedBatch.root}`);
+  must(b.anchored === true, `anchored is ${b.anchored} for a root the chain holds`);
+  must(b.via === "gateway", `via is ${b.via}`);
+  return `anchored true, via ${b.via}`;
+});
+await item("2.35", async () => {
+  const b = await jget("/chain/is-anchored?batchId=nope&root=nope", 400);
+  must(/32 bytes of hex/.test(b.error), b.error);
+  return b.error;
+});
+await item("2.36", async () => {
+  /*
+   * A root the chain does not hold is a legitimate question with a legitimate
+   * answer. Erroring on it would make "not anchored" indistinguishable from
+   * "the check broke", which is the one distinction this endpoint exists for.
+   */
+  must(confirmedBatch, "no CONFIRMED batch to check");
+  const wrong = `0x${"ab".repeat(32)}`;
+  const b = await jget(`/chain/is-anchored?batchId=${confirmedBatch.batchId}&root=${wrong}`);
+  must(b.anchored === false, `a root the chain does not hold answered ${b.anchored}`);
+  return "answered false, not an error";
+});
+await item("2.37", async () => {
+  const b = await jget("/health");
+  const local = env.MANDATE_AUDIT_DB ?? "mandate";
+  must(b.database, "health does not name its database");
+  must(b.database === local, `the gateway uses "${b.database}", this suite reads "${local}"`);
+  return `both on "${b.database}"`;
+});
+
 // ── 6. External integrations ────────────────────────────────────────────────
 console.log("\n6. EXTERNAL INTEGRATIONS");
 await item("6.1", async () => {
@@ -665,6 +702,29 @@ await item("6.10", async () => {
   const priced = bindingMismatches(bindingFor(expected, { ...honest, amount: "999" }));
   must(priced.some((m) => m.field === "amount"), "a raised price was not caught");
   return "honest binds; swapped payee and raised price both caught";
+});
+
+await item("6.11", async () => {
+  /*
+   * The SDK's claim, executed. `examples/authority.mjs` imports only published
+   * packages, so if it runs the packages compose — and if it did not, the SDK
+   * would be a private detail of one gateway wearing a public name.
+   *
+   * Run for a refusal only. The approval path moves real tUSDC and is covered
+   * by section 3; what is under test here is that the five steps assemble at
+   * all from npm.
+   */
+  const out = execSync(`set -a; . ./.env; set +a; cd examples && node authority.mjs 5000 market-data 2>&1`, {
+    cwd: ROOT,
+    encoding: "utf8",
+    shell: "/bin/zsh",
+    timeout: 180000,
+  });
+  // \s+ because the example pads its labels into a column.
+  must(/policy\s+v\d+ ACTIVE/.test(out), `the example could not read the anchor: ${out.slice(0, 120)}`);
+  must(/BLOCKED_PER_CALL_CAP at perCall\.cap/.test(out), `unexpected verdict: ${out.slice(-120)}`);
+  must(/nothing moved/.test(out), "a refusal did not say it moved nothing");
+  return "composes from npm: reads the anchor, refuses at the cap, records it";
 });
 
 // ── 7. Hygiene ──────────────────────────────────────────────────────────────
