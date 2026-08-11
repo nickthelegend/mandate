@@ -234,7 +234,17 @@ test("a facilitator reporting failure is believed", async () => {
 });
 
 test("the networks named map to the right chains", () => {
+  /*
+   * Every id here is KeeperHub's, taken from the chain list its MCP serves.
+   * Pinned because a wrong id does not throw — it binds a payment to a chain
+   * the seller never quoted. `tempo` was 4218 in a second copy of this table
+   * for exactly as long as nobody compared the two.
+   */
   assert.equal(NETWORK_CHAIN_IDS["base"], 8453);
   assert.equal(NETWORK_CHAIN_IDS["base-sepolia"], 84532);
   assert.equal(NETWORK_CHAIN_IDS["sepolia"], 11155111);
+  assert.equal(NETWORK_CHAIN_IDS["ethereum-sepolia"], 11155111);
+  assert.equal(NETWORK_CHAIN_IDS["ethereum"], 1);
+  assert.equal(NETWORK_CHAIN_IDS["tempo"], 4217);
+  assert.equal(NETWORK_CHAIN_IDS["tempo-testnet"], 42431);
 });

@@ -92,12 +92,22 @@ export type SettlementResponse = {
  * x402's own deployment is Base mainnet with real USDC. Sepolia is here because
  * that is where this project's contracts live, and the verification argument is
  * indifferent to which chain carries the value.
+ *
+ * Every id is KeeperHub's, checked against the chain list its MCP serves. That
+ * matters more than it looks: a wrong id here does not fail loudly, it binds a
+ * payment to a chain the seller did not quote — which is the exact class of
+ * mismatch the Challenge Binding Check exists to catch, arriving through the
+ * one table the check trusts.
  */
 export const NETWORK_CHAIN_IDS: Record<string, number> = {
   base: 8453,
   "base-sepolia": 84532,
   sepolia: 11155111,
   "ethereum-sepolia": 11155111,
+  ethereum: 1,
+  mainnet: 1,
+  tempo: 4217,
+  "tempo-testnet": 42431,
 };
 
 /* Base64 that works in a browser and in Node without a polyfill or a branch on

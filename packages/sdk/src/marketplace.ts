@@ -30,7 +30,7 @@
 
 import { Wallet, type Signer } from "ethers";
 
-import { encodePaymentHeader, type PaymentPayload } from "./x402.ts";
+import { encodePaymentHeader, NETWORK_CHAIN_IDS, type PaymentPayload } from "./x402.ts";
 import { SpendLedger, type SpendDecision } from "./spend-policy.ts";
 
 import {
@@ -72,20 +72,21 @@ export type Listing = {
 
 const DEFAULT_BASE = "https://app.keeperhub.com";
 
-/** CAIP-2 (`eip155:8453`) or the bare names x402 v1 used. */
-const NAMED_CHAINS: Record<string, number> = {
-  base: 8453,
-  "base-sepolia": 84532,
-  ethereum: 1,
-  mainnet: 1,
-  sepolia: 11155111,
-  tempo: 4218,
-};
-
+/**
+ * CAIP-2 (`eip155:8453`) or the bare names x402 v1 used.
+ *
+ * The table is imported rather than restated. This file used to keep its own
+ * copy, and the copy said `tempo: 4218` where KeeperHub's chain list says
+ * **4217** — an id one digit out, for a chain that does not exist. It would not
+ * have thrown: a `tempo` quote would have resolved, bound, and signed against
+ * the wrong chain, which is precisely the mismatch `bindingFor` is here to
+ * prevent, arriving through the table the check trusts. Two copies of a lookup
+ * are one edit away from disagreeing, so now there is one.
+ */
 function chainIdOf(network: string): number {
   const caip = /^eip155:(\d+)$/.exec(network);
   if (caip) return Number(caip[1]);
-  const named = NAMED_CHAINS[network.toLowerCase()];
+  const named = NETWORK_CHAIN_IDS[network.toLowerCase()];
   if (named) return named;
   throw new Error(`unrecognised x402 network: ${network}`);
 }
