@@ -702,10 +702,22 @@ export function AuthorityConsole() {
             </div>
           )}
 
+          {/*
+            * `execution.simulated` is passed apart from `failedAt` on purpose.
+            * It is not one of the fifteen — the policy allowed this spend, and
+            * what stopped it was KeeperHub simulating the transfer and finding
+            * it would revert. Showing it inside the chain would read as the
+            * policy refusing something it did not.
+            */}
           <RuleChain
             className="mt-5"
-            failedAt={mandate.failedRule}
+            failedAt={mandate.failedRule === "execution.simulated" ? null : mandate.failedRule}
             decision={mandate.decision}
+            simulated={
+              mandate.failedRule === "execution.simulated"
+                ? (mandate.rules.find((r) => r.rule === "execution.simulated")?.observed as string) ?? "the transfer would revert"
+                : null
+            }
           />
 
           {/* The refusing rule's own numbers, which is what makes it checkable. */}

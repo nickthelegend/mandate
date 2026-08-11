@@ -52,11 +52,22 @@ function label(rule: string): string {
 export function RuleChain({
   failedAt,
   decision,
+  simulated,
   className,
 }: {
   /** The rule that refused, exactly as the engine named it, or null when none did. */
   failedAt: string | null;
   decision: string;
+  /**
+   * The revert reason, when every rule passed and the transfer itself would
+   * still fail.
+   *
+   * Deliberately separate from `failedAt`. This is not the sixteenth rule — no
+   * rule in the engine's chain can know whether a transfer would succeed, and
+   * folding it in would claim the policy refused something the policy allowed.
+   * Fifteen chips pass; a distinct chip after them is what stopped it.
+   */
+  simulated?: string | null;
   className?: string;
 }) {
   const stopIndex = failedAt
@@ -130,6 +141,19 @@ export function RuleChain({
             </span>
           );
         })}
+
+        {simulated && (
+          <span
+            title={simulated}
+            className={cn(
+              "rounded-full px-2.5 py-1 text-[11px] transition-[opacity,transform] duration-200",
+              "bg-[var(--refused-wash)] text-[var(--refused)] ring-1 ring-[var(--refused-line)] font-semibold",
+              shown < RULES.length && "opacity-0 translate-y-1"
+            )}
+          >
+            execution.simulated
+          </span>
+        )}
       </div>
 
       <p className="mt-3 text-[12px] text-[var(--ink-3)]">
@@ -145,6 +169,13 @@ export function RuleChain({
             ) : (
               <> It is the last rule in the chain, so every other one had already passed.</>
             )}
+          </>
+        ) : simulated ? (
+          <>
+            All fifteen passed — the policy allowed this. KeeperHub then simulated the transfer
+            against the chain and it would have failed:{" "}
+            <span className="font-semibold text-[var(--refused)]">{simulated}</span>. No rule can
+            know that; it is the executor&rsquo;s answer about its own wallet.
           </>
         ) : (
           <>All fifteen passed. Only then does the money move.</>
