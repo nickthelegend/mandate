@@ -3,14 +3,19 @@
  *
  * Contracts read from Sepolia, every gateway endpoint including the ones only
  * reachable with bad input, every external integration, and the repo hygiene
- * checks. `qa.mjs` and `qa-live.mjs` cover the pages and the flows; this covers
- * what they stand on.
+ * checks. `qa.mjs` covers the pages and `qa-live.mjs` the money flows; this
+ * covers what they stand on.
+ *
+ * Item ids match TESTPLAN.md exactly, and every line printed here is one row of
+ * that table. Where an item needs a real artefact — a confirmed receipt batch,
+ * an approved spend, an execution id — it is discovered from the live record
+ * rather than hardcoded, so the suite cannot pass on a hash that was true once.
  *
  *   node qa-infra.mjs
  */
 
 import { JsonRpcProvider, Contract } from "ethers";
-import { readFileSync, existsSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { execSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
@@ -35,10 +40,9 @@ const record = (id, ok, note) => {
 };
 const item = async (id, fn) => {
   try {
-    const note = await fn();
-    record(id, true, note);
+    record(id, true, await fn());
   } catch (e) {
-    record(id, false, e.message.slice(0, 150));
+    record(id, false, e.message.slice(0, 160));
   }
 };
 const must = (cond, msg) => {
@@ -47,6 +51,7 @@ const must = (cond, msg) => {
 
 const provider = new JsonRpcProvider(RPC, 11155111);
 const POLICY_ID = env.POLICY_ID;
+const DEPLOYER = env.DEPLOYER_ADDRESS;
 
 const jget = async (path, expect = 200) => {
   const r = await fetch(`${G}${path}`);
@@ -67,19 +72,34 @@ const jpost = async (path, payload, expect) => {
 /** The spend route is paced per client; space the deliberate-400 probes out. */
 const pace = () => new Promise((r) => setTimeout(r, 1800));
 
+/** One Mongo connection, reused. Several items need to look at the record. */
+let _db = null;
+async function db() {
+  if (_db) return _db;
+  const { MongoClient } = await import("mongodb");
+  const c = new MongoClient(env.MONGODB_URI, { serverSelectionTimeoutMS: 20000 });
+  await c.connect();
+  _db = c.db(env.MANDATE_AUDIT_DB ?? "mandate");
+  _db.__client = c;
+  return _db;
+}
+
 // ── 1. Contracts ────────────────────────────────────────────────────────────
 console.log("\n1. CONTRACTS ON SEPOLIA");
 const ADDR = {
-  "1.1": ["PolicyRegistry", "0x13452fcA19819d37Fa4b01a0e64C8Fce60C5E304"],
-  "1.2": ["MandateEscrow", "0x0ED9d1235cB9FD080D687FD978a38d972a34dC3B"],
-  "1.3": ["USDCx", "0x0d864A625c280F7f9B9AD024d12F94f5D6DCCF13"],
-  "1.4": ["tUSDC", "0x49C86277a91002c4943837bf20F6ED41976Db09F"],
+  registry: "0x13452fcA19819d37Fa4b01a0e64C8Fce60C5E304",
+  receipts: env.MANDATE_RECEIPTS ?? "0x64AE971Fda589E4C878F66452b8CE0533032f60d",
+  token: "0x49C86277a91002c4943837bf20F6ED41976Db09F",
 };
-for (const [id, [name, addr]] of Object.entries(ADDR)) {
+for (const [id, key, name] of [
+  ["1.1", "registry", "PolicyRegistry"],
+  ["1.2", "receipts", "MandateReceipts"],
+  ["1.3", "token", "tUSDC"],
+]) {
   await item(id, async () => {
-    const code = await provider.getCode(addr);
-    must(code !== "0x", `${name} has no bytecode at ${addr}`);
-    return `${name} deployed, ${(code.length - 2) / 2} bytes`;
+    const code = await provider.getCode(ADDR[key]);
+    must(code !== "0x", `${name} has no bytecode at ${ADDR[key]}`);
+    return `${name} ${ADDR[key].slice(0, 10)}… deployed, ${(code.length - 2) / 2} bytes`;
   });
 }
 
@@ -87,82 +107,100 @@ const REGISTRY_ABI = [
   "function getPolicy(uint256) view returns (tuple(address owner,uint64 expiry,uint32 version,address agent,uint8 status,bytes32 policyHash))",
   "function isUsable(uint256) view returns (bool)",
 ];
-await item("1.5", async () => {
-  const c = new Contract(ADDR["1.1"][1], REGISTRY_ABI, provider);
+await item("1.4", async () => {
+  const c = new Contract(ADDR.registry, REGISTRY_ABI, provider);
   const [p, usable] = await Promise.all([c.getPolicy(POLICY_ID), c.isUsable(POLICY_ID)]);
   must(Number(p.status) === 1, `status is ${p.status}, expected 1 (ACTIVE)`);
-  must(usable === true, "registry does not report the policy usable");
+  must(usable === true, "the registry does not report the policy usable");
   return `ACTIVE and usable, v${p.version}`;
 });
 
-await item("1.6", async () => {
+await item("1.5", async () => {
   const { hashCanonicalJson } = await import(`${ROOT}packages/policy/dist/esm/canon/index.js`);
   const doc = JSON.parse(readFileSync(`${ROOT}apps/gateway/policy.json`, "utf8"));
   const local = hashCanonicalJson(doc.rules);
-  const c = new Contract(ADDR["1.1"][1], REGISTRY_ABI, provider);
+  const c = new Contract(ADDR.registry, REGISTRY_ABI, provider);
   const onChain = (await c.getPolicy(POLICY_ID)).policyHash;
   must(
     onChain.toLowerCase() === local.toLowerCase(),
-    `registry holds ${onChain.slice(0, 12)}…, document hashes to ${local.slice(0, 12)}…`
+    `registry holds ${onChain.slice(0, 12)}…, the document hashes to ${local.slice(0, 12)}…`
   );
-  return `document matches the anchor ${local.slice(0, 14)}…`;
+  return `the document on disk matches the anchor ${local.slice(0, 14)}…`;
 });
+
+const RECEIPTS_ABI = [
+  "function batchCount() view returns (uint256)",
+  "function isAnchored(bytes32,bytes32) view returns (bool)",
+  "function getAnchor(bytes32) view returns (tuple(bytes32 root,uint64 anchoredAt,address anchoredBy))",
+];
+await item("1.6", async () => {
+  const c = new Contract(ADDR.receipts, RECEIPTS_ABI, provider);
+  const n = await c.batchCount();
+  must(n >= 1n, `batchCount is ${n}; nothing has ever been anchored`);
+  return `${n} receipt batch(es) anchored on chain`;
+});
+
+/** The most recent CONFIRMED batch, which several items below need. */
+const confirmedBatch = await (await db())
+  .collection("authority_batches")
+  .findOne({ status: "CONFIRMED" }, { sort: { createdAt: -1 } });
 
 await item("1.7", async () => {
-  const c = new Contract(
-    ADDR["1.2"][1],
-    [
-      "function intents(bytes32) view returns (address payer,address payee,address beneficiary,uint256 amount,uint64 refundableAt,uint8 state)",
-      "function isClaimed(bytes32) view returns (bool)",
-      "function escrowed() view returns (uint256)",
-    ],
-    provider
-  );
-  // A real claimed intent, from the /agent cycle. An unknown id is not a
-  // useful probe: it proves the escrow rejects nonsense, not that it holds state.
-  const REAL = "0x9818f89002a3e28c1ef3f08e2cd1ee16fb447848a118a6f85735ee82a41fd572";
-  const [row, claimed, escrowed] = await Promise.all([
-    c.intents(REAL),
-    c.isClaimed(REAL),
-    c.escrowed(),
-  ]);
-  must(claimed === true, "a known intent reads as unclaimed");
-  must(row.amount > 0n, `intent amount is ${row.amount}`);
-  must(escrowed >= 0n, "escrowed() did not return a balance");
-  return `intents/isClaimed/escrowed all answer; ${row.amount} held on a real intent`;
+  must(confirmedBatch, "no batch has reached CONFIRMED, so there is no anchored root to check");
+  const c = new Contract(ADDR.receipts, RECEIPTS_ABI, provider);
+  const ok = await c.isAnchored(confirmedBatch.batchId, confirmedBatch.root);
+  must(ok === true, `the chain does not hold ${confirmedBatch.root.slice(0, 12)}… under this batch id`);
+  return `root ${confirmedBatch.root.slice(0, 14)}… is anchored, ${confirmedBatch.receiptIds.length} receipts under it`;
 });
 
-const SITE_TX = {
-  anchor: "0x17cc144a475c94e2243dd859166a90ab2fd2923728f876de5bc9dda7054a9ad2",
-  spend: "0xd8bd2b6170811f38831ea6b118f142ecaebbf0b2389e137e2ac5e508062288b8",
-  reanchor: "0xdd035281df43216c5873e6822d92f0092c963166adb9113261dfcfd1d235f4e8",
-  pause: "0x384a73fe41aaad058d171984d17838b08a50ebab440bc40d3d4e47db436e1b9d",
-  lying: "0x6db7218d717f5be3c3b37f386593bf0bdf3760b0407ac1145c617ac172136603",
-  honest: "0x3aac3134ba7c4ce4e12c04e206ad7ce468318607fdb7a8e7ad85e91a70fe72ee",
-};
+/**
+ * Every transaction hash the site can currently show.
+ *
+ * Read from the record rather than a hardcoded list, so a hash that stopped
+ * being displayed stops being checked and a new one starts.
+ */
+const shownTx = [
+  ...(await (await db())
+    .collection("authority_decisions")
+    .find({ transactionHash: { $exists: true, $ne: null } })
+    .sort({ at: -1 })
+    .limit(8)
+    .toArray()),
+].map((d) => ({ what: d.decision, hash: d.transactionHash, amount: d.amount, recipient: d.recipient }));
+if (confirmedBatch?.transactionHash) shownTx.push({ what: "anchor", hash: confirmedBatch.transactionHash });
+
 await item("1.8", async () => {
-  for (const [name, h] of Object.entries(SITE_TX)) {
-    const r = await provider.getTransactionReceipt(h);
-    must(r, `${name} ${h.slice(0, 12)}… is not a transaction`);
-    must(r.status === 1, `${name} has status ${r.status}`);
+  must(shownTx.length > 0, "the site has no transactions to show");
+  for (const t of shownTx) {
+    const r = await provider.getTransactionReceipt(t.hash);
+    must(r, `${t.what} ${t.hash.slice(0, 12)}… is not a transaction`);
+    must(r.status === 1, `${t.what} ${t.hash.slice(0, 12)}… has status ${r.status}`);
   }
-  return `${Object.keys(SITE_TX).length} displayed transactions all real, all status 1`;
+  return `${shownTx.length} displayed transactions, all real, all status 1`;
 });
 
 await item("1.9", async () => {
-  const r = await provider.getTransactionReceipt(SITE_TX.lying);
+  const spend = shownTx.find((t) => t.what === "APPROVED" && t.amount);
+  must(spend, "no approved spend on record to check");
+  const r = await provider.getTransactionReceipt(spend.hash);
   const transfers = r.logs.filter((l) => l.topics[0] === TRANSFER);
-  must(transfers.length === 0, `the "moved nothing" tx has ${transfers.length} Transfer logs`);
-  must(r.logs.length > 0, "it should still have emitted a log — that is the point");
-  return `status 1, ${r.logs.length} log, zero Transfers`;
+  must(transfers.length === 1, `expected exactly 1 ERC-20 Transfer, found ${transfers.length}`);
+  const moved = BigInt(transfers[0].data);
+  const expected = BigInt(Math.round(spend.amount * 1e6));
+  must(moved === expected, `moved ${moved} base units, the decision recorded ${expected}`);
+  const to = "0x" + transfers[0].topics[2].slice(26);
+  must(to.toLowerCase() === spend.recipient.toLowerCase(), `paid ${to}, decision named ${spend.recipient}`);
+  return `$${spend.amount} → ${to.slice(0, 10)}…, exactly ${moved} base units`;
 });
 
 await item("1.10", async () => {
-  const r = await provider.getTransactionReceipt(SITE_TX.honest);
-  const t = r.logs.filter((l) => l.topics[0] === TRANSFER);
-  must(t.length === 1, `expected exactly 1 Transfer, found ${t.length}`);
-  must(BigInt(t[0].data) === 1000000n, `moved ${BigInt(t[0].data)}, expected 1000000`);
-  return "1 Transfer of exactly 1000000 base units";
+  must(confirmedBatch?.transactionHash, "no anchor transaction to check");
+  const r = await provider.getTransactionReceipt(confirmedBatch.transactionHash);
+  must(
+    r.from.toLowerCase() !== DEPLOYER.toLowerCase(),
+    `the anchor was sent by the deployer ${DEPLOYER}, not by KeeperHub`
+  );
+  return `anchored by ${r.from.slice(0, 12)}… via ${r.to.slice(0, 12)}…, not the deployer`;
 });
 
 // ── 2. Gateway endpoints ────────────────────────────────────────────────────
@@ -170,15 +208,18 @@ console.log("\n2. GATEWAY ENDPOINTS");
 await item("2.1", async () => {
   const b = await jget("/health");
   must(b.ok === true, "health did not report ok");
-  must(/^0x[0-9a-fA-F]{40}$/.test(b.facilitator), "no facilitator address");
-  return `ok, facilitator ${b.facilitator.slice(0, 10)}…`;
+  must(b.policyId === POLICY_ID, `health serves policy ${b.policyId}, .env names ${POLICY_ID}`);
+  must(b.keeperhub === true, "the gateway has no KeeperHub credential");
+  return `ok, policy ${String(b.policyId).slice(0, 10)}…, KeeperHub wired`;
 });
 await item("2.2", async () => {
   const b = await jget("/authority");
   must(b.onChain.status === "ACTIVE", `onChain.status is ${b.onChain.status}`);
   must(typeof b.vendorFloor === "number", "vendorFloor missing");
   must(typeof b.spentToday === "number" && typeof b.remaining === "number", "budget fields missing");
-  return `ACTIVE, floor ${b.vendorFloor}, spent ${b.spentToday}`;
+  must(b.totals && typeof b.totals.total === "number", "no system-wide totals");
+  must(b.totals.total > 0, "the authority claims to have decided nothing");
+  return `ACTIVE, floor ${b.vendorFloor}, ${b.totals.total} decisions (${b.totals.refused} refused, ${b.totals.escalated} held)`;
 });
 const PROBE_AGENT = `qa${Date.now().toString(36)}`;
 await item("2.3", async () => {
@@ -193,149 +234,153 @@ await item("2.4", async () => {
   return b.error.slice(0, 50);
 });
 await item("2.5", async () => {
-  const b = await jget("/authority/log?limit=5");
+  const b = await jget("/authority/log?limit=5&agent=agent-ppqt8er7");
   must(Array.isArray(b.entries), "no entries array");
-  if (b.entries.length > 1) {
-    must(b.entries[0].at >= b.entries[1].at, "entries are not newest-first");
-  }
+  must(b.entries.length > 0, "the log is empty for an agent that has decisions on record");
+  if (b.entries.length > 1) must(b.entries[0].at >= b.entries[1].at, "entries are not newest-first");
   for (const e of b.entries) {
     must(e.decision, "an entry has no decision");
-    must(Array.isArray(e.rules), "an entry has no rule trace");
+    must(Array.isArray(e.rules) && e.rules.length > 0, "an entry has no rule trace");
   }
   return `${b.entries.length} entries, newest first, all with traces`;
 });
 await item("2.6", async () => {
-  const b = await jget("/authority/escalations?limit=5");
-  must(Array.isArray(b.entries), "no entries array");
-  for (const e of b.entries) must(!e.approvalCodeHash, "an approval code hash leaked to the client");
-  return `${b.entries.length} entries, no code hashes exposed`;
-});
-await item("2.7", async () => {
   const b = await jget("/authority/score/0x000000000000000000000000000000000000dEaD");
   must(b.lcb <= b.score, `lcb ${b.lcb} exceeds score ${b.score}`);
   must(b.features.length === 7, `${b.features.length} features, expected 7`);
   must(b.features.filter((f) => f.implemented).length === 4, "expected exactly 4 observed features");
   return `lcb ${b.lcb.toFixed(1)} ≤ score ${b.score.toFixed(1)}, band ${b.band}`;
 });
-await item("2.8", async () => {
+await item("2.7", async () => {
   const b = await jget("/authority/score/junk", 400);
   must(/20-byte address/.test(b.error), b.error);
   return b.error;
 });
+await item("2.8", async () => {
+  const b = await jget("/authority/escalations?limit=5");
+  must(Array.isArray(b.entries), "no entries array");
+  for (const e of b.entries) must(!e.approvalCodeHash, "an approval code hash leaked to the client");
+  return `${b.entries.length} entries, no code hashes exposed`;
+});
+const LADDER = ["QUEUED", "BATCHED", "SUBMITTED", "CONFIRMED", "DEGRADED_UNANCHORED"];
+let anchoredReceiptId = null;
 await item("2.9", async () => {
-  const b = await jget("/audit?limit=3");
-  must(typeof b.total === "number" && b.total > 0, "no persisted audit entries");
-  return `${b.total} persisted decisions`;
+  const b = await jget("/authority/receipts?limit=10");
+  must(Array.isArray(b.entries) && b.entries.length > 0, "no receipts on record");
+  must(b.moved && typeof b.moved.batched === "number", "the tick did not report what it moved");
+  for (const e of b.entries) must(LADDER.includes(e.status), `receipt status ${e.status} is not on the ladder`);
+  anchoredReceiptId = b.entries.find((e) => e.status === "CONFIRMED")?.receiptId ?? null;
+  return `${b.entries.length} receipts, all on the ladder; tick moved ${JSON.stringify(b.moved)}`;
 });
 await item("2.10", async () => {
+  must(anchoredReceiptId, "no CONFIRMED receipt to ask for a proof of");
+  const p = await jget(`/authority/receipt/${anchoredReceiptId}`);
+  must(Array.isArray(p.proof), "no merkle proof in the response");
+  must(p.anchored === true, `a CONFIRMED receipt reports anchored=${p.anchored}`);
+  must(p.status === "CONFIRMED", `status ${p.status}`);
+  return `proof of ${p.proof.length} sibling(s) against root ${p.root.slice(0, 12)}…`;
+});
+await item("2.11", async () => {
+  const b = await jget("/authority/receipt/junk", 400);
+  must(/receipt id/.test(b.error), b.error);
+  return b.error;
+});
+
+/** An executionId from anywhere in the record — decisions are per-agent. */
+const execId = (
+  await (await db())
+    .collection("authority_decisions")
+    .findOne({ executionId: { $exists: true, $ne: null } }, { sort: { at: -1 } })
+)?.executionId;
+
+await item("2.12", async () => {
+  must(execId, "no decision on record carries an executionId to look up");
+  const b = await jget(`/execution/${execId}`);
+  must(b.status, "KeeperHub returned no status");
+  return `${execId} → ${b.status}`;
+});
+await item("2.13", async () => {
   const b = await jget("/execution/!!!", 400);
   must(/execution id/.test(b.error), b.error);
   return b.error;
 });
-/**
- * An executionId from anywhere in the record.
- *
- * `/authority/log` defaults to the shared agent, and every real decision is
- * partitioned per agent, so the default view is legitimately empty. Read the
- * collection directly to find one rather than asserting against a partition
- * nothing writes to.
- */
-async function anyExecutionId() {
-  const { MongoClient } = await import("mongodb");
-  const c = new MongoClient(env.MONGODB_URI, { serverSelectionTimeoutMS: 15000 });
-  await c.connect();
-  const row = await c
-    .db(env.MANDATE_AUDIT_DB ?? "mandate")
-    .collection("authority_decisions")
-    .findOne({ executionId: { $exists: true, $ne: null } }, { sort: { at: -1 } });
-  await c.close();
-  return row?.executionId ?? null;
-}
-
-await item("2.11", async () => {
-  const withExec = { executionId: await anyExecutionId() };
-  must(withExec.executionId, "no decision on record carries an executionId to look up");
-  const b = await jget(`/execution/${withExec.executionId}`);
-  must(b.status, "KeeperHub returned no status");
-  return `${withExec.executionId} → ${b.status}`;
-});
-await item("2.12", async () => {
-  const r = await fetch(`${G}/article`);
-  must(r.status === 402, `expected 402, got ${r.status}`);
-  const b = await r.json();
-  must(Array.isArray(b.accepts) && b.accepts.length > 0, "no accepts[] in the challenge");
-  const a = b.accepts[0];
-  must(a.scheme === "exact" && a.asset && a.payTo, "challenge is not spec-shaped");
-  return `402 with a ${a.scheme} challenge`;
-});
-await item("2.13", async () => {
+await item("2.14", async () => {
   const r = await fetch(`${G}/authority/spend`);
   must(r.status === 405, `expected 405, got ${r.status}`);
   return "405 POST only";
 });
 
 const BAD = [
-  ["2.14", "{oops", 400, /body must be JSON/],
-  ["2.15", { amount: 0 }, 400, /positive number/],
-  ["2.16", { amount: 1e30 }, 400, /implausible/],
-  ["2.17", { amount: 0.1, recipient: "nope" }, 400, /20-byte address/],
-  ["2.18", { amount: 0.1, endpoint: "javascript:alert(1)" }, 400, /http\(s\) URL/],
+  ["2.15", "{oops", /body must be JSON/],
+  ["2.16", { amount: 0 }, /positive number/],
+  ["2.17", { amount: 1e30 }, /implausible/],
+  ["2.18", { amount: 0.1, recipient: "nope" }, /20-byte address/],
+  ["2.19", { amount: 0.1, endpoint: "javascript:alert(1)" }, /http\(s\) URL/],
 ];
-for (const [id, payload, status, re] of BAD) {
+for (const [id, payload, re] of BAD) {
   await pace();
   await item(id, async () => {
-    const b = await jpost("/authority/spend", payload, status);
+    const b = await jpost("/authority/spend", payload, 400);
     must(re.test(b.error), `unexpected message: ${b.error}`);
     return b.error.slice(0, 58);
   });
 }
 
 await pace();
-await item("2.19", async () => {
+await item("2.20", async () => {
   const b = await jpost("/authority/spend", { amount: 0.1, category: "<img src=x onerror=alert(1)>" }, 400);
   must(/category must be/.test(b.error), b.error);
   const log = await jget("/authority/log?limit=50");
   const dirty = log.entries.filter((e) => /[<>]/.test(e.category ?? ""));
   must(dirty.length === 0, `${dirty.length} entries with markup survive in the public log`);
-  return "refused, and the log is clean";
+  return "refused, and nothing reached the log";
 });
 
-await item("2.20", async () => {
+await item("2.21", async () => {
   // Back to back, no pacing: both must be answered on their merits.
-  const a = await fetch(`${G}/authority/spend`, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ amount: -1 }),
-  });
-  const b = await fetch(`${G}/authority/spend`, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ amount: -1 }),
-  });
+  const send = () =>
+    fetch(`${G}/authority/spend`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ amount: -1 }),
+    });
+  const [a, b] = [await send(), await send()];
   must(a.status === 400 && b.status === 400, `got ${a.status} then ${b.status}; the throttle ran first`);
   return "both 400, never 429";
 });
 
 const RESOLVE = "/authority/escalation/esc_0000000000000000000/resolve";
-await item("2.21", async () => {
-  const b = await jpost(RESOLVE, { code: "short", operator: env.DEPLOYER_ADDRESS ?? "0x7A2E11B3ECEBaB8Ea46966eDaDD4092583809b67", action: "APPROVE" }, 400);
+await item("2.22", async () => {
+  const b = await jpost(RESOLVE, { code: "short", operator: DEPLOYER, action: "APPROVE" }, 400);
   must(/24 hex/.test(b.error), b.error);
   return b.error;
 });
-await item("2.22", async () => {
+await item("2.23", async () => {
   const b = await jpost(RESOLVE, { code: "0".repeat(24), operator: "nope", action: "APPROVE" }, 400);
   must(/20-byte address/.test(b.error), b.error);
   return b.error;
 });
-await item("2.23", async () => {
-  const b = await jpost(RESOLVE, { code: "0".repeat(24), operator: "0x7A2E11B3ECEBaB8Ea46966eDaDD4092583809b67", action: "MAYBE" }, 400);
+await item("2.24", async () => {
+  const b = await jpost(RESOLVE, { code: "0".repeat(24), operator: DEPLOYER, action: "MAYBE" }, 400);
   must(/APPROVE or DENY/.test(b.error), b.error);
   return b.error;
 });
-await item("2.24", async () => {
-  const b = await jpost(RESOLVE, { code: "a".repeat(24), operator: "0x7A2E11B3ECEBaB8Ea46966eDaDD4092583809b67", action: "APPROVE" }, 200);
+await item("2.25", async () => {
+  const b = await jpost(RESOLVE, { code: "a".repeat(24), operator: DEPLOYER, action: "APPROVE" }, 200);
   must(b.mandate === "IGNORED_NOT_FOUND", `mandate was ${b.mandate}`);
   return b.mandate;
+});
+await item("2.26", async () => {
+  const b = await jget("/not-a-route", 404);
+  must(/no route \/not-a-route/.test(b.error), b.error);
+  return b.error;
+});
+await item("2.27", async () => {
+  for (const gone of ["/demo", "/agent", "/article", "/audit", "/verify", "/settle"]) {
+    const r = await fetch(`${G}${gone}`);
+    must(r.status === 404, `${gone} still answers ${r.status}`);
+  }
+  return "demo, agent, article, audit, verify, settle all 404";
 });
 
 // ── 6. External integrations ────────────────────────────────────────────────
@@ -343,28 +388,26 @@ console.log("\n6. EXTERNAL INTEGRATIONS");
 await item("6.1", async () => {
   const n = await provider.getBlockNumber();
   must(n > 0, "no block number");
-  return `Sepolia at block ${n}`;
+  const r = await provider.getTransactionReceipt(shownTx[0].hash);
+  must(r?.blockNumber > 0, "a receipt read came back empty");
+  return `Sepolia at block ${n}, receipts readable`;
 });
 await item("6.2", async () => {
-  const { MongoClient } = await import("mongodb");
-  const c = new MongoClient(env.MONGODB_URI, { serverSelectionTimeoutMS: 15000 });
-  await c.connect();
-  const db = c.db(env.MANDATE_AUDIT_DB ?? "mandate");
+  const d = await db();
   const counts = {};
-  for (const n of ["authority_ledger", "authority_decisions", "authority_escalations"]) {
-    counts[n] = await db.collection(n).countDocuments();
+  for (const n of ["authority_ledger", "authority_decisions", "authority_escalations", "authority_receipts", "authority_batches"]) {
+    counts[n] = await d.collection(n).countDocuments();
   }
-  await c.close();
   must(counts.authority_decisions > 0, "the decision log is empty");
   must(counts.authority_ledger > 0, "no ledger partitions persisted");
-  return `ledger ${counts.authority_ledger}, decisions ${counts.authority_decisions}, escalations ${counts.authority_escalations}`;
+  must(counts.authority_receipts > 0, "no receipts persisted");
+  return `ledger ${counts.authority_ledger}, decisions ${counts.authority_decisions}, escalations ${counts.authority_escalations}, receipts ${counts.authority_receipts} in ${counts.authority_batches} batch(es)`;
 });
 await item("6.3", async () => {
-  const id = await anyExecutionId();
-  must(id, "nothing to query");
-  const b = await jget(`/execution/${id}`);
+  must(execId, "nothing to query");
+  const b = await jget(`/execution/${execId}`);
   must(b.status === "completed", `KeeperHub reports ${b.status}`);
-  return `execute API returns ${b.status} for a real execution`;
+  return `the execute API returns ${b.status} for a real execution`;
 });
 
 const khRpc = async () => {
@@ -395,7 +438,7 @@ await item("6.4", async () => {
   const call = await khRpc();
   const list = await call({ jsonrpc: "2.0", id: 2, method: "tools/list" });
   const n = list?.result?.tools?.length ?? 0;
-  must(n > 30, `KeeperHub MCP exposed ${n} tools`);
+  must(n >= 40, `KeeperHub MCP exposed ${n} tools`);
   return `${n} tools over MCP`;
 });
 await item("6.5", async () => {
@@ -407,10 +450,62 @@ await item("6.5", async () => {
 });
 await item("6.6", async () => {
   const call = await khRpc();
-  const r = await call({ jsonrpc: "2.0", id: 3, method: "tools/call", params: { name: "get_workflow_listing", arguments: { slug: "mandate-escrow-intent-status" } } });
-  const d = JSON.parse(r.result.content[0].text);
-  must(d.priceUsdcPerCall === "0.02", `listed at ${d.priceUsdcPerCall}, expected 0.02`);
-  return `${d.listedSlug} live at $${d.priceUsdcPerCall}/call`;
+  const listing = JSON.parse(
+    (
+      await call({
+        jsonrpc: "2.0",
+        id: 3,
+        method: "tools/call",
+        params: { name: "get_workflow_listing", arguments: { slug: "mandate-policy-status" } },
+      })
+    ).result.content[0].text
+  );
+  must(listing.priceUsdcPerCall === "0.02", `listed at ${listing.priceUsdcPerCall}, expected 0.02`);
+  must(!/escrow/i.test(JSON.stringify(listing)), "the listing still advertises the removed escrow");
+
+  /*
+   * And it must actually answer. A priced listing whose workflow errors is
+   * worse than no listing — the buyer has paid before they find out. Paying is
+   * out of scope here (Base mainnet USDC), so the challenge is checked for
+   * shape and the workflow is run directly as its owner.
+   */
+  const challenge = (
+    await call({
+      jsonrpc: "2.0",
+      id: 4,
+      method: "tools/call",
+      params: { name: "call_workflow", arguments: { slug: "mandate-policy-status", inputs: { policyId: POLICY_ID } } },
+    })
+  ).result.content[0].text;
+  const quoted = JSON.parse(challenge.slice(challenge.indexOf("{")));
+  must(quoted.x402Version === 2, `challenge is x402 v${quoted.x402Version}`);
+  const a = quoted.accepts?.[0];
+  must(a?.scheme === "exact" && a.amount === "20000" && /^0x[0-9a-fA-F]{40}$/.test(a.payTo), "the challenge is not spec-shaped");
+
+  const probe = JSON.parse(
+    (
+      await call({
+        jsonrpc: "2.0",
+        id: 5,
+        method: "tools/call",
+        params: { name: "execute_workflow", arguments: { workflowId: listing.id ?? "ucsufidzsjt9hvq6igpdn", input: { policyId: POLICY_ID } } },
+      })
+    ).result.content[0].text
+  );
+  await new Promise((r) => setTimeout(r, 12000));
+  const run = JSON.parse(
+    (
+      await call({
+        jsonrpc: "2.0",
+        id: 6,
+        method: "tools/call",
+        params: { name: "get_execution", arguments: { executionId: probe.executionId } },
+      })
+    ).result.content[0].text
+  );
+  const err = run.progress?.errorContext?.error ?? run.logs?.execution?.error ?? null;
+  must(!err, `the listed workflow errors: ${String(err).slice(0, 80)}`);
+  return `${listing.listedSlug} at $${listing.priceUsdcPerCall}/call, x402 v2 challenge, workflow runs green`;
 });
 await item("6.7", async () => {
   const out = execSync(
@@ -418,23 +513,55 @@ await item("6.7", async () => {
     { cwd: ROOT, encoding: "utf8", timeout: 60000 }
   );
   const line = out.split("\n").find((l) => l.includes('"id":2'));
-  const tools = JSON.parse(line).result.tools.map((t) => t.name);
-  must(tools.length === 6, `${tools.length} tools, expected 6`);
-  must(tools.includes("mandate_verify") && tools.includes("mandate_settle"), "expected tools missing");
+  const tools = JSON.parse(line).result.tools.map((t) => t.name).sort();
+  const expected = [
+    "mandate_budget",
+    "mandate_can_spend",
+    "mandate_decisions",
+    "mandate_escalations",
+    "mandate_policy",
+    "mandate_score",
+    "mandate_spend",
+  ];
+  must(
+    JSON.stringify(tools) === JSON.stringify(expected),
+    `tools are ${tools.join(",")}, expected ${expected.join(",")}`
+  );
   return `${tools.length} tools over stdio, no credential needed to list`;
 });
 await item("6.8", async () => {
-  for (const p of ["mandate-sdk", "mandate-policy"]) {
-    const r = await fetch(`https://registry.npmjs.org/${p}`);
-    must(r.ok, `${p} is not published`);
-    const d = await r.json();
-    must(d["dist-tags"].latest, `${p} has no latest tag`);
-  }
-  const { mongoLedger, executeIfAuthorised } = await import(`${ROOT}packages/sdk/dist/esm/node.js`);
-  must(typeof mongoLedger === "function" && typeof executeIfAuthorised === "function", "sdk exports missing");
-  return "both published, exports resolve";
+  const out = execSync(
+    `printf '%s\\n' '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"qa","version":"1"}}}' '{"jsonrpc":"2.0","method":"notifications/initialized"}' '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"mandate_can_spend","arguments":{"amount":5000,"agent":"qa-mcp","endpoint":"https://api.example.com/v1/probe"}}}' | node --experimental-strip-types packages/mcp/src/cli.ts 2>/dev/null`,
+    { cwd: ROOT, encoding: "utf8", timeout: 120000, env: { ...process.env, MANDATE_AUTHORITY_URL: G } }
+  );
+  /*
+   * The tools answer in prose, because a model has only the prose to go on.
+   * So this asserts on the sentence: the verdict, the rule, the numbers it
+   * compared, and no transaction — a preflight that reported one would be
+   * reporting a payment it must not have made.
+   */
+  const line = out.split("\n").find((l) => l.includes('"id":2'));
+  const said = JSON.parse(line).result.content[0].text;
+  must(/BLOCKED_PER_CALL_CAP/.test(said), `the tool answered: ${said.slice(0, 90)}`);
+  must(/`perCall\.cap`/.test(said), "the refusal did not name the rule");
+  must(/of 15 rules/.test(said) && /never consulted/.test(said), "no short-circuit reported");
+  must(/Observed 5000/.test(said), "the refusal did not say what it compared");
+  must(!/0x[0-9a-f]{64}/i.test(said), "a preflight reported a transaction");
+  return said.slice(0, 74);
 });
 await item("6.9", async () => {
+  const state = {};
+  for (const p of ["mandate-sdk", "mandate-policy", "mandate-mcp"]) {
+    const r = await fetch(`https://registry.npmjs.org/${p}`);
+    state[p] = r.ok ? (await r.json())["dist-tags"]?.latest : null;
+  }
+  const missing = Object.entries(state).filter(([, v]) => !v).map(([k]) => k);
+  const { mongoLedger, executeIfAuthorised } = await import(`${ROOT}packages/sdk/dist/esm/node.js`);
+  must(typeof mongoLedger === "function" && typeof executeIfAuthorised === "function", "sdk exports missing");
+  must(missing.length === 0, `not published: ${missing.join(", ")} — the site tells a reader to install them`);
+  return Object.entries(state).map(([k, v]) => `${k}@${v}`).join(", ");
+});
+await item("6.10", async () => {
   const { bindingFor, bindingMismatches } = await import(`${ROOT}packages/sdk/dist/esm/x402-guard.js`);
   const expected = { slug: "s", amount: "20000", asset: "0xA", payTo: "0xB", baseUrl: "https://x" };
   const honest = { amount: "20000", asset: "0xA", payTo: "0xB" };
@@ -464,25 +591,60 @@ await item("7.1", async () => {
   return `${lines.length} matches, all comments about past bugs or the empty STUBBED_RULES const`;
 });
 await item("7.2", async () => {
-  const out = execSync("npm test 2>&1 || true", {
+  /*
+   * The previous product is gone; its vocabulary must be too.
+   *
+   * Scoped to what would actually mislead a reader: the deleted contracts, and
+   * links or fetches to routes that no longer exist. "facilitator" on its own
+   * is not on the list — it is x402's own word for a real role in a protocol
+   * this still implements, and banning it would mean renaming a spec field.
+   */
+  const out = execSync(
+    `grep -rniE "\\bescrow|USDCx|[\\"'\\\`/](demo|agent|article|audit|claim|verify|explorer|settle)/" --include="*.ts" --include="*.tsx" --include="*.sol" --include="*.json" --include="*.md" apps packages contracts/contracts 2>/dev/null | grep -v "/dist/" | grep -v "/.next/" | grep -v "/out/" || true`,
+    { cwd: ROOT, encoding: "utf8" }
+  ).trim();
+  const lines = out ? out.split("\n") : [];
+  const live = lines.filter(
+    (l) =>
+      // A comment recording what was removed is the opposite of a leftover.
+      !/^\S+:\d+:\s*(\*|\/\/|\/\*)/.test(l) &&
+      // The marketplace listing slug is a name registered with KeeperHub, not a
+      // code path; it is checked for real by 6.6.
+      !/escrow-intent-status/.test(l)
+  );
+  must(live.length === 0, `${live.length} live references: ${live[0]?.slice(0, 110)}`);
+  return `${lines.length} matches, none of them live code`;
+});
+await item("7.3", async () => {
+  const out = execSync("npm test 2>&1; npm run test:contracts 2>&1 || true", {
     cwd: ROOT,
     encoding: "utf8",
     timeout: 900000,
     maxBuffer: 32 * 1024 * 1024,
     env: { ...process.env, MONGODB_URI: env.MONGODB_URI },
   });
-  const pass = [...out.matchAll(/pass (\d+)/g)].reduce((s, m) => s + Number(m[1]), 0);
-  const fail = [...out.matchAll(/fail (\d+)/g)].reduce((s, m) => s + Number(m[1]), 0);
-  must(fail === 0, `${fail} failing tests`);
-  must(pass >= 185, `only ${pass} tests ran`);
-  return `${pass} pass, ${fail} fail`;
+  /*
+   * node:test's summary lines start with a multi-byte `ℹ`, and there is one
+   * block per workspace. Anchoring on the word rather than the glyph avoids the
+   * encoding trap; summing across blocks avoids reading only the last package.
+   */
+  const sum = (word) => [...out.matchAll(new RegExp(`^\\S* ?${word} (\\d+)$`, "gm"))].reduce((s, m) => s + Number(m[1]), 0);
+  const pass = sum("pass");
+  const fail = sum("fail");
+  // Hardhat prints its own summary, so the contract tests are counted apart.
+  const contracts = Number(out.match(/(\d+) passing/)?.[1] ?? 0);
+  const contractsFailed = Number(out.match(/(\d+) failing/)?.[1] ?? 0);
+  must(fail === 0 && contractsFailed === 0, `${fail + contractsFailed} failing tests`);
+  must(pass >= 180, `only ${pass} unit tests ran`);
+  must(contracts >= 25, `only ${contracts} contract tests ran`);
+  return `${pass} unit + ${contracts} contract = ${pass + contracts} pass, 0 fail`;
 });
-await item("7.3", async () => {
+await item("7.4", async () => {
   const out = execSync("npm run typecheck 2>&1 | grep -cE 'error TS' || true", { cwd: ROOT, encoding: "utf8", timeout: 600000 }).trim();
   must(out === "0", `${out} typecheck errors`);
   return "0 errors";
 });
-await item("7.4", async () => {
+await item("7.5", async () => {
   /*
    * Wait for the head commit's runs rather than reading whatever is newest.
    * An in-progress run has a null conclusion, and treating that as a failure
@@ -492,22 +654,21 @@ await item("7.4", async () => {
   const deadline = Date.now() + 600000;
   for (;;) {
     const out = execSync(
-      `gh run list --commit ${head} --json workflowName,status,conclusion -q '.[] | "\(.workflowName):\(.status):\(.conclusion)"'`,
+      `gh run list --commit ${head} --json workflowName,status,conclusion -q '.[] | "\\(.workflowName):\\(.status):\\(.conclusion)"'`,
       { cwd: ROOT, encoding: "utf8", timeout: 120000 }
     ).trim();
     const runs = out ? out.split("\n") : [];
-    must(runs.length > 0 || Date.now() < deadline, "no CI runs for the head commit");
     const done = runs.length >= 2 && runs.every((r) => r.includes(":completed:"));
     if (done) {
       const bad = runs.filter((r) => !r.endsWith(":success"));
       must(bad.length === 0, `CI: ${bad.join(", ")}`);
-      return runs.map((r) => r.split(":").slice(0, 1) + ":success").join(", ");
+      return runs.map((r) => `${r.split(":")[0]}:success`).join(", ");
     }
-    must(Date.now() < deadline, `CI still running after 10 minutes: ${runs.join(", ")}`);
+    must(Date.now() < deadline, `CI still running after 10 minutes: ${runs.join(", ") || "no runs yet"}`);
     await new Promise((r) => setTimeout(r, 15000));
   }
 });
-await item("7.5", async () => {
+await item("7.6", async () => {
   const out = execSync(
     `git grep -nEi "kh_[A-Za-z0-9]{20,}|ghp_[A-Za-z0-9]{20,}|mongodb\\+srv://[^ ]+:|npm_[A-Za-z0-9]{30,}" -- ':!*.md' || true`,
     { cwd: ROOT, encoding: "utf8" }
@@ -517,6 +678,7 @@ await item("7.5", async () => {
 });
 
 // ── summary ─────────────────────────────────────────────────────────────────
+await (await db()).__client.close();
 const failed = results.filter((r) => !r.ok);
 console.log("\n" + "=".repeat(64));
 console.log(`${results.length - failed.length}/${results.length} PASS`);

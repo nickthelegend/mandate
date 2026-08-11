@@ -14,6 +14,7 @@
  */
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { CheckCircle2, Fuel, Loader2, Search } from "lucide-react";
 
@@ -139,8 +140,11 @@ export function Inspector() {
       </form>
 
       <p className="mt-3 font-mono text-xs text-[var(--ink-3)]">
-        Run the <a href="/mandate/demo/" className="underline underline-offset-4 hover:text-[var(--ink)]">live demo</a>{" "}
-        and it will link you straight here with its own id.
+        Every approved spend on the{" "}
+        <Link href="/authority" className="underline underline-offset-4 hover:text-[var(--ink)]">
+          authority
+        </Link>{" "}
+        carries one of these ids — take it from there and read it here.
       </p>
 
       {error && (

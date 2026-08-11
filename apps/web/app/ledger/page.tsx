@@ -12,6 +12,7 @@
  * it gets paid. A record only the deciding party can read is a private note.
  */
 
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
 import { PageHead } from "@/components/page-head";
@@ -114,10 +115,10 @@ export default function LedgerPage() {
 
       {!error && !loading && entries.length === 0 && (
         <p className="mt-10 max-w-[60ch] text-sm leading-relaxed text-[var(--ink-3)]">
-          Nothing struck yet. Run the{" "}
-          <a href="/mandate/demo/" className="text-[var(--ink)] underline underline-offset-4">
-            live demo
-          </a>{" "}
+          Nothing struck yet. Ask the{" "}
+          <Link href="/authority" className="text-[var(--ink)] underline underline-offset-4">
+            authority to spend
+          </Link>{" "}
           and the first verdict lands here.
         </p>
       )}

@@ -165,7 +165,7 @@ shared, not per-instance.
 | **Execute API** | every policy anchor, every authorised transfer |
 | **MCP server** | KeeperHub's, to create and publish a workflow; plus `mandate-mcp`, seven tools of our own including a real preflight |
 | **x402** | spec-exact adapter and an autonomous payer, with a Challenge Binding Check so a swapped payee is caught before signing |
-| **Workflow builder** | [`mandate-escrow-intent-status`](https://app.keeperhub.com), listed at $0.02/call |
+| **Workflow builder** | [`mandate-policy-status`](https://app.keeperhub.com), listed at $0.02/call |
 | **Audit trail** | KeeperHub's execution record read back at `/inspect`; our own decision record, refusals included, persisted to MongoDB |
 | **CLI** | `kh execute contract-call` anchors a policy — [`0xfecbcf8f`](https://sepolia.etherscan.io/tx/0xfecbcf8f777dcc08b579aa6d176270ab3af4389f536c1a9479625fe106a7c478) |
 | **MPP** | **not used** — see Known gaps |
@@ -201,8 +201,8 @@ client, the x402 payer.
 
 ```bash
 npm install
-npm test                       # 156 tests across policy, bureau, escalation and sdk
-npm run test:contracts         # 21 more against the Solidity
+npm test                       # 189 across policy, bureau, escalation, receipts, sdk and mcp
+npm run test:contracts         # 27 more against the Solidity
 npm run build -w mandate-web
 ```
 
@@ -232,8 +232,9 @@ implementation across untch's differential corpus (**15/15**), and untch's own
 engine suite passes against it (**68/68**).
 
 Written here: the KeeperHub anchoring and loader, the authority gate, the
-autonomous x402 marketplace payer, the escrow, the receipt verifier, the MCP
-server and the console.
+autonomous x402 marketplace payer, `MandateReceipts` and the merkle receipt
+writer, the reliability bureau, the escalation service, the MCP server and the
+console.
 
 ## Known gaps
 

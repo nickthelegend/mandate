@@ -1,76 +1,79 @@
 # mandate-mcp
 
-**An MCP server that lets an agent check it was actually paid.**
+A spending authority an agent cannot argue with, as MCP tools.
 
 ```bash
 npx mandate-mcp
 ```
 
-No configuration. The defaults point at a live Sepolia deployment, and every
-read-only tool — including verifying any transaction — works without a
-credential. Only settlement moves money, and only settlement needs a key.
+Every read-only tool works with no configuration and no credential. That is the
+point: the party most in need of knowing what an agent is allowed to spend is
+rarely the party holding the operator's API key, and a tool that demands a key
+before it will tell you an agent's limit has made itself useless to exactly the
+person who should be asking.
 
-## Install into a client
+## Why an authority rather than a wallet guard
+
+A budget an agent enforces on itself is a suggestion. This one is not held by
+the agent at all.
+
+The rules live in a JSON document; the document is canonicalised (RFC 8785) and
+hashed; the hash is anchored in `PolicyRegistry` on Sepolia. The authority reads
+that anchor before every decision and refuses if the document it holds does not
+match. Editing the policy therefore requires a transaction the agent cannot
+send. Pausing it is also a transaction — and a paused policy fails at rule 1 of
+15, so nothing downstream gets a chance to be clever about it.
+
+The agent holds no key. KeeperHub does. So a refusal is not advice.
+
+## The tools
+
+| Tool | What it does |
+| --- | --- |
+| `mandate_can_spend` | Preflight. The same fifteen rules, the same anchored policy, the same persisted ledger — and **nothing written**: no budget consumed, no duplicate recorded, no money moved. |
+| `mandate_spend` | The binding one. On approval the money moves on chain and you get the hash. |
+| `mandate_budget` | What this agent has spent today and what is left, read from the ledger rather than from anything the agent tracks itself. |
+| `mandate_policy` | The rules being enforced, and whether the registry still says they are live. |
+| `mandate_score` | What the reliability bureau makes of a payee, and why. |
+| `mandate_decisions` | The decision record. Refusals as well as approvals. |
+| `mandate_escalations` | Spends held for a human. Nothing is charged while one is open. |
+
+**Call `mandate_can_spend` first.** A refusal you can read is one you can act
+on; attempting a payment is a worse way to discover a limit. The engine returns
+proposed effects rather than applying them, so a preflight has no path through
+which state could change — it is not a dry-run flag on the same code, it is the
+same decision with the write step absent.
+
+### Three answers, not two
+
+A spend can be approved, refused, or **held**. A held spend has charged nothing
+and moved nothing, and only a bound operator holding a single-use code can
+release it. If a tool tells you a spend is held, do not retry — retrying raises
+a second escalation for a person to work through.
+
+## Configuration
+
+| Variable | Effect | Default |
+| --- | --- | --- |
+| `MANDATE_AUTHORITY_URL` | Which authority to ask | the hosted one |
+
+There is no key here. `mandate_spend` moves money, but the credential that does
+it lives on the authority — this package never holds one, which is the same
+property that makes a refusal binding in the first place.
 
 ```json
 {
   "mcpServers": {
-    "mandate": {
-      "command": "npx",
-      "args": ["-y", "mandate-mcp"]
-    }
+    "mandate": { "command": "npx", "args": ["-y", "mandate-mcp"] }
   }
 }
 ```
 
-`.mcp.json` for Claude Code, or `claude_desktop_config.json` for Claude Desktop.
+## Why it talks HTTP instead of reading the chain itself
 
-## Why
+If this package judged spends locally it would be a second implementation of the
+same fifteen rules, reading a different ledger, fully capable of disagreeing
+with the one that actually governs the money. A client cannot drift from the
+thing it is a client of.
 
-x402 releases funds when a facilitator returns success, and the buyer is
-expected to trust it. `status: 0x1` only means the EVM did not revert — a
-transaction can mine, emit no logs, transfer nothing, and still be recorded as a
-payment.
-
-Try it the moment the server is up:
-
-```
-mandate_verify
-  transactionHash  0xf2c4055d08d9b52ca5f4f89fe2cd6c670e2204c2458e4731fd3c0ae0eda5073c
-  recipient        0x000000000000000000000000000000000000dEaD
-  minAmount        2000000
-```
-
-That transaction mined successfully on Sepolia and paid nobody.
-
-## Tools
-
-| Tool | Does |
-|---|---|
-| `mandate_intent_id` | Derive the id for a piece of work. Two agents given the same task and payee get the same id, so a duplicate is refused on chain rather than paid for twice. |
-| `mandate_get_intent` | State, amount, and beneficiary — the address the work actually has to reach. |
-| `mandate_verify` | Did this transaction move value? Reads the receipt for a real ERC-20 `Transfer`. Read-only. |
-| `mandate_settle` | Release or refund, decided from a transaction hash. |
-| `mandate_diagnose` | Why an execution failed and whether resending helps. In-flight is never worth resending. |
-| `mandate_audit` | The decision record: what was verified, what was settled, and why. |
-
-**`mandate_settle` accepts a transaction hash and nothing else** — no verdict, no
-`done` flag, no description of the work. An agent that could assert its way to a
-payout would be the thing this replaces. A test asserts the schema still has
-exactly two fields.
-
-## Configuration
-
-| Variable | Meaning | Default |
-|---|---|---|
-| `MANDATE_RPC_URL` | RPC endpoint | public Sepolia |
-| `MANDATE_ESCROW` | `MandateEscrow` address | the live deployment |
-| `MANDATE_TOKEN` | ERC-20 address | tUSDC on Sepolia |
-| `MANDATE_CHAIN_ID` | chain id | `11155111` |
-| `KEEPERHUB_API_KEY` | enables `mandate_settle` | unset — read-only |
-| `MANDATE_AUDIT_LOG` | decision trail path, or `-` to disable | `.mandate/audit.jsonl` |
-
-Built on [`mandate-sdk`](https://www.npmjs.com/package/mandate-sdk). Source and
-console: [github.com/nickthelegend/mandate](https://github.com/nickthelegend/mandate).
-
-MIT
+MIT.

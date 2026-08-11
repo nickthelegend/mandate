@@ -1,7 +1,7 @@
 {
   "name": "mandate-mcp",
   "version": "0.1.2",
-  "description": "MCP server that lets an agent verify it was actually paid: reads the receipt instead of trusting the status byte, with on-chain idempotency, escrow settlement and execution diagnosis.",
+  "description": "MCP server for a spending authority an agent cannot argue with: preflight a payment against a policy anchored on chain, read any agent's budget and the reason behind every refusal, and spend only when the fifteen rules allow it.",
   "license": "MIT",
   "author": "Mandate",
   "homepage": "https://github.com/nickthelegend/mandate/tree/main/packages/mcp#readme",
@@ -16,11 +16,11 @@
   "keywords": [
     "mcp",
     "model-context-protocol",
-    "x402",
     "agent-payments",
-    "escrow",
-    "settlement",
-    "verification",
+    "spending-policy",
+    "budget",
+    "guardrails",
+    "x402",
     "claude",
     "keeperhub"
   ],
