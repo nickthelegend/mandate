@@ -68,6 +68,13 @@ jobs:
       - name: MCP
         run: npm run test -w mandate-mcp
 
+      # The example is the SDK's claim that the packages compose into a working
+      # authority. It imports from the workspace here rather than npm so a
+      # change lands before a release, and it only typechecks/parses -- running
+      # it needs a Mongo URI and a KeeperHub key, which CI does not have.
+      - name: Example composes
+        run: node --check examples/authority.mjs
+
       # The published entry points claim to be browser-safe. This is the check
       # that keeps that true.
       - name: Entry point boundaries
