@@ -1,0 +1,72 @@
+{
+  "base": "https://nickthelegend.github.io/mandate",
+  "viewport": {
+    "width": 1440,
+    "height": 900
+  },
+  "tookMs": 218929,
+  "narrationMs": 135700,
+  "consoleErrorsDuringTake": 0,
+  "marks": [
+    {
+      "id": "intro",
+      "at": 4712
+    },
+    {
+      "id": "b01-open",
+      "at": 13121
+    },
+    {
+      "id": "b02-authority",
+      "at": 24146
+    },
+    {
+      "id": "b03-approve",
+      "at": 36878,
+      "signing": true,
+      "tx": "0xdf7c834ef29befb59bb8132097efe33ddfcda0d8373d3d7899d0eaadff355a36"
+    },
+    {
+      "id": "b04-signer",
+      "at": 68640
+    },
+    {
+      "id": "b05-cap",
+      "at": 80400
+    },
+    {
+      "id": "b06-duplicate",
+      "at": 92497
+    },
+    {
+      "id": "b07-escalate",
+      "at": 101515
+    },
+    {
+      "id": "b08-release",
+      "at": 119860,
+      "signing": true,
+      "tx": "0x7791b4e306c234d6d18448b8f055068f029e0db3c9dc4ed310df3428988d9423"
+    },
+    {
+      "id": "b09-reload",
+      "at": 148498
+    },
+    {
+      "id": "b10-ledger",
+      "at": 159419
+    },
+    {
+      "id": "b11-proof",
+      "at": 184700
+    },
+    {
+      "id": "b12-verify",
+      "at": 199525
+    },
+    {
+      "id": "outro",
+      "at": 208832
+    }
+  ]
+}

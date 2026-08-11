@@ -20,3 +20,9 @@ apps/web/demo/*.webm
 
 # Stale static export; the deploy builds it fresh.
 apps/web/out/
+
+# Raw take output. The scripts, the narration and the beat log are tracked;
+# the video and the rendered audio are build products and are large.
+recording/video/
+recording/frames/
+recording/audio/*.wav

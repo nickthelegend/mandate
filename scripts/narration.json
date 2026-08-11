@@ -1,0 +1,63 @@
+{
+  "_comment": "Phase 1. One line per beat, plus an intro and an outro. Written to be read aloud: short clauses, no nested asides, numbers said the way a person says them. The driver holds each beat for its own audio duration plus a breath, so a line that runs long simply holds the shot longer — nothing is synced by eye.",
+  "voice": "af_heart",
+  "speed": 1.0,
+  "lines": [
+    {
+      "id": "intro",
+      "text": "Teams are handing autonomous agents private keys and hoping. This is Mandate. It gives an agent a budget it cannot exceed."
+    },
+    {
+      "id": "b01-open",
+      "text": "Not a limit the agent agrees to respect. One it has no key to break. KeeperHub holds the signer, and the policy is the only way through."
+    },
+    {
+      "id": "b02-authority",
+      "text": "This is the authority, live. The policy is read from a registry contract on Sepolia. The budget comes from a database. Neither is something this page decides."
+    },
+    {
+      "id": "b03-approve",
+      "text": "A spend inside every limit. Fifteen rules run in order, and only when all of them pass does the money actually move. This is a real transaction being signed on-chain, on Sepolia, right now."
+    },
+    {
+      "id": "b04-signer",
+      "text": "KeeperHub executed it, and paid the gas. That signing address is theirs, not ours. The agent holds no key and no ether, which is why it cannot send anything the policy refused."
+    },
+    {
+      "id": "b05-cap",
+      "text": "Now a prompt-injected agent asking for five thousand dollars. The chain stops dead at the per-call cap. The four rules after it were never consulted."
+    },
+    {
+      "id": "b06-duplicate",
+      "text": "The same purchase, twice. Caught as a duplicate against the prior intent, and the budget does not move."
+    },
+    {
+      "id": "b07-escalate",
+      "text": "A payee we have never paid. This is the third answer. Not approved, not refused — held for a person. Look at the bar: the score clears the floor comfortably, and the lower bound does not. Thin evidence tightens the limit instead of flattering it."
+    },
+    {
+      "id": "b08-release",
+      "text": "An operator releases it with a single-use code. Only now is the budget charged, and only now does the money move. Another real signature, on-chain."
+    },
+    {
+      "id": "b09-reload",
+      "text": "And this is the whole argument. Reload the page. The spend is still gone, because it is in a database, not in this tab."
+    },
+    {
+      "id": "b10-ledger",
+      "text": "Every decision is kept, refusals included, and readable by anyone without a credential. Open one and you get every rule it consulted, and the one that stopped it."
+    },
+    {
+      "id": "b11-proof",
+      "text": "Each decision is hashed into a merkle tree and the root is anchored on chain. The proof is recomputed here in your own browser, and then the contract is asked directly."
+    },
+    {
+      "id": "b12-verify",
+      "text": "And you do not have to take our word for any of it. This script uses none of our packages. It pulls a receipt, recomputes the path, and asks Sepolia."
+    },
+    {
+      "id": "outro",
+      "text": "A spending limit the agent cannot argue with, evidence anybody can check, and every write executed through KeeperHub. Thanks for watching."
+    }
+  ]
+}

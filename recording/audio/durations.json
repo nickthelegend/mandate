@@ -1,0 +1,16 @@
+{
+ "intro": 7.957,
+ "b01-open": 8.619,
+ "b02-authority": 10.304,
+ "b03-approve": 12.501,
+ "b04-signer": 11.307,
+ "b05-cap": 9.301,
+ "b06-duplicate": 6.229,
+ "b07-escalate": 15.061,
+ "b08-release": 9.792,
+ "b09-reload": 7.147,
+ "b10-ledger": 10.027,
+ "b11-proof": 10.005,
+ "b12-verify": 8.853,
+ "outro": 8.597
+}
