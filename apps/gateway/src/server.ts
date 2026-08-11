@@ -23,6 +23,7 @@ import { createServer } from "node:http";
 import { JsonRpcProvider } from "ethers";
 
 import { KeeperHubClient } from "mandate-sdk/node";
+import { readCosts, type Costs } from "./costs.ts";
 import {
   createAuthority,
   POLICY_ID,
@@ -128,6 +129,9 @@ function clientIp(req: import("node:http").IncomingMessage): string {
     "unknown"
   );
 }
+
+/** Brief cache for the third-party analytics read; see the /authority/costs route. */
+let costCache: { at: number; body: Costs } | null = null;
 
 /** The authority's own throttle: lease-fairness only, not a spend limit. */
 const SPEND_THROTTLE_MS = 1_500;
@@ -307,6 +311,27 @@ const server = createServer(async (req, res) => {
       const from = (req.headers["user-agent"] as string | undefined) ?? null;
       const { id } = await (await getAuthority()).recordDelivery(body, { from });
       return json(res, 200, { received: true, id });
+    } catch (e: unknown) {
+      return json(res, 503, { error: e instanceof Error ? e.message : String(e) });
+    }
+  }
+
+  /*
+   * What enforcement costs, from the executor's own books.
+   *
+   * Cached briefly: it is a third-party call on a public route, and a judge
+   * refreshing the page should not turn into a burst against KeeperHub's
+   * analytics API. Ninety seconds is long enough to absorb that and short
+   * enough that the figure is still current.
+   */
+  if (url.pathname === "/authority/costs") {
+    if (!kh) return json(res, 501, { error: "no KeeperHub key configured on this gateway" });
+    const now = Date.now();
+    if (costCache && now - costCache.at < 90_000) return json(res, 200, costCache.body);
+    try {
+      const body = await readCosts(process.env.KEEPERHUB_API_KEY!);
+      costCache = { at: now, body };
+      return json(res, 200, body);
     } catch (e: unknown) {
       return json(res, 503, { error: e instanceof Error ? e.message : String(e) });
     }

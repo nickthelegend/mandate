@@ -91,6 +91,67 @@ function rootFrom(leaf: string, proof: readonly string[]): string {
   return node;
 }
 
+/**
+ * What enforcement cost, according to the party that paid for it.
+ *
+ * Everything else on this site is the chain's word or ours. This is
+ * KeeperHub's: the gas it sponsored, how long its executions took, and its own
+ * classification of the ones that failed. None of it is derivable from our
+ * database — we know what we asked for and what landed, not what the executor
+ * spent getting there.
+ *
+ * It is here rather than on /authority because it belongs with the evidence,
+ * not with the buttons: a reader asking "is any of this real" wants the bill.
+ */
+function Costs() {
+  const [c, setC] = useState<{
+    direct: number; succeeded: number; failed: number;
+    gasEth: string; medianMs: number | null;
+    failures: Record<string, number>; source: string;
+  } | null>(null);
+
+  useEffect(() => {
+    let live = true;
+    fetch(`${GATEWAY}/authority/costs`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => live && d && !d.error && setC(d))
+      .catch(() => {});
+    return () => { live = false; };
+  }, []);
+
+  // Absent rather than zeroed while it loads: a 0.000000 that becomes a real
+  // figure is a number the page was willing to state before it knew.
+  if (!c || c.direct === 0) return null;
+  const kinds = Object.entries(c.failures);
+
+  return (
+    <p className="mt-4 max-w-[68ch] text-[11px] leading-relaxed text-[var(--ink-4)]">
+      KeeperHub has executed{" "}
+      <span className="figure text-[var(--ink-3)]">{c.direct}</span> of these directly and paid{" "}
+      <span className="figure text-[var(--ink-3)]">{c.gasEth} ETH</span> in gas for them — the agent
+      holds none, which is why it cannot send anything the policy refused.
+      {c.medianMs !== null && (
+        <> A median execution takes <span className="figure text-[var(--ink-3)]">{(c.medianMs / 1000).toFixed(1)}s</span>.</>
+      )}{" "}
+      {c.failed === 0 ? (
+        <>None failed.</>
+      ) : (
+        <>
+          {c.failed} failed, classified by KeeperHub as{" "}
+          {kinds.map(([k, n], i) => (
+            <span key={k}>
+              {i > 0 ? ", " : ""}
+              <span className="figure text-[var(--ink-3)]">{k}</span> ×{n}
+            </span>
+          ))}
+          .
+        </>
+      )}{" "}
+      Read from <span className="figure">{c.source.replace(/^https?:\/\//, "")}</span>.
+    </p>
+  );
+}
+
 export function Receipts() {
   const [rows, setRows] = useState<Receipt[] | null>(null);
   const [moved, setMoved] = useState<Record<string, number> | null>(null);
@@ -346,6 +407,8 @@ export function Receipts() {
         would be a privacy leak dressed up as transparency; a holder proves membership with the
         proof above instead.
       </p>
+
+      <Costs />
     </div>
   );
 }
