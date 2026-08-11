@@ -410,7 +410,18 @@ await item("2.28", async () => {
     must(c.detail, `${c.name} says nothing about what it found`);
   }
   must(b.status === "UP", `aggregate is ${b.status}`);
-  return b.checks.map((c) => `${c.name} ${c.up ? "up" : "DOWN"}`).join(", ");
+  /*
+   * The gateway's database must be the one this suite reads directly.
+   *
+   * They drifted: a local .env said `outcome`, the project's former name, while
+   * production said `mandate`. Every direct-database assertion below was
+   * reading a stale copy with a third of the rows and none of the notification
+   * deliveries — passing, against the wrong system. Nothing else in the suite
+   * could have caught that, because both databases exist and both answer.
+   */
+  const local = env.MANDATE_AUDIT_DB ?? "mandate";
+  must(b.database === local, `the gateway uses "${b.database}", this suite reads "${local}"`);
+  return `${b.checks.map((c) => `${c.name} ${c.up ? "up" : "DOWN"}`).join(", ")}, db "${b.database}"`;
 });
 
 const HOOK_MARK = `qa-${Date.now().toString(36)}`;

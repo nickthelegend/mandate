@@ -51,6 +51,8 @@ const PUBLIC_URL = process.env.PUBLIC_URL ?? `http://localhost:${PORT}`;
 const CHAIN_ID = 11155111;
 
 const RPC = process.env.MANDATE_RPC_URL ?? process.env.SEPOLIA_RPC_URL ?? "https://ethereum-sepolia-rpc.publicnode.com";
+/** Resolved once, so /health and the authority cannot disagree about it. */
+const MONGO_DB = process.env.MANDATE_AUDIT_DB ?? "mandate";
 
 
 const provider = new JsonRpcProvider(RPC, CHAIN_ID);
@@ -82,7 +84,7 @@ function getAuthority(): Promise<Authority> {
     provider,
     kh: kh ?? null,
     mongoUri: uri,
-    mongoDb: process.env.MANDATE_AUDIT_DB ?? "mandate",
+    mongoDb: MONGO_DB,
   }).catch((e) => {
     // Do not cache a failed connection: the next request should try again.
     authorityReady = null;
@@ -190,10 +192,13 @@ const server = createServer(async (req, res) => {
     const checks = await Promise.all([
       probe("mongo", async () => {
         // A read, not a ping: a connection that is up but cannot serve the
-        // ledger is not a working authority.
+        // ledger is not a working authority. The database NAME is reported
+        // because it silently drifted once -- a local copy pointed at the
+        // project's former name and every direct-database check read a stale
+        // copy with a third of the rows, passing against the wrong system.
         const a = await deadline(getAuthority(), 8000);
         const n = (await a.history(1)).length;
-        return `readable, ${n} decision${n === 1 ? "" : "s"} in the last page`;
+        return `db "${MONGO_DB}" readable, ${n} decision${n === 1 ? "" : "s"} in the last page`;
       }),
       probe("sepolia", async () => {
         const b = await deadline(provider.getBlockNumber(), 8000);
@@ -219,6 +224,8 @@ const server = createServer(async (req, res) => {
     return json(res, fatal.length ? 503 : 200, {
       ok: fatal.length === 0,
       status,
+      /* Named so a caller can assert its own config matches production. */
+      database: MONGO_DB,
       // Kept for the callers that already read these two.
       keeperhub: Boolean(kh),
       policyId: POLICY_ID || null,
