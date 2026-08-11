@@ -16,23 +16,29 @@ export const DEPLOYMENT = {
   chainName: "Sepolia",
   rpcUrl: "https://ethereum-sepolia-rpc.publicnode.com",
   /**
-   * More than one, in preference order.
+   * More than one, in the order they actually work **from a browser**.
    *
    * The proof check on /ledger is the page's "don't take our word for it"
-   * affordance, and it was pointed at a single free endpoint — which closed the
-   * connection under two calls in quick succession, turning a working
-   * verification into a red console error and an "the RPC did not answer" that
-   * had nothing to do with the contract. A claim a reader is invited to check
-   * must not hinge on one host being up.
+   * affordance, and pointing it at a single free endpoint broke it the moment
+   * that endpoint dropped a connection. Adding fallbacks fixed that and
+   * introduced a worse problem: the first list was written from the endpoints
+   * that work in Node, and two of them fail from a page — `sepolia.drpc.org`
+   * answers 400 and `rpc.sepolia.org` sends no CORS header — so every
+   * fallthrough walked through two guaranteed console errors before reaching a
+   * working host.
+   *
+   * These are the ones measured from `nickthelegend.github.io` itself, by
+   * `eth_blockNumber`, in Chrome. `publicnode` is last rather than first
+   * despite being the canonical Sepolia endpoint: it is the one this project
+   * uses server-side, and from the browser it currently fails CORS outright.
    *
    * All public and keyless on purpose: the check has to run in a visitor's own
    * browser with nothing configured, or it is not independent verification.
    */
   rpcUrls: [
-    "https://ethereum-sepolia-rpc.publicnode.com",
-    "https://sepolia.drpc.org",
-    "https://rpc.sepolia.org",
     "https://1rpc.io/sepolia",
+    "https://sepolia.gateway.tenderly.co",
+    "https://ethereum-sepolia-rpc.publicnode.com",
   ],
   /** PolicyRegistry: where a spend policy is anchored, and where a pause takes effect. */
   registry: "0x13452fcA19819d37Fa4b01a0e64C8Fce60C5E304",

@@ -26,13 +26,16 @@ const IGNORE = [
   // endpoint rate-limiting us, not a defect in the page.
   /429|Too Many Requests|rate limit/i,
   /*
-   * A free RPC host dropping a connection, which the page now survives by
-   * trying the next endpoint. Scoped to the transport failure against a
-   * third-party RPC — anything from our own origin or the gateway still fails
-   * the item, and so does the verification itself not succeeding.
+   * The LAST endpoint in the fallback list dropping a connection.
+   *
+   * Deliberately narrow. A blanket exemption for "any RPC transport failure"
+   * was here for one run and it hid a real defect: two endpoints in the
+   * fallback list answered 400 and failed CORS from a browser, so every
+   * fallthrough produced guaranteed console errors that this pattern then
+   * swallowed. Only `publicnode` is exempt, because it sits last and is only
+   * ever reached once the two working hosts have already refused.
    */
-  /(publicnode\.com|drpc\.org|rpc\.sepolia\.org|1rpc\.io)[^ ]* net::ERR_/,
-  /^Failed to load resource: net::ERR_CONNECTION_CLOSED$/,
+  /publicnode\.com[^ ]* net::ERR_/,
   // The authority answers 400 for input it correctly refuses. Asserted
   // explicitly in qa-infra rather than treated as a page defect here.
   /one decision at a time/i,
