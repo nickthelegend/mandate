@@ -333,10 +333,20 @@ const server = createServer(async (req, res) => {
   if (url.pathname === "/authority/log") {
     const limit = Math.min(Number(url.searchParams.get("limit") ?? 25) || 25, 100);
     try {
-      const agent = agentOf(url);
-      if (!agent) return json(res, 400, { error: "bad agent id" });
+      /*
+       * No `agent` means the whole record, not the default partition.
+       *
+       * This route is the public decision log, and every real decision is
+       * written under a per-agent partition — so defaulting to `shared` made
+       * the one page whose entire argument is "the record is readable by
+       * anyone" show an empty table to everyone. The console passes its own
+       * agent and still gets only its own rows.
+       */
+      const asked = url.searchParams.get("agent");
+      const agent = asked === null ? undefined : agentOf(url);
+      if (asked !== null && !agent) return json(res, 400, { error: "bad agent id" });
       const entries = await (await getAuthority()).history(limit, agent);
-      return json(res, 200, { returned: entries.length, entries });
+      return json(res, 200, { returned: entries.length, scope: agent ?? "all", entries });
     } catch (e: unknown) {
       return json(res, 503, { error: e instanceof Error ? e.message : String(e) });
     }

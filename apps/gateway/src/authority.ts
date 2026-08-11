@@ -794,8 +794,12 @@ export async function createAuthority(args: {
       } satisfies AuthorityOutcome;
     },
 
+    /*
+     * No agent means every agent. The public record is the whole record;
+     * scoping to one partition is what a caller asks for, not the default.
+     */
     async history(limit, agent) {
-      return ledger.decisions(limit, partitionFor(policyId, agent ?? DEFAULT_AGENT));
+      return ledger.decisions(limit, agent ? partitionFor(policyId, agent) : undefined);
     },
 
     async score(payee) {

@@ -240,6 +240,13 @@ await item("4.10", async () => {
 });
 
 await item("4.11", async () => {
+  /*
+   * Hrefs already carry the deployment's basePath, so they are resolved
+   * against the ORIGIN, not against BASE. Joining them to BASE produces
+   * /mandate/mandate/… and every link "fails" — a harness bug that reads
+   * exactly like a broken site.
+   */
+  const origin = new URL(BASE).origin;
   const seen = new Set();
   for (const p of PAGES) {
     current = `4.11 ${p}`;
@@ -247,15 +254,15 @@ await item("4.11", async () => {
     for (const h of await page.evaluate(() =>
       [...document.querySelectorAll("a")].map((a) => a.getAttribute("href") ?? "")
     )) {
-      if (h.startsWith("/") || h.startsWith(BASE)) seen.add(h.replace(BASE, "") || "/");
+      if (h.startsWith("/")) seen.add(h);
+      else if (h.startsWith(origin)) seen.add(new URL(h).pathname);
     }
   }
   const dead = [...seen].filter((h) => /\/(demo|agent|article|audit|verify|claim|explorer|settle)(\/|$)/.test(h));
   if (dead.length) fail("link to a deleted route", dead.join(", "));
-  // And every surviving internal link must actually answer.
   const bad = [];
   for (const h of seen) {
-    const r = await fetch(`${BASE}${h.startsWith("/") ? h : `/${h}`}`);
+    const r = await fetch(`${origin}${h}`);
     if (!r.ok) bad.push(`${h} → ${r.status}`);
   }
   if (bad.length) fail("broken internal link", bad.join(", "));
