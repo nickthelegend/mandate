@@ -69,13 +69,7 @@
     "prepublishOnly": "npm run build && node scripts/check-entrypoints.mjs"
   },
   "peerDependencies": {
-    "ethers": ">=6",
-    "react": ">=18"
-  },
-  "peerDependenciesMeta": {
-    "react": {
-      "optional": true
-    }
+    "ethers": ">=6"
   },
   "dependencies": {
     "mongodb": "^7.5.0",
@@ -83,7 +77,6 @@
   },
   "devDependencies": {
     "@types/node": "^22.20.1",
-    "@types/react": "^19.0.0",
     "ethers": "^6.17.0",
     "typescript": "^5.9.3"
   }

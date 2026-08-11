@@ -265,12 +265,19 @@ await item("2.8", async () => {
 const LADDER = ["QUEUED", "BATCHED", "SUBMITTED", "CONFIRMED", "DEGRADED_UNANCHORED"];
 let anchoredReceiptId = null;
 await item("2.9", async () => {
-  const b = await jget("/authority/receipts?limit=10");
+  /*
+   * A wide page, not the newest ten. Every run of this suite enqueues fresh
+   * receipts, so the top of the list is whatever just arrived — asking for ten
+   * and looking for a CONFIRMED one finds none and reports the ladder as
+   * broken when it is working perfectly.
+   */
+  const b = await jget("/authority/receipts?limit=100");
   must(Array.isArray(b.entries) && b.entries.length > 0, "no receipts on record");
   must(b.moved && typeof b.moved.batched === "number", "the tick did not report what it moved");
   for (const e of b.entries) must(LADDER.includes(e.status), `receipt status ${e.status} is not on the ladder`);
   anchoredReceiptId = b.entries.find((e) => e.status === "CONFIRMED")?.receiptId ?? null;
-  return `${b.entries.length} receipts, all on the ladder; tick moved ${JSON.stringify(b.moved)}`;
+  const seen = [...new Set(b.entries.map((e) => e.status))].join(", ");
+  return `${b.entries.length} receipts (${seen}); tick moved ${JSON.stringify(b.moved)}`;
 });
 await item("2.10", async () => {
   must(anchoredReceiptId, "no CONFIRMED receipt to ask for a proof of");
@@ -477,7 +484,11 @@ await item("6.6", async () => {
       params: { name: "call_workflow", arguments: { slug: "mandate-policy-status", inputs: { policyId: POLICY_ID } } },
     })
   ).result.content[0].text;
-  const quoted = JSON.parse(challenge.slice(challenge.indexOf("{")));
+  /*
+   * The 402 arrives as a prose line, the JSON challenge, then more prose about
+   * how to pay. Take the object and stop, rather than parsing to end of string.
+   */
+  const quoted = JSON.parse(challenge.slice(challenge.indexOf("{")).split("\n")[0]);
   must(quoted.x402Version === 2, `challenge is x402 v${quoted.x402Version}`);
   const a = quoted.accepts?.[0];
   must(a?.scheme === "exact" && a.amount === "20000" && /^0x[0-9a-fA-F]{40}$/.test(a.payTo), "the challenge is not spec-shaped");
