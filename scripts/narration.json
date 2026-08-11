@@ -1,63 +1,99 @@
 {
-  "_comment": "Phase 1. One line per beat, plus an intro and an outro. Written to be read aloud: short clauses, no nested asides, numbers said the way a person says them. The driver holds each beat for its own audio duration plus a breath, so a line that runs long simply holds the shot longer — nothing is synced by eye.",
+  "_comment": "Phase 1, second script. Longer, and built around the judging criteria rather than around the UI: execution through KeeperHub is named in the beats where it happens, the surfaces are counted out loud once, and the failure modes get their own beats because 'does it understand failure' is a criterion and a demo that only shows the happy path answers it with silence. Written to be read aloud — short clauses, numbers said the way a person says them.",
   "voice": "af_heart",
   "speed": 1.0,
   "lines": [
     {
       "id": "intro",
-      "text": "Teams are handing autonomous agents private keys and hoping. This is Mandate. It gives an agent a budget it cannot exceed."
+      "text": "Teams are handing autonomous agents private keys and hoping. That is an unbounded liability with a chat interface. This is Mandate — a spending authority that sits between an agent and its money, and every write it makes is executed through KeeperHub."
     },
     {
-      "id": "b01-open",
-      "text": "Not a limit the agent agrees to respect. One it has no key to break. KeeperHub holds the signer, and the policy is the only way through."
+      "id": "b01-home",
+      "text": "The usual answer is a spend limit inside the agent's own code. That is a suggestion, not a limit — the agent holds the key, so anything it decides to sign, it signs. Prompt-inject it and the limit is gone."
     },
     {
-      "id": "b02-authority",
-      "text": "This is the authority, live. The policy is read from a registry contract on Sepolia. The budget comes from a database. Neither is something this page decides."
+      "id": "b02-custody",
+      "text": "Mandate makes the limit binding by removing the key. KeeperHub owns the signer. The policy is the only path to a transfer, so a refusal cannot be routed around — there is nothing to route around it with."
     },
     {
-      "id": "b03-approve",
-      "text": "A spend inside every limit. Fifteen rules run in order, and only when all of them pass does the money actually move. This is a real transaction being signed on-chain, on Sepolia, right now."
+      "id": "b03-demo",
+      "text": "The rule engine is published to npm and runs right here in your browser. Fifteen rules in a fixed order, each naming itself and the number it compared. This is the real engine, not a picture of one."
     },
     {
-      "id": "b04-signer",
-      "text": "KeeperHub executed it, and paid the gas. That signing address is theirs, not ours. The agent holds no key and no ether, which is why it cannot send anything the policy refused."
+      "id": "b04-authority",
+      "text": "Here is the authority running live. The policy is read from a registry contract on Sepolia, and the budget from a database. Neither is something this page decides, and neither is something the agent supplies."
     },
     {
-      "id": "b05-cap",
-      "text": "Now a prompt-injected agent asking for five thousand dollars. The chain stops dead at the per-call cap. The four rules after it were never consulted."
+      "id": "b05-approve",
+      "text": "A spend inside every limit. All fifteen rules pass, and only then does KeeperHub move the money. This is a real transaction being signed on-chain right now, through KeeperHub's execute API."
     },
     {
-      "id": "b06-duplicate",
-      "text": "The same purchase, twice. Caught as a duplicate against the prior intent, and the budget does not move."
+      "id": "b06-signer",
+      "text": "KeeperHub executed it and sponsored the gas. That signing address is theirs, not ours — the deployer key in our environment did not sign this. The agent holds no key and no ether, which is exactly why it cannot send anything the policy refused."
     },
     {
-      "id": "b07-escalate",
-      "text": "A payee we have never paid. This is the third answer. Not approved, not refused — held for a person. Look at the bar: the score clears the floor comfortably, and the lower bound does not. Thin evidence tightens the limit instead of flattering it."
+      "id": "b07-inspect",
+      "text": "And KeeperHub keeps its own account of what it did. This is their execution record, read back without a credential: what was simulated, what was sent, whether gas was sponsored, and how long it took to confirm."
     },
     {
-      "id": "b08-release",
-      "text": "An operator releases it with a single-use code. Only now is the budget charged, and only now does the money move. Another real signature, on-chain."
+      "id": "b08-cap",
+      "text": "Now a prompt-injected agent asking for five thousand dollars. The chain stops dead at the per-call cap, and the refusal names the rule and the numbers it compared."
     },
     {
-      "id": "b09-reload",
-      "text": "And this is the whole argument. Reload the page. The spend is still gone, because it is in a database, not in this tab."
+      "id": "b09-chain",
+      "text": "Look at the chain itself. Ten rules passed, one refused, and the four after it were never consulted — because the engine short-circuits at the first failure, and a trace that claimed otherwise would be describing work it never did."
     },
     {
-      "id": "b10-ledger",
-      "text": "Every decision is kept, refusals included, and readable by anyone without a credential. Open one and you get every rule it consulted, and the one that stopped it."
+      "id": "b10-duplicate",
+      "text": "The same purchase again. Caught as a duplicate against the prior intent, and the budget does not move. That window is in the database, so it survives a restart."
     },
     {
-      "id": "b11-proof",
-      "text": "Each decision is hashed into a merkle tree and the root is anchored on chain. The proof is recomputed here in your own browser, and then the contract is asked directly."
+      "id": "b11-escalate",
+      "text": "Now a payee this system has never paid. This is the third answer — not approved, not refused, but held for a person. Look at the bar: the score clears the floor comfortably, and the lower bound does not. Thin evidence tightens the limit instead of flattering it."
     },
     {
-      "id": "b12-verify",
-      "text": "And you do not have to take our word for any of it. This script uses none of our packages. It pulls a receipt, recomputes the path, and asks Sepolia."
+      "id": "b12-notified",
+      "text": "And a person was actually told. The notice went out, and the delivery is recorded by the receiving end rather than asserted by the sender — because held for a human is only true if a human can find out."
+    },
+    {
+      "id": "b13-release",
+      "text": "An operator releases it with a single-use code that only they hold. The budget is charged now, at release, and not when the spend was held — an escalation nobody answers must cost nothing. Another real signature through KeeperHub."
+    },
+    {
+      "id": "b14-reload",
+      "text": "And this is the whole argument in one press. Reload the page. The spend is still gone, because the budget lives in a database and not in this tab."
+    },
+    {
+      "id": "b15-ledger",
+      "text": "Every decision is kept — refusals included — and readable by anyone without a credential. A record that keeps only the approvals cannot answer the question an audit actually asks."
+    },
+    {
+      "id": "b16-trace",
+      "text": "Open one and you get the full trace: every rule consulted, the one that stopped it, and how many were never reached."
+    },
+    {
+      "id": "b17-receipts",
+      "text": "Underneath, each decision is hashed into a merkle tree and the batch root is anchored on chain, through KeeperHub again. If the chain goes down the evidence degrades and enforcement keeps running — the failure points the right way round."
+    },
+    {
+      "id": "b18-proof",
+      "text": "And the proof is checkable. The path is recomputed here in your own browser, and then the contract is asked directly. Both answers are shown apart, so if they ever disagreed you would see it."
+    },
+    {
+      "id": "b19-costs",
+      "text": "This is KeeperHub's own bill for all of it — the executions it ran, the gas it sponsored, and how long a median execution took. Numbers we could not have produced ourselves."
+    },
+    {
+      "id": "b20-docs",
+      "text": "The whole thing ships as three npm packages and seven MCP tools of our own, so an agent can ask whether a spend is allowed before attempting it. Every read-only tool works with no credential at all."
+    },
+    {
+      "id": "b21-surfaces",
+      "text": "KeeperHub is not a call we make at the end. Its execute API signs every write. Its MCP server publishes our workflow. Its audit trail is on our pages. Our policy anchor was written through KeeperHub, so the registry records their wallet as owner — which is why the agent cannot edit its own limits."
     },
     {
       "id": "outro",
-      "text": "A spending limit the agent cannot argue with, evidence anybody can check, and every write executed through KeeperHub. Thanks for watching."
+      "text": "A spending limit an agent cannot argue with, evidence anybody can check, and every transaction executed through KeeperHub. Thanks for watching."
     }
   ]
 }

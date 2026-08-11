@@ -4,69 +4,105 @@
     "width": 1440,
     "height": 900
   },
-  "tookMs": 218929,
-  "narrationMs": 135700,
+  "tookMs": 407614,
+  "narrationMs": 290834,
   "consoleErrorsDuringTake": 0,
   "marks": [
     {
       "id": "intro",
-      "at": 4712
+      "at": 5396
     },
     {
-      "id": "b01-open",
-      "at": 13121
+      "id": "b01-home",
+      "at": 21526
     },
     {
-      "id": "b02-authority",
-      "at": 24146
+      "id": "b02-custody",
+      "at": 37162
     },
     {
-      "id": "b03-approve",
-      "at": 36878,
+      "id": "b03-demo",
+      "at": 52753
+    },
+    {
+      "id": "b04-authority",
+      "at": 69606
+    },
+    {
+      "id": "b05-approve",
+      "at": 85831,
       "signing": true,
-      "tx": "0xdf7c834ef29befb59bb8132097efe33ddfcda0d8373d3d7899d0eaadff355a36"
+      "tx": "0x01b3e55da875c9e6cf689069c9a9061086b9b9c7d4801db1fd6ea1eb443352c9"
     },
     {
-      "id": "b04-signer",
-      "at": 68640
+      "id": "b06-signer",
+      "at": 115549
     },
     {
-      "id": "b05-cap",
-      "at": 80400
+      "id": "b07-inspect",
+      "at": 132586
     },
     {
-      "id": "b06-duplicate",
-      "at": 92497
+      "id": "b08-cap",
+      "at": 147212
     },
     {
-      "id": "b07-escalate",
-      "at": 101515
+      "id": "b09-chain",
+      "at": 163735
     },
     {
-      "id": "b08-release",
-      "at": 119860,
+      "id": "b10-duplicate",
+      "at": 178941
+    },
+    {
+      "id": "b11-escalate",
+      "at": 193955
+    },
+    {
+      "id": "b12-notified",
+      "at": 217086
+    },
+    {
+      "id": "b13-release",
+      "at": 231026,
       "signing": true,
-      "tx": "0x7791b4e306c234d6d18448b8f055068f029e0db3c9dc4ed310df3428988d9423"
+      "tx": "0xda35d7e9d557f6b63c481079aea66bbb1b52084325bffd74098bb5e3c3f5a2f0"
     },
     {
-      "id": "b09-reload",
-      "at": 148498
+      "id": "b14-reload",
+      "at": 262491
     },
     {
-      "id": "b10-ledger",
-      "at": 159419
+      "id": "b15-ledger",
+      "at": 275588
     },
     {
-      "id": "b11-proof",
-      "at": 184700
+      "id": "b16-trace",
+      "at": 308503
     },
     {
-      "id": "b12-verify",
-      "at": 199525
+      "id": "b17-receipts",
+      "at": 316403
+    },
+    {
+      "id": "b18-proof",
+      "at": 332424
+    },
+    {
+      "id": "b19-costs",
+      "at": 346449
+    },
+    {
+      "id": "b20-docs",
+      "at": 359146
+    },
+    {
+      "id": "b21-surfaces",
+      "at": 375467
     },
     {
       "id": "outro",
-      "at": 208832
+      "at": 397024
     }
   ]
 }

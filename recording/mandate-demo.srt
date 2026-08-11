@@ -1,0 +1,91 @@
+1
+00:00:00,000 --> 00:00:15,680
+Teams are handing autonomous agents private keys and hoping. That is an unbounded liability with a chat interface. This is Mandate — a spending authority that sits between an agent and its money, and every write it makes is executed through KeeperHub.
+
+2
+00:00:16,167 --> 00:00:29,500
+The usual answer is a spend limit inside the agent's own code. That is a suggestion, not a limit — the agent holds the key, so anything it decides to sign, it signs. Prompt-inject it and the limit is gone.
+
+3
+00:00:31,833 --> 00:00:44,654
+Mandate makes the limit binding by removing the key. KeeperHub owns the signer. The policy is the only path to a transfer, so a refusal cannot be routed around — there is nothing to route around it with.
+
+4
+00:00:47,199 --> 00:01:00,084
+The rule engine is published to npm and runs right here in your browser. Fifteen rules in a fixed order, each naming itself and the number it compared. This is the real engine, not a picture of one.
+
+5
+00:01:02,599 --> 00:01:15,634
+Here is the authority running live. The policy is read from a registry contract on Sepolia, and the budget from a database. Neither is something this page decides, and neither is something the agent supplies.
+
+6
+00:01:18,166 --> 00:01:31,243
+A spend inside every limit. All fifteen rules pass, and only then does KeeperHub move the money. This is a real transaction being signed on-chain right now, through KeeperHub's execute API.
+
+7
+00:01:35,232 --> 00:01:50,613
+KeeperHub executed it and sponsored the gas. That signing address is theirs, not ours — the deployer key in our environment did not sign this. The agent holds no key and no ether, which is exactly why it cannot send anything the policy refused.
+
+8
+00:01:52,299 --> 00:02:04,928
+And KeeperHub keeps its own account of what it did. This is their execution record, read back without a credential: what was simulated, what was sent, whether gas was sponsored, and how long it took to confirm.
+
+9
+00:02:06,966 --> 00:02:17,142
+Now a prompt-injected agent asking for five thousand dollars. The chain stops dead at the per-call cap, and the refusal names the rule and the numbers it compared.
+
+10
+00:02:19,699 --> 00:02:33,246
+Look at the chain itself. Ten rules passed, one refused, and the four after it were never consulted — because the engine short-circuits at the first failure, and a trace that claimed otherwise would be describing work it never did.
+
+11
+00:02:34,965 --> 00:02:44,693
+The same purchase again. Caught as a duplicate against the prior intent, and the budget does not move. That window is in the database, so it survives a restart.
+
+12
+00:02:47,232 --> 00:03:03,381
+Now a payee this system has never paid. This is the third answer — not approved, not refused, but held for a person. Look at the bar: the score clears the floor comfortably, and the lower bound does not. Thin evidence tightens the limit instead of flattering it.
+
+13
+00:03:05,898 --> 00:03:18,186
+And a person was actually told. The notice went out, and the delivery is recorded by the receiving end rather than asserted by the sender — because held for a human is only true if a human can find out.
+
+14
+00:03:19,898 --> 00:03:34,575
+An operator releases it with a single-use code that only they hold. The budget is charged now, at release, and not when the spend was held — an escalation nobody answers must cost nothing. Another real signature through KeeperHub.
+
+15
+00:03:38,598 --> 00:03:47,899
+And this is the whole argument in one press. Reload the page. The spend is still gone, because the budget lives in a database and not in this tab.
+
+16
+00:03:50,431 --> 00:04:01,994
+Every decision is kept — refusals included — and readable by anyone without a credential. A record that keeps only the approvals cannot answer the question an audit actually asks.
+
+17
+00:04:04,498 --> 00:04:11,090
+Open one and you get the full trace: every rule consulted, the one that stopped it, and how many were never reached.
+
+18
+00:04:12,431 --> 00:04:26,596
+Underneath, each decision is hashed into a merkle tree and the batch root is anchored on chain, through KeeperHub again. If the chain goes down the evidence degrades and enforcement keeps running — the failure points the right way round.
+
+19
+00:04:28,497 --> 00:04:39,718
+And the proof is checkable. The path is recomputed here in your own browser, and then the contract is asked directly. Both answers are shown apart, so if they ever disagreed you would see it.
+
+20
+00:04:42,263 --> 00:04:53,100
+This is KeeperHub's own bill for all of it — the executions it ran, the gas it sponsored, and how long a median execution took. Numbers we could not have produced ourselves.
+
+21
+00:04:55,029 --> 00:05:08,298
+The whole thing ships as three npm packages and seven MCP tools of our own, so an agent can ask whether a spend is allowed before attempting it. Every read-only tool works with no credential at all.
+
+22
+00:05:10,863 --> 00:05:30,170
+KeeperHub is not a call we make at the end. Its execute API signs every write. Its MCP server publishes our workflow. Its audit trail is on our pages. Our policy anchor was written through KeeperHub, so the registry records their wallet as owner — which is why the agent cannot edit its own limits.
+
+23
+00:05:32,429 --> 00:05:41,602
+A spending limit an agent cannot argue with, evidence anybody can check, and every transaction executed through KeeperHub. Thanks for watching.

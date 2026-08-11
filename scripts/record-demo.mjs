@@ -321,101 +321,164 @@ console.log("\nrecording");
 line("intro");
 await hold();
 
-line("b01-open");
+line("b01-home");
 await page.goto(`${BASE}/`, { waitUntil: "networkidle", timeout: 90000 });
 await installCursor();
-await until("b01-open", async () => /budget\s+it\s+cannot\s+exceed/i.test(await bodyText()));
-await glide(720, 380, 900);
+await until("b01-home", async () => /budget\s+it\s+cannot\s+exceed/i.test(await bodyText()));
+await glide(720, 400, 900);
 await hold();
 
-line("b02-authority");
+line("b02-custody");
+// The chain-of-custody table: anchor, spend, tamper, pause — each with a hash.
+await page.evaluate(() => {
+  const h = [...document.querySelectorAll("h2")].find((x) => /custody|chain of/i.test(x.textContent ?? ""));
+  (h ?? document.querySelector("main"))?.scrollIntoView({ behavior: "smooth", block: "center" });
+});
+await page.waitForTimeout(1400);
+await glide(700, 500, 900);
+await hold();
+
+line("b03-demo");
+// The decision demo: the published engine, running client-side.
+await page.evaluate(() => {
+  const el = [...document.querySelectorAll("*")].find((x) => /judged in your browser|decision demo/i.test(x.textContent ?? "") && x.children.length < 8);
+  el?.scrollIntoView({ behavior: "smooth", block: "center" });
+});
+await page.waitForTimeout(1400);
+const demoCase = page.locator("button", { hasText: /Spend|Buy|Pay/ }).first();
+if ((await demoCase.count()) > 0) await press("b03-demo", () => demoCase);
+await page.waitForTimeout(1200);
+await hold();
+
+line("b04-authority");
 await page.goto(`${BASE}/authority/`, { waitUntil: "networkidle", timeout: 90000 });
 await installCursor();
-await until("b02-authority", async () => /ACTIVE ON CHAIN/.test(await bodyText()));
-if ((await budget()) !== 0) throw new BeatFailure("b02-authority", `budget opened at ${await budget()}, not 0`);
-await glide(360, 300, 900);
+await until("b04-authority", async () => /ACTIVE ON CHAIN/.test(await bodyText()));
+if ((await budget()) !== 0) throw new BeatFailure("b04-authority", `budget opened at ${await budget()}, not 0`);
+await glide(360, 320, 900);
 await hold();
 
-// b03 — a real approved spend. SIGNING BEAT.
-line("b03-approve");
-await press("b03-approve", () => page.locator("button", { hasText: "Buy market data" }).first());
+// b05 — a real approved spend. SIGNING BEAT.
+line("b05-approve");
+await press("b05-approve", () => page.locator("button", { hasText: "Buy market data" }).first());
 await overlayOn();
 const spendHash = await (async () => {
-  await until("b03-approve", async () => (await shownTx()) !== null, 180000);
+  await until("b05-approve", async () => (await shownTx()) !== null, 180000);
   return shownTx();
 })();
 await overlayHash(spendHash);
-await until("b03-approve/chain", () => confirmed(spendHash), 180000);
+await until("b05-approve/chain", () => confirmed(spendHash), 180000);
 await overlayOff();
 console.log(`  signed: ${spendHash}`);
 marks[marks.length - 1].signing = true;
 marks[marks.length - 1].tx = spendHash;
 await hold();
 
-line("b04-signer");
-await until("b04-signer", async () => /KeeperHub executed this as/.test(await bodyText()));
+line("b06-signer");
+await until("b06-signer", async () => /KeeperHub executed this as/.test(await bodyText()));
+await page.evaluate(() => {
+  const el = [...document.querySelectorAll("*")].find((x) => /Who actually signed it/.test(x.textContent ?? "") && x.children.length < 6);
+  el?.scrollIntoView({ behavior: "smooth", block: "center" });
+});
+await page.waitForTimeout(1200);
 await hold();
 
-line("b05-cap");
-await press("b05-cap", () => page.locator("button", { hasText: "Spend $5,000" }).first());
-await until("b05-cap", async () => /BLOCKED_PER_CALL_CAP/.test(await bodyText()));
+line("b07-inspect");
+// KeeperHub's own execution record, for the spend just made.
+const execId = await page.evaluate(() => {
+  const a = [...document.querySelectorAll("a")].find((x) => /inspect\/\?id=/.test(x.getAttribute("href") ?? ""));
+  return a ? (a.getAttribute("href").match(/id=([a-z0-9]+)/) ?? [])[1] ?? null : null;
+});
+await page.goto(`${BASE}/inspect/${execId ? `?id=${execId}` : ""}`, { waitUntil: "networkidle", timeout: 90000 });
+await installCursor();
+if (execId) await until("b07-inspect", async () => /completed|gas sponsored|execution id/i.test(await bodyText()), 60000);
 await hold();
 
-line("b06-duplicate");
-await press("b06-duplicate", () => page.locator("button", { hasText: "Buy the same thing again" }).first());
-await until("b06-duplicate", async () => /BLOCKED_DUPLICATE/.test(await bodyText()));
+line("b08-cap");
+await page.goto(`${BASE}/authority/`, { waitUntil: "networkidle", timeout: 90000 });
+await installCursor();
+await page.waitForTimeout(2500);
+await press("b08-cap", () => page.locator("button", { hasText: "Spend $5,000" }).first());
+await until("b08-cap", async () => /BLOCKED_PER_CALL_CAP/.test(await bodyText()));
 await hold();
 
-line("b07-escalate");
-await press("b07-escalate", () => page.locator("button", { hasText: "Pay someone new" }).first());
-await until("b07-escalate", async () => /ESCALATED_VENDOR_RISK/.test(await bodyText()));
-await until("b07-escalate/bar", async () => /vs floor \d+/.test(await bodyText()));
+line("b09-chain");
+// Hold on the rule chain itself — the short-circuit is the argument.
+await page.evaluate(() => document.querySelector("[data-rule]")?.scrollIntoView({ behavior: "smooth", block: "center" }));
+await page.waitForTimeout(1200);
+const chain = await page.evaluate(() => ({
+  chips: document.querySelectorAll("[data-rule]").length,
+  caption: document.body.innerText.match(/Refused at [^\n]*/)?.[0] ?? null,
+}));
+if (chain.chips !== 15) throw new BeatFailure("b09-chain", `${chain.chips} chips, expected 15`);
 await hold();
 
-// b08 — the release. SIGNING BEAT.
-line("b08-release");
+line("b10-duplicate");
+await page.waitForTimeout(2500);
+await press("b10-duplicate", () => page.locator("button", { hasText: "Buy the same thing again" }).first());
+await until("b10-duplicate", async () => /BLOCKED_DUPLICATE/.test(await bodyText()));
+await hold();
+
+line("b11-escalate");
+await page.waitForTimeout(2500);
+await press("b11-escalate", () => page.locator("button", { hasText: "Pay someone new" }).first());
+await until("b11-escalate", async () => /ESCALATED_VENDOR_RISK/.test(await bodyText()));
+await until("b11-escalate/bar", async () => /vs floor \d+/.test(await bodyText()));
+await page.evaluate(() => {
+  const el = [...document.querySelectorAll("*")].find((x) => /What the payee scored/.test(x.textContent ?? "") && x.children.length < 8);
+  el?.scrollIntoView({ behavior: "smooth", block: "center" });
+});
+await page.waitForTimeout(1200);
+await hold();
+
+line("b12-notified");
+await until("b12-notified", async () => /operator notified|left to answer/.test(await bodyText()), 60000);
+await page.evaluate(() => {
+  const el = [...document.querySelectorAll("*")].find((x) => /Waiting on you/.test(x.textContent ?? "") && x.children.length < 8);
+  el?.scrollIntoView({ behavior: "smooth", block: "center" });
+});
+await page.waitForTimeout(1200);
+await hold();
+
+// b13 — the release. SIGNING BEAT.
+line("b13-release");
 const beforeRelease = await budget();
 const demoAgent = await page.evaluate(() => localStorage.getItem("mandate.agent"));
-await press("b08-release", () => page.locator("button", { hasText: "Release it" }).first());
-await overlayOn("Signing Transaction");
-await until("b08-release", async () => (await budget()) > beforeRelease, 240000);
-/*
- * From the escalation record, not from the page.
- *
- * `shownTx()` returns the first /tx/ link in the DOM, which after a release is
- * still the earlier approval's — the first take logged b03's hash against b08
- * and claimed a transaction the beat did not make. The authority knows which
- * transaction released which escalation, so ask it.
- */
+await press("b13-release", () => page.locator("button", { hasText: "Release it" }).first());
+await overlayOn();
+await until("b13-release", async () => (await budget()) > beforeRelease, 240000);
 const releaseHash = await (async () => {
   const list = await fetch(`${GATEWAY}/authority/escalations?limit=10&status=APPROVED&agent=${demoAgent}`)
     .then((r) => r.json())
     .catch(() => ({ entries: [] }));
   return list.entries?.find((e) => e.transactionHash)?.transactionHash ?? null;
 })();
-if (releaseHash === spendHash) throw new BeatFailure("b08-release", "the release hash is the approval's");
+if (releaseHash === spendHash) throw new BeatFailure("b13-release", "the release hash is the approval's");
 if (releaseHash) {
   await overlayHash(releaseHash);
-  await until("b08-release/chain", () => confirmed(releaseHash), 180000);
+  await until("b13-release/chain", () => confirmed(releaseHash), 180000);
 }
 await overlayOff();
-console.log(`  released: ${releaseHash ?? "(charged; hash on the row)"}`);
+console.log(`  released: ${releaseHash ?? "(charged)"}`);
 marks[marks.length - 1].signing = true;
 marks[marks.length - 1].tx = releaseHash;
 await hold();
 
-line("b09-reload");
+line("b14-reload");
 const spent = await budget();
-await press("b09-reload", () => page.locator("button", { hasText: "Reload the page state" }).first());
+await press("b14-reload", () => page.locator("button", { hasText: "Reload the page state" }).first());
 await page.waitForTimeout(2500);
-if ((await budget()) !== spent) throw new BeatFailure("b09-reload", "the budget changed across a reload");
+if ((await budget()) !== spent) throw new BeatFailure("b14-reload", "the budget changed across a reload");
 await hold();
 
-line("b10-ledger");
+line("b15-ledger");
 await page.goto(`${BASE}/ledger/`, { waitUntil: "networkidle", timeout: 90000 });
 await installCursor();
-await until("b10-ledger", async () => (await page.locator("table tbody tr").count()) > 0);
-await press("b10-ledger", async () => {
+await until("b15-ledger", async () => (await page.locator("table tbody tr").count()) > 0);
+await hold();
+
+line("b16-trace");
+await press("b16-trace", async () => {
   const rows = page.locator("table tbody tr");
   const n = await rows.count();
   for (let i = 0; i < n; i++) {
@@ -423,20 +486,47 @@ await press("b10-ledger", async () => {
   }
   return rows.first();
 });
-await until("b10-ledger/trace", async () => /rules consulted/.test(await bodyText()));
+await until("b16-trace", async () => /rules consulted/.test(await bodyText()));
 await hold();
 
-line("b11-proof");
-await press("b11-proof", () => page.locator("button", { hasText: "Check the proof" }).first());
-await until("b11-proof", async () => /computed in this browser|does NOT match/.test(await bodyText()), 60000);
-await until("b11-proof/chain", async () => /MandateReceipts confirms|does NOT hold/.test(await bodyText()), 60000);
+line("b17-receipts");
+await page.evaluate(() => {
+  const el = [...document.querySelectorAll("h2")].find((x) => /what backs the record/i.test(x.textContent ?? ""));
+  el?.scrollIntoView({ behavior: "smooth", block: "center" });
+});
+await page.waitForTimeout(1400);
+await until("b17-receipts", async () => /\[?QUEUED|BATCHED|SUBMITTED|CONFIRMED/.test(await bodyText()));
+await hold();
+
+line("b18-proof");
+await press("b18-proof", () => page.locator("button", { hasText: "Check the proof" }).first());
+await until("b18-proof", async () => /computed in this browser|does NOT match/.test(await bodyText()), 60000);
+await until("b18-proof/chain", async () => /MandateReceipts confirms|does NOT hold/.test(await bodyText()), 60000);
 if (!/MandateReceipts confirms this exact root/.test(await bodyText())) {
-  throw new BeatFailure("b11-proof", "the contract did not confirm the root");
+  throw new BeatFailure("b18-proof", "the contract did not confirm the root");
 }
 await hold();
 
-line("b12-verify");
-// The terminal beat is filmed separately; the page rests on the proof.
+line("b19-costs");
+await page.evaluate(() => {
+  const el = [...document.querySelectorAll("*")].find((x) => /KeeperHub has executed/.test(x.textContent ?? "") && x.children.length < 10);
+  el?.scrollIntoView({ behavior: "smooth", block: "center" });
+});
+await page.waitForTimeout(1400);
+await until("b19-costs", async () => /KeeperHub has executed/.test(await bodyText()), 60000);
+await hold();
+
+line("b20-docs");
+await page.goto(`${BASE}/docs/`, { waitUntil: "networkidle", timeout: 90000 });
+await installCursor();
+await until("b20-docs", async () => /mandate_can_spend|Quickstart/.test(await bodyText()));
+await page.evaluate(() => window.scrollBy({ top: 420, behavior: "smooth" }));
+await page.waitForTimeout(1400);
+await hold();
+
+line("b21-surfaces");
+await page.evaluate(() => window.scrollBy({ top: 520, behavior: "smooth" }));
+await page.waitForTimeout(1400);
 await hold();
 
 line("outro");
