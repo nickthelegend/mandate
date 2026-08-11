@@ -165,7 +165,49 @@ pages, eleven endpoints, three contracts, six packages.
 
 ---
 
-## Results — 2026-08-11, second full pass
+## Executed through Claude in Chrome — 2026-08-11
+
+Re-run through the Chrome extension against the live deployed app, after the
+extension was got connected. The blocker had been diagnosed wrongly at first:
+`pgrep` matched a *headless* Chrome on a throwaway profile
+(`/tmp/dorr-nav-9534`), so it looked as though Chrome was running when the
+user's real Chrome was not. Launching the binary on the Default profile paired
+the extension immediately.
+
+Verified in Chrome, with the console read on every page and the network list
+checked for non-2xx:
+
+| Item | Result in Chrome |
+|---|---|
+| 1.1 / 1.2 / 1.3 | bytecode 3119 / 749 / 2074 bytes, read by `eth_call` from the page |
+| 1.7 | `MandateReceipts confirms this exact root under this batch id` |
+| 2.1–2.32 | all 32: statuses and error strings match the plan exactly |
+| 3.4 | APPROVED, $0.00 → $0.40, tx `0x360ff6f399…` |
+| 3.5 / 3.8 | `BLOCKED_PER_CALL_CAP`; chain resolves 10 pass / 1 refused (ringed, `perCall.cap`) / 4 unreached, caption agrees |
+| 3.12 | `ESCALATED_VENDOR_RISK`, budget held, score panel, `vs floor 20`, no transaction |
+| 3.13 | released → $0.40 → $0.60, charged at release |
+| 4.1 | video `readyState 4`, playing, 1600×900, self-hosted |
+| 4.2 | 202 decisions, matching the authority |
+| 4.3–4.8 | chain status, budget, 5 spend cases, 100 rows = header, 7 MCP tools, branded 404 with 12 ways out |
+| 4.12–4.14 | ladder drawn, proof recomputed **in Chrome** and confirmed on chain, JSON export complete |
+| 4.15 | "executed as transfer with gas sponsored", signer linked, not the deployer |
+| 4.16 / 4.17 | `14:29` → `14:04` ticking; `operator notified · dlv_0nca51jl0y` |
+| 5.1 / 5.2 | malformed and empty ids refused locally, **0** requests fired |
+
+**Zero console errors on every page**, checked fresh per page. Every network
+request 200/206/304 — no 4xx, no 5xx. The one thing worth recording: on the
+`/ledger` proof check Chrome shows `POST https://1rpc.io/sepolia 200`, which is
+the RPC fallthrough built earlier today doing its job after the primary
+endpoint refused.
+
+Two readings that looked like defects and were not, both artifacts of the
+extension's tab being backgrounded (`visibilityState: "hidden"`): the hero video
+stayed at `readyState 0` because Chrome does not fetch media in hidden tabs, and
+the rule-chain animation advanced one chip per second because Chrome throttles
+background timers. Both were re-tested once the tab was visible and both pass.
+Neither was "fixed", because neither was broken.
+
+## Results — harness pass
 
 Every item executed against the live deployment. Browser items run in a real
 Chromium against `nickthelegend.github.io/mandate`; endpoint items against the
