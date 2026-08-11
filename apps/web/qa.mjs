@@ -259,6 +259,61 @@ await item("4.10", async () => {
   return "no console.log on any page";
 });
 
+await item("4.22", async () => {
+  /*
+   * The footer is on every page, so a false claim there is a false claim
+   * everywhere. It carried the escrow product's tagline and "there is no
+   * backend to trust" long after the authority became a service.
+   */
+  for (const p of PAGES) {
+    current = `4.22 ${p}`;
+    await go(p);
+    const t = await text();
+    if (/no backend to trust/i.test(t)) fail("false claim", `${p} still says there is no backend`);
+    if (/verified result/i.test(t)) fail("stale tagline", `${p} carries the removed product's tagline`);
+    if (!/anchored on Sepolia/i.test(t)) fail("no honest claim", `${p} footer says nothing checkable`);
+  }
+  return "the footer claims only what is true, on every page";
+});
+
+await item("4.23", async () => {
+  /*
+   * What a visitor sees when the authority is unreachable. Tested by making
+   * every gateway call fail in the page itself — the real UI meeting a real
+   * failure, which no amount of reading the code establishes.
+   */
+  await go("/authority/");
+  await page.evaluate(() => {
+    window.__of = window.fetch;
+    window.fetch = (...a) =>
+      String(a[0]).includes("railway.app")
+        ? Promise.reject(new TypeError("Failed to fetch"))
+        : window.__of(...a);
+  });
+  await page.evaluate(() =>
+    [...document.querySelectorAll("button")].find((b) => /Reload the page state/.test(b.textContent))?.click()
+  );
+  await page.waitForTimeout(4000);
+  const down = await text();
+  if (/Failed to fetch|TypeError/.test(down)) fail("raw error", "the browser's own string reached the reader");
+  if (!/The authority is not answering/.test(down)) fail("no explanation", down.slice(0, 90));
+  // And it must stop asserting what it can no longer confirm.
+  if (/ACTIVE ON CHAIN/.test(down)) fail("stale claim", "still says ACTIVE while unable to reach the chain reader");
+  if (!/LAST KNOWN — NOT CONFIRMED/.test(down)) fail("not marked stale", "");
+
+  // Recovery: a stale flag that never clears is a new bug.
+  await page.evaluate(() => {
+    window.fetch = window.__of;
+  });
+  await page.evaluate(() =>
+    [...document.querySelectorAll("button")].find((b) => /Reload the page state/.test(b.textContent))?.click()
+  );
+  await page.waitForTimeout(5000);
+  const back = await text();
+  if (!/ACTIVE ON CHAIN/.test(back)) fail("did not recover", "the stale state never clears");
+  return "readable, marked stale, and recovers";
+});
+
 await item("4.11", async () => {
   /*
    * Hrefs already carry the deployment's basePath, so they are resolved

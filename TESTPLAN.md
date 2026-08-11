@@ -127,6 +127,8 @@ pages, eleven endpoints, three contracts, six packages.
 | 4.19 | Renormalization is computed, not asserted | states how many signals are priors and what each observed one carries, read off `weightApplied` |
 | 4.20 | A decision opens its full trace | every rule consulted with its verdict, plus how many were never reached |
 | 4.21 | `/ledger` states the cost of enforcement | KeeperHub's own figures — executions, gas **units**, median duration — and never an ETH price it was not given |
+| 4.22 | The footer claims only what is true | no "no backend to trust", no removed-product tagline, and one checkable claim — on every page |
+| 4.23 | The authority unreachable | a readable sentence, never `Failed to fetch`; the state marked `LAST KNOWN — NOT CONFIRMED`; and it recovers when the gateway returns |
 
 ## 5. Interaction edges
 
