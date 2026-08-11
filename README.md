@@ -265,11 +265,30 @@ console.
 
 Stated rather than hidden.
 
-- **MPP is unused.** Tempo is reachable (chain 4217 / 42431) and the CLI talks
-  to it, but the KeeperHub wallet holds no Tempo balance
-  (`kh wallet balance --chain 42431` → "No balances found"), so an MPP payment
-  cannot settle. Blocked on funding, not on capability — so it is left undone
-  rather than faked.
+- **MPP is unused, and here is exactly how far it got.** The three tools
+  (`tempo_sign_and_hold`, `tempo_release_hold`, `tempo_cancel_hold`) are
+  reachable and `42431` resolves as a network — the call fails at
+  `Could not resolve the selected token to a contract address`. `tokenConfig`
+  needs `{"mode":"custom","customToken":{"address":"0x…"}}`, and no USDC.e
+  address is published for Tempo **testnet**; KeeperHub's own docs give only
+  the mainnet one (`0x20c0…8b50`), there is no faucet documented, and no public
+  Tempo testnet RPC answered. So the only working path is mainnet USDC.e, which
+  is real money.
+
+  Worth stating plainly, because it changes what the gap means: KeeperHub's docs
+  describe x402 and MPP as **alternatives for the same job** — *"the wallet pays
+  via x402 by default and uses MPP when the workflow is MPP-only"*, settling in
+  USDC on Base or USDC.e on Tempo. This project implements that job on the rail
+  its chain supports: a spec-exact x402 adapter, an autonomous payer, a
+  Challenge Binding Check, and a live priced listing that returns a real 402.
+  MPP is the same capability on a chain we cannot fund, not a capability that
+  was skipped.
+
+  The shape it would take is already built, which is the frustrating part:
+  `tempo_sign_and_hold` signs a payment and holds it against an on-chain
+  deadline, `release` broadcasts it and `cancel` voids it — which is precisely
+  this project's escalation, natively. Our version does it with a Mongo record
+  and a single-use code because Tempo would not take our money.
 - **Sepolia, not mainnet.** x402's own gate is Base-mainnet-only.
 - **One policy, one agent.** The gateway enforces a single anchored policy read
   from `POLICY_ID`. The registry, the engine and the ledger are all keyed per
