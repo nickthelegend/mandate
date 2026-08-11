@@ -16,7 +16,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
 import { PageHead } from "@/components/page-head";
-import { VerdictMark } from "@/components/verdict";
+import { VerdictMark, stateOf } from "@/components/verdict";
 
 const GATEWAY =
   process.env.NEXT_PUBLIC_GATEWAY_URL ?? "https://gateway-production-944e.up.railway.app";
@@ -41,8 +41,7 @@ type Entry = {
   transactionHash?: string;
 };
 
-/** The one verdict that means money moved. Everything else refused or held. */
-const APPROVED = "APPROVED";
+const money = (n: number) => `$${n.toFixed(2)}`;
 
 export default function LedgerPage() {
   const [entries, setEntries] = useState<Entry[]>([]);
@@ -60,10 +59,14 @@ export default function LedgerPage() {
         setError(body.error ?? `gateway returned ${res.status}`);
         return;
       }
-      // Newest first for reading; the API hands them back oldest-first.
       // The API already answers newest-first, which is the order a reader wants.
       setEntries(body.entries as Entry[]);
-      setTotal(body.total as number);
+      /*
+       * `returned`, not `total` — the route has no `total` field, so this used
+       * to set undefined, pass the `!== null` guard, and render "  decisions on
+       * record" with a hole where the number goes.
+       */
+      setTotal(body.returned as number);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -89,7 +92,7 @@ export default function LedgerPage() {
         </button>
         {total !== null && (
           <span className="figure text-xs text-[var(--ink-3)]">
-            {total} decision{total === 1 ? "" : "s"} on record
+            the last {total} decision{total === 1 ? "" : "s"}, every agent
           </span>
         )}
       </div>
@@ -125,36 +128,38 @@ export default function LedgerPage() {
 
       {entries.length > 0 && (
         <div className="mt-10 overflow-x-auto">
-          <table className="w-full min-w-[720px] border-collapse text-sm">
+          <table className="w-full min-w-[840px] border-collapse text-sm">
             <thead>
               <tr className="border-b-2 border-[var(--ink)] text-left">
                 <th className="text-[11px] font-medium uppercase tracking-wide text-neutral-500 px-3 pb-2 text-left">When</th>
+                <th className="text-[11px] font-medium uppercase tracking-wide text-neutral-500 px-3 pb-2 text-right">Asked for</th>
                 <th className="text-[11px] font-medium uppercase tracking-wide text-neutral-500 px-3 pb-2 text-left">Decision</th>
-                <th className="text-[11px] font-medium uppercase tracking-wide text-neutral-500 px-3 pb-2 text-left">Verdict</th>
+                <th className="text-[11px] font-medium uppercase tracking-wide text-neutral-500 px-3 pb-2 text-left">Rule</th>
                 <th className="text-[11px] font-medium uppercase tracking-wide text-neutral-500 px-3 pb-2 text-left">Why</th>
               </tr>
             </thead>
             <tbody>
-              {entries.map((e, i) => {
-                const good = e.decision === APPROVED;
-                const bad = e.decision.startsWith("BLOCKED_") || e.decision.startsWith("REJECTED_");
-                return (
-                  <tr key={`${e.at}-${i}`} className="border-b border-[var(--line)] align-top">
-                    <td className="figure whitespace-nowrap px-3 py-4 text-xs text-[var(--ink-3)]">
-                      {e.at.replace("T", " ").slice(0, 19)}
-                    </td>
-                    <td className="figure whitespace-nowrap px-3 py-4 text-xs">
-                      {e.failedRule ?? "—"}
-                    </td>
-                    <td className="px-3 py-4">
-                      <VerdictMark state={good ? "proven" : bad ? "not_proven" : "awaiting"} />
-                    </td>
-                    <td className="max-w-[46ch] px-3 py-4 font-mono text-xs leading-relaxed text-[var(--ink-3)]">
-                      {e.reason}
-                    </td>
-                  </tr>
-                );
-              })}
+              {entries.map((e, i) => (
+                <tr key={`${e.at}-${i}`} className="border-b border-[var(--line)] align-top">
+                  <td className="figure whitespace-nowrap px-3 py-4 text-xs text-[var(--ink-3)]">
+                    {e.at.replace("T", " ").slice(0, 19)}
+                  </td>
+                  <td className="figure whitespace-nowrap px-3 py-4 text-right text-xs">{money(e.amount)}</td>
+                  <td className="whitespace-nowrap px-3 py-4">
+                    <VerdictMark state={stateOf(e.decision)} />
+                    {/*
+                      * The mark says approved / refused / held; this says which
+                      * of the refusals it was. A reader comparing two rows
+                      * needs the constant, not a colour they have to decode.
+                      */}
+                    <span className="figure mt-1 block text-[10px] text-[var(--ink-4)]">{e.decision}</span>
+                  </td>
+                  <td className="figure whitespace-nowrap px-3 py-4 text-xs">{e.failedRule ?? "—"}</td>
+                  <td className="max-w-[46ch] px-3 py-4 font-mono text-xs leading-relaxed text-[var(--ink-3)]">
+                    {e.reason}
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
@@ -166,8 +171,8 @@ export default function LedgerPage() {
           KeeperHub records agent actions to an append-only trail and gives agents no way to read
           it: both routes are session-cookie only and no MCP tool exposes it. So the agent whose
           payment is being decided cannot see the reasoning. This record is served without
-          authentication for the same reason the verifier reads a receipt instead of a status byte —
-          if you have to take it on trust, it is not evidence.
+          authentication for the same reason a decision states the rule and the number it compared:
+          if you have to take it on trust, it is not an account of anything.
         </p>
         <p className="mt-4 max-w-[68ch] text-pretty text-sm leading-relaxed text-[var(--ink-3)]">
           Append-only, and persisted in a database rather than on the container&rsquo;s disk. A

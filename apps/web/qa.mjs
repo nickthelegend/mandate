@@ -146,12 +146,17 @@ await item("4.3", async () => {
 
 await item("4.4", async () => {
   await go("/ledger/");
-  if (!(await has(/decision|verdict|refused|approved/i))) fail("no rows", "the ledger renders nothing");
-  const rows = await page.evaluate(
-    () => (document.body.innerText.match(/BLOCKED_\w+|APPROVED|ESCALATED_\w+/g) ?? []).length
-  );
-  if (rows === 0) fail("no decisions", "the ledger shows no decision on any row");
-  return `${rows} decisions on the page`;
+  const t = await text();
+  const rows = (t.match(/BLOCKED_\w+|APPROVED|ESCALATED_\w+/g) ?? []).length;
+  if (rows === 0) return fail("no decisions", "the ledger shows no decision on any row");
+  // The count in the header must match what is actually on the page, or the
+  // page is asserting a number it did not render.
+  const claimed = Number(t.match(/the last (\d+) decisions?/)?.[1] ?? -1);
+  if (claimed !== rows) fail("count disagrees", `header claims ${claimed}, ${rows} rows rendered`);
+  // Three states, in this product's vocabulary — not the removed one's.
+  if (/Not proven|Awaiting|\bProven\b/.test(t)) fail("stale vocabulary", "the ledger still says proven/not proven");
+  if (!/Refused|Approved|Held/.test(t)) fail("no verdict marks", "");
+  return `${rows} decisions, header agrees, approved/refused/held`;
 });
 
 await item("4.5", async () => {

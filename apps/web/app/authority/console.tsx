@@ -24,6 +24,7 @@ import { Loader2, RotateCw } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { RuleChain } from "@/components/rule-chain";
+import { stateOf } from "@/components/verdict";
 import { DEPLOYMENT, tx as txUrl, address as addressUrl, short } from "@/lib/mandate";
 import { cn } from "@/lib/utils";
 
@@ -447,9 +448,7 @@ export function AuthorityConsole() {
           paused && "ring-1 ring-[var(--refused-line)]"
         )}
       >
-        <span
-          className={cn("verdict", paused ? "verdict--not_proven" : "verdict--proven")}
-        >
+        <span className={cn("verdict", paused ? "verdict--refused" : "verdict--approved")}>
           <svg viewBox="0 0 20 20" aria-hidden="true">
             <circle cx="10" cy="10" r="8" />
             {paused && <path d="M3 17 L17 3" stroke="currentColor" strokeWidth="2.5" />}
@@ -583,15 +582,16 @@ export function AuthorityConsole() {
       {mandate && (
         <div className="card-p card-p--bordered p-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <span
-              className={cn(
-                "verdict",
-                mandate.approved ? "verdict--proven" : "verdict--not_proven"
-              )}
-            >
+            {/*
+              * Held is its own state, not a quiet refusal. An escalation has
+              * charged nothing and moved nothing, but the question is still
+              * open — rendering it in the refusal colour tells the reader the
+              * authority said no when it said "ask a person".
+              */}
+            <span className={cn("verdict", `verdict--${stateOf(mandate.decision)}`)}>
               <svg viewBox="0 0 20 20" aria-hidden="true">
                 <circle cx="10" cy="10" r="8" />
-                {!mandate.approved && (
+                {stateOf(mandate.decision) === "refused" && (
                   <path d="M3 17 L17 3" stroke="currentColor" strokeWidth="2.5" />
                 )}
               </svg>

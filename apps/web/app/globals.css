@@ -9,9 +9,9 @@
  * action. Inter throughout, with Instrument Serif italic reserved for a single
  * accent word in a headline.
  *
- * The one thing Mandate adds is a verdict pair, because no marketing surface
- * ships with the state this product exists to render: a settlement that
- * succeeded and still paid nobody.
+ * The one thing Mandate adds is a three-way decision mark, because no marketing
+ * surface ships with the state this product exists to render: a spend that was
+ * neither approved nor refused, but held for a person to answer.
  */
 
 :root {
@@ -386,57 +386,39 @@
     flex: none;
   }
 
-  .verdict--proven {
+  .verdict--approved {
     background: var(--proven-wash);
     color: var(--proven);
   }
 
-  .verdict--proven svg {
+  .verdict--approved svg {
     fill: currentColor;
     stroke: none;
   }
 
-  .verdict--not_proven {
+  .verdict--refused {
     background: var(--refused-wash);
     color: var(--refused);
   }
 
-  .verdict--not_proven svg {
+  .verdict--refused svg {
     fill: none;
     stroke: currentColor;
     stroke-width: 2.5;
   }
 
-  .verdict--awaiting {
+  /* Held is deliberately the quiet one: it is neither answer yet. */
+  .verdict--held {
     background: #f5f5f5;
     color: var(--ink-3);
   }
 
-  .verdict--awaiting svg {
+  .verdict--held svg {
     fill: none;
     stroke: currentColor;
     stroke-width: 2;
   }
 
-  /*
-   * The settlement card. Two facts side by side that never move: what the
-   * facilitator claimed, and what the chain actually moved.
-   */
-  .settlement {
-    background: #fff;
-    border: 1px solid var(--line);
-    border-radius: 1rem;
-    box-shadow: var(--shadow-sm);
-    padding: 1.25rem;
-  }
-
-  .settlement--refused {
-    border-color: var(--refused-line);
-  }
-
-  .settlement--proven {
-    border-color: var(--proven-line);
-  }
 }
 
 .no-scrollbar::-webkit-scrollbar {
