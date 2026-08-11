@@ -216,7 +216,7 @@ await item("3.8", async () => {
       "rgb(253, 239, 237)": "FAIL",
       "rgb(250, 250, 250)": "unreached",
     };
-    const chips = [...document.querySelectorAll("span[title]")];
+    const chips = [...document.querySelectorAll("[data-rule]")];
     return {
       n: chips.length,
       states: chips.map((c) => map[getComputedStyle(c).backgroundColor] ?? "?"),

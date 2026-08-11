@@ -311,7 +311,9 @@ export function Receipts() {
 
                   <div className="flex shrink-0 items-center gap-2">
                     {/* The ladder, as a ladder. Position carries the state. */}
-                    <span className="flex items-center gap-1" title={r.status}>
+                    {/* Named, so a selector can ask for the ladder rather than
+                        for "a span that happens to have four children". */}
+                    <span className="flex items-center gap-1" data-ladder={r.status} title={r.status}>
                       {LADDER.map((s, i) => (
                         <span
                           key={s}

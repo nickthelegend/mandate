@@ -304,7 +304,7 @@ await item("4.12", async () => {
   if (statuses === 0) return fail("no receipts", "the ladder renders nothing");
   // The ladder is drawn, not just named: four segments per receipt.
   const segs = await page.evaluate(
-    () => [...document.querySelectorAll("span[title]")].filter((s) => s.querySelectorAll("span").length === 4).length
+    () => [...document.querySelectorAll("[data-ladder]")].filter((s) => s.querySelectorAll("span").length === 4).length
   );
   if (segs === 0) fail("no ladder", "statuses are listed but the ladder is not drawn");
   return `${statuses} receipts, ${segs} ladders drawn`;

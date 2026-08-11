@@ -121,6 +121,16 @@ export function RuleChain({
               key={rule}
               title={rule}
               /*
+               * A stable hook for the chain specifically.
+               *
+               * Anything selecting "a span with a title" used to mean "a rule
+               * chip", and that stopped being true the moment the bound bar
+               * added titled marks to the same panel — a selector picked up 18
+               * where the chain has 15. The chain is a named thing; it should
+               * be addressable as one rather than by a coincidence of markup.
+               */
+              data-rule={rule}
+              /*
                * The transition names opacity and transform, which are the only
                * things this animates. `transition-all` also interpolated the
                * background, so a refusal spent 200ms fading out of the pass
@@ -145,6 +155,7 @@ export function RuleChain({
         {simulated && (
           <span
             title={simulated}
+            data-rule="execution.simulated"
             className={cn(
               "rounded-full px-2.5 py-1 text-[11px] transition-[opacity,transform] duration-200",
               "bg-[var(--refused-wash)] text-[var(--refused)] ring-1 ring-[var(--refused-line)] font-semibold",
