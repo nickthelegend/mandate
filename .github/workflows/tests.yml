@@ -1,13 +1,13 @@
 # Every test, on every push.
 #
-# Three suites with genuinely different failure modes, so they run as separate
-# steps rather than one command -- a red job should say which layer broke
+# Every suite runs as its own step rather than one command, because they have
+# genuinely different failure modes -- a red job should say which layer broke
 # without anyone opening the log.
 #
 # Nothing here needs a credential or a network. The contract tests run against
-# an in-process Hardhat chain, and the SDK and MCP suites are offline by
-# construction: the receipt verifier is a pure function over a receipt, which is
-# most of why it was written that way. The live Sepolia flows are exercised by
+# an in-process Hardhat chain, and every package suite is offline by
+# construction: the rule engine is a pure function of an intent and a snapshot,
+# and the MCP layer substitutes the network at the client boundary. The live Sepolia flows are exercised by
 # hand and their transaction hashes are in the README.
 name: tests
 
@@ -46,10 +46,26 @@ jobs:
       - name: Contracts
         run: npm run test:contracts
 
+      # The rule engine, the bureau's bounded score, the escalation state
+      # machine and the receipt tree. These are where a wrong answer is
+      # silent -- a policy that approves what it should refuse looks exactly
+      # like one that works -- and for two months they were not in CI at all.
+      - name: Policy engine
+        run: npm run test -w mandate-policy
+
+      - name: Bureau
+        run: npm run test -w mandate-bureau
+
+      - name: Escalation
+        run: npm run test -w mandate-escalation
+
+      - name: Receipts
+        run: npm run test -w mandate-receipts
+
       - name: SDK
         run: npm run test -w mandate-sdk
 
-      - name: MCP over stdio
+      - name: MCP
         run: npm run test -w mandate-mcp
 
       # The published entry points claim to be browser-safe. This is the check

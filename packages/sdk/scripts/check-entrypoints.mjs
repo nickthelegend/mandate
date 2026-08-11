@@ -8,9 +8,14 @@
  * source: what ships is what is checked.
  *
  * Rules:
- *   .       no `node:` builtins, no react
- *   ./react react is expected; `node:` builtins are not
- *   ./node  anything goes, it is the privileged half
+ *   .      no `node:` builtins, no react
+ *   ./x402 the same, so a buyer can check a settlement in a browser
+ *   ./node anything goes, it is the privileged half
+ *
+ * There used to be a `./react` entry. It went with the escrow console it
+ * existed for, and this script kept asserting the built file imported react —
+ * which failed CI for two commits while describing a package that no longer
+ * has that entry. An assertion about a thing that is gone is not a guard.
  */
 
 import { readFileSync, existsSync } from "node:fs";
@@ -55,8 +60,6 @@ function check(name, entry, { forbid, require: required }) {
   /*
    * A scan that reads nothing passes every rule. Each entry names something it
    * must import, so a broken walk fails loudly instead of silently approving.
-   * Counting files does not work here: react.ts uses MandateClient only in type
-   * position, so the emitted module legitimately has no relative imports at all.
    */
   for (const spec of required) {
     if (!external.has(spec)) {
@@ -74,11 +77,18 @@ function check(name, entry, { forbid, require: required }) {
 
 console.log("checking built entrypoints");
 check(".", "dist/esm/index.js", { forbid: ["node:", "react"], require: ["ethers"] });
-check("./react", "dist/esm/react.js", { forbid: ["node:"], require: ["react"] });
-// x402 imports only types, so it emits no runtime edges at all -- hence no
-// `require` here. The rule that matters is that a buyer checking whether they
-// were charged for nothing can do it in a browser.
-check("./x402", "dist/esm/x402.js", { forbid: ["node:", "react"], require: [] });
+// The rule that matters here is that a buyer checking whether they were
+// charged for nothing can do it in a browser, with no server and no key.
+check("./x402", "dist/esm/x402.js", { forbid: ["node:", "react"], require: ["ethers"] });
+/*
+ * And the privileged half must actually be privileged. If `./node` stops
+ * reaching a builtin, the split has collapsed into one entry wearing two names
+ * and the browser guarantee above is guarding nothing.
+ *
+ * `node:fs`, not mongodb: the driver is imported lazily inside `mongoLedger`,
+ * so a static walk correctly never sees it.
+ */
+check("./node", "dist/esm/node.js", { forbid: ["react"], require: ["ethers", "node:fs"] });
 
 if (failures.length) {
   console.error("\nentrypoint check FAILED");
