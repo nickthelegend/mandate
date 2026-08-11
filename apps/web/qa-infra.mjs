@@ -210,7 +210,15 @@ await item("2.1", async () => {
   must(b.ok === true, "health did not report ok");
   must(b.policyId === POLICY_ID, `health serves policy ${b.policyId}, .env names ${POLICY_ID}`);
   must(b.keeperhub === true, "the gateway has no KeeperHub credential");
-  return `ok, policy ${String(b.policyId).slice(0, 10)}…, KeeperHub wired`;
+  /*
+   * It must say what it can reach, not just that it is configured. A health
+   * check whose body is identical whether Mongo answers or not is decoration.
+   */
+  must(Array.isArray(b.checks) && b.checks.length >= 4, "health reports no dependency checks");
+  const down = b.checks.filter((c) => !c.up);
+  must(down.length === 0, `unreachable: ${down.map((c) => `${c.name} (${c.detail})`).join(", ")}`);
+  must(b.status === "UP", `aggregate status is ${b.status}`);
+  return `${b.status} — ${b.checks.map((c) => `${c.name} ${c.ms}ms`).join(", ")}`;
 });
 await item("2.2", async () => {
   const b = await jget("/authority");
