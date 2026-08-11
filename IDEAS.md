@@ -50,7 +50,7 @@ reason. Blank means not reached.
 | 25 | `validate_workflow` in CI for every workflow we publish | skipped — ran out of time; `validate_workflow` exists and is not wired to CI |
 | 26 | Bureau reads KeeperHub's error taxonomy from `list_executions` | |
 | 27 | Publish the preflight as a free read listing so any agent can ask | |
-| 28 | Gas spent per agent, from KeeperHub's analytics | |
+| 28 | Gas spent per agent, from KeeperHub's analytics | BUILT — `/authority/costs`, verified live: 80 direct executions, 6,009,180 gas units, median 12.1s, read from KeeperHub's own analytics |
 | 29 | `test_notification` when an operator binds a channel | BLOCKED — `test_notification` needs a Discord/Slack integration that does not exist on this account |
 | 30 | Show the Turnkey smart account and relayer, so "the agent holds no key" is checkable | BUILT — verified: the signing address is shown and linked, and it is not the deployer |
 
@@ -148,7 +148,7 @@ reason. Blank means not reached.
 
 ## What actually happened
 
-**21 built and verified running against the live deployment.** Each was checked
+**22 built and verified running against the live deployment.** Each was checked
 by triggering it, not by compiling it: a real escalation delivered a real
 notice, the simulator was fed transfers that do and do not revert, the proof was
 recomputed in a browser and put to the contract.
