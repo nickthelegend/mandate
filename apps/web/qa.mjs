@@ -395,6 +395,78 @@ await item("4.17", async () => {
   return said.slice(0, 70);
 });
 
+await item("4.18", async () => {
+  await go("/authority/");
+  await page.locator("button", { hasText: "Pay someone new" }).first().click();
+  await page.waitForSelector("text=What the payee scored", { timeout: 120000 });
+  await page.waitForTimeout(3000);
+  const t = await text();
+  const n = t.match(/score ([\d.]+) − 1\.28 × σ ([\d.]+) = ([\d.]+) vs floor (\d+)/);
+  if (!n) return fail("no arithmetic", "the vendor panel does not state the sum");
+  const [, score, sigma, lcb, floor] = n.map(Number);
+  /*
+   * The marks must sit where the numbers say. Checked against the values
+   * rather than eyeballed — a bar drawn to a pleasing width instead of to the
+   * data is decoration pretending to be evidence.
+   */
+  const marks = await page.evaluate(() =>
+    [...document.querySelectorAll('[title^="lower bound"],[title^="score "],[title^="floor "],[title^="uncertainty costs"]')]
+      .map((e) => ({ title: e.getAttribute("title"), left: parseFloat(e.style.left), width: parseFloat(e.style.width || "0") }))
+  );
+  if (marks.length !== 4) return fail("wrong mark count", `${marks.length}, expected 4`);
+  const at = (p) => marks.find((m) => m.title.startsWith(p));
+  const near = (a, b) => Math.abs(a - b) < 0.5;
+  if (!near(at("lower bound").left, lcb)) fail("bound misplaced", `${at("lower bound").left}% for lcb ${lcb}`);
+  if (!near(at("score ").left, score)) fail("score misplaced", `${at("score ").left}% for score ${score}`);
+  if (!near(at("floor ").left, floor)) fail("floor misplaced", `${at("floor ").left}% for floor ${floor}`);
+  const span = at("uncertainty costs");
+  if (!near(span.left + span.width, score)) fail("span wrong", `${span.left}+${span.width} should reach ${score}`);
+  return `bound ${lcb} floor ${floor} score ${score}, every mark at its own value`;
+});
+
+await item("4.19", async () => {
+  const t = await text();
+  const m = t.match(/(\d+) of (\d+) signals have no honest source[^\n]*carries ([\d.]+)% instead of its nominal ([\d.]+)%/);
+  if (!m) return fail("not computed", "the priors note does not state the redistribution");
+  const [, priors, total, each, nominal] = m.map(Number);
+  const observed = total - priors;
+  // The arithmetic has to be the engine's, not a sentence that sounds right.
+  if (Math.abs(nominal - 100 / total) > 0.15) fail("nominal wrong", `${nominal}% vs 1/${total}`);
+  if (Math.abs(each - 100 / observed) > 0.15) fail("redistribution wrong", `${each}% vs 1/${observed}`);
+  return `${priors}/${total} priors, each observed carries ${each}% vs nominal ${nominal}%`;
+});
+
+await item("4.20", async () => {
+  await go("/ledger/");
+  const rows = page.locator("table tbody tr");
+  await rows.first().click();
+  await page.waitForTimeout(1500);
+  const t = await text();
+  const head = t.match(/policy v\d+ · (\d+) of 15 rules consulted/);
+  if (!head) return fail("no trace", "a row does not open its rule trace");
+  const consulted = Number(head[1]);
+  const marks = (t.match(/[✓✕]\s*[a-z]+\.[a-zA-Z_]+/g) ?? []).length;
+  if (marks !== consulted) fail("count disagrees", `header says ${consulted}, ${marks} rules drawn`);
+  if (consulted < 15 && !/The chain stopped at/.test(t)) {
+    fail("silent short trace", "a partial trace does not say the rest were never reached");
+  }
+  return `${consulted} of 15 shown, and it says so`;
+});
+
+await item("4.21", async () => {
+  const t = await text();
+  const line = (t.match(/KeeperHub has executed[^\n]*/) ?? [null])[0];
+  if (!line) return fail("no cost line", "the page does not say what enforcement cost");
+  if (!/units of gas/.test(line)) fail("no units", line.slice(0, 90));
+  /*
+   * Never a currency. KeeperHub returns gasCostWei and gasUsedWei identical, so
+   * neither is a price — an ETH figure here would be one this code invented.
+   */
+  if (/[\d.]+ ETH/.test(line)) fail("invented a price", "an ETH cost is quoted from a units field");
+  if (!/median/.test(t)) fail("no duration", "");
+  return line.slice(0, 74);
+});
+
 // ── 5. Interaction edges ────────────────────────────────────────────────────
 console.log("\n5. INTERACTION EDGES");
 
@@ -568,6 +640,30 @@ await item("5.9", async () => {
   // It must continue from the real deadline, not restart.
   if (b > a) fail("restarted", `${before[0]} → ${after[0]}, which is longer`);
   return `${before[0]} → ${after[0]}, continued from the real deadline`;
+});
+
+await item("5.10", async () => {
+  // A permalink has to survive arrival, not just a click.
+  await go("/ledger/");
+  await page.locator("table tbody tr").first().click();
+  await page.waitForTimeout(1200);
+  const url = page.url();
+  if (!/intent=0x[0-9a-f]{64}/.test(url)) return fail("no permalink", "opening a row does not change the URL");
+  await page.goto(url, { waitUntil: "networkidle", timeout: 90000 });
+  await page.waitForTimeout(5000);
+  if (!/rules consulted/.test(await text())) fail("did not reopen", "the link does not restore the trace");
+  return "the trace reopens from the URL alone";
+});
+
+await item("5.11", async () => {
+  const rows = page.locator("table tbody tr");
+  await rows.nth(0).click();
+  await page.waitForTimeout(900);
+  await rows.nth(4).click();
+  await page.waitForTimeout(1200);
+  const open = ((await text()).match(/rules consulted/g) ?? []).length;
+  if (open !== 1) fail("two traces open", `${open} panels at once`);
+  return "one at a time";
 });
 
 // ── done ────────────────────────────────────────────────────────────────────

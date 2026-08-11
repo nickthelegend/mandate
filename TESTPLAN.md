@@ -70,6 +70,7 @@ pages, eleven endpoints, three contracts, six packages.
 | 2.30 | `POST /hook/operator` malformed | 400, "body must be JSON" |
 | 2.31 | `GET /hook/operator` | 405, "POST only" |
 | 2.32 | `GET /authority/deliveries` | 200, names the destination notices are sent to |
+| 2.33 | `GET /authority/costs` | 200, gas as **units** with a count of reporting runs, no ETH figure, and cached between calls |
 
 ## 3. The authority, end to end
 
@@ -122,6 +123,10 @@ pages, eleven endpoints, three contracts, six packages.
 | 4.15 | An approved spend shows who signed it | "gas sponsored", the signing address linked, and it is not the deployer |
 | 4.16 | A held spend counts down | `M:SS left to answer`, decreasing |
 | 4.17 | A held spend says whether anyone was told | notified / not reached / no notifier — never silence |
+| 4.18 | The bound is drawn to scale | four marks — score, bound, floor, and the span σ costs — on one 0–100 axis, positions matching the numbers |
+| 4.19 | Renormalization is computed, not asserted | states how many signals are priors and what each observed one carries, read off `weightApplied` |
+| 4.20 | A decision opens its full trace | every rule consulted with its verdict, plus how many were never reached |
+| 4.21 | `/ledger` states the cost of enforcement | KeeperHub's own figures — executions, gas **units**, median duration — and never an ETH price it was not given |
 
 ## 5. Interaction edges
 
@@ -136,6 +141,8 @@ pages, eleven endpoints, three contracts, six packages.
 | 5.7 | Held spend from another session | explains why it cannot be released; no dead button |
 | 5.8 | Checking a proof twice | the second check re-runs and agrees; no stale panel from the first |
 | 5.9 | The countdown across a reload | continues from the real deadline, not from where it was |
+| 5.10 | A decision permalink survives a reload | `?intent=0x…` re-opens that exact trace on arrival |
+| 5.11 | Opening a second decision | closes the first; never two traces open at once |
 
 ## 6. External integrations
 
