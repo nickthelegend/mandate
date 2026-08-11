@@ -456,6 +456,60 @@ export async function createAuthority(args: {
   const vendorFloor = (POLICY_DOC.rules as { vendors?: { minScoreLCB: number } }).vendors?.minScoreLCB;
 
   /**
+   * Would this transfer actually go through?
+   *
+   * The fifteen rules answer "is this allowed". They cannot answer "would it
+   * succeed" — that depends on the treasury's balance, the token's own
+   * transfer logic, and the state of the signer, none of which are policy. So
+   * a spend could pass every rule, be recorded APPROVED, charge the budget,
+   * and then revert; the ledger would show a payment that never happened.
+   *
+   * KeeperHub simulates against current chain state with the same signer it
+   * would use, and returns the decoded revert reason. That is not something
+   * this process could work out for itself: it is the executor's own answer
+   * about its own wallet.
+   *
+   * A `null` return means "no objection" — including when there is no
+   * KeeperHub client to ask, because a missing simulator must not become a
+   * refusal. Only a simulator that actually says no produces one.
+   */
+  async function wouldRevert(recipient: string, amount: number): Promise<string | null> {
+    if (!args.kh) return null;
+    const base = BigInt(Math.round(amount * 1e6));
+    try {
+      const sim = await args.kh.simulateContractCall({
+        contractAddress: TOKEN,
+        chainId: CHAIN_ID,
+        functionName: "transfer",
+        functionArgs: JSON.stringify([recipient, base.toString()]),
+        abi: JSON.stringify([
+          {
+            type: "function",
+            name: "transfer",
+            stateMutability: "nonpayable",
+            inputs: [
+              { name: "to", type: "address" },
+              { name: "amount", type: "uint256" },
+            ],
+            outputs: [{ type: "bool" }],
+          },
+        ]),
+      });
+      const reason = sim?.revertReason ?? sim?.error ?? null;
+      if (sim?.success === false && !reason) return "the transfer would fail, with no reason given";
+      return reason;
+    } catch (e: unknown) {
+      /*
+       * The simulator being unreachable is not evidence that the transfer would
+       * fail, and turning it into a refusal would mean a KeeperHub blip stops
+       * every approved spend. Unknown is not the same as no.
+       */
+      void e;
+      return null;
+    }
+  }
+
+  /**
    * Execute an authorised spend.
    *
    * Shared by the immediate path and the released-escalation path on purpose:
@@ -574,12 +628,48 @@ export async function createAuthority(args: {
         );
 
         const failed = decision.rules.find((r) => r.result === "FAIL");
-        const approved = decision.decision === "APPROVED";
+        let approved = decision.decision === "APPROVED";
 
         let executionId: string | undefined;
         let transactionHash: string | undefined;
         let executionError: string | undefined;
         let opened: { id: string; code: string; expiresAt: string } | undefined;
+
+        /*
+         * The sixteenth check, and the only one that is not policy.
+         *
+         * Every rule above answers "is this allowed". This one answers "would
+         * it actually work", which the rules cannot know: it depends on the
+         * treasury's balance and the token's own transfer logic, neither of
+         * which is a limit anybody wrote down. Without it, a spend that passes
+         * fifteen rules is recorded APPROVED, charges the budget, and then
+         * reverts — leaving the ledger asserting a payment that never happened,
+         * which is the precise failure this project exists to refuse.
+         *
+         * Runs only on the approval path. A refusal has nothing to simulate,
+         * and an escalation has not been authorised yet — it is re-checked at
+         * release, where the money actually moves.
+         */
+        let simulationRefusal: string | null = null;
+        if (approved) {
+          simulationRefusal = await wouldRevert(req.recipient, req.amount);
+          if (simulationRefusal) approved = false;
+        }
+
+        /*
+         * The engine's decision is readonly and stays that way. The simulation
+         * is not one of its rules and must not be smuggled in as one — it is a
+         * separate check with a separate author, so it is layered on top and
+         * labelled `execution.simulated`.
+         */
+        const verdict = simulationRefusal ? "BLOCKED_WOULD_REVERT" : decision.decision;
+        const rulesOut: readonly { rule: string; result: string; observed?: unknown; limit?: unknown }[] =
+          simulationRefusal
+            ? [...decision.rules, { rule: "execution.simulated", result: "FAIL", observed: simulationRefusal }]
+            : decision.rules;
+        const failedOut = simulationRefusal
+          ? { rule: "execution.simulated" }
+          : (failed as { rule: string } | undefined);
 
         if (approved && effects) {
           /*
@@ -667,22 +757,24 @@ export async function createAuthority(args: {
           policyId,
           policyVersion: POLICY_DOC.version,
           intentHash: decision.intentHash,
-          decision: decision.decision,
-          failedRule: failed?.rule ?? null,
+          decision: verdict,
+          failedRule: failedOut?.rule ?? null,
           /*
            * The engine's own words. `reasons` is where it explains itself; the
            * earlier fallback here printed "within every limit" on refusals,
            * which is the one sentence a refusal must never carry.
            */
           reason:
-            anchorError ??
-            decision.reasons?.[0] ??
-            (approved ? "within every limit" : `refused by ${failed?.rule ?? "an unnamed rule"}`),
+            simulationRefusal
+              ? `every rule passed, and the transfer itself would fail: ${simulationRefusal}`
+              : (anchorError ??
+                decision.reasons?.[0] ??
+                (approved ? "within every limit" : `refused by ${failedOut?.rule ?? "an unnamed rule"}`)),
           amount: req.amount,
           recipient: req.recipient,
           endpoint: req.endpoint,
           category: req.category,
-          rules: decision.rules.map((r) => toRuleTrace(r as never)),
+          rules: rulesOut.map((r) => toRuleTrace(r as never)),
           ...(executionId ? { executionId } : {}),
           ...(transactionHash ? { transactionHash } : {}),
         };
@@ -700,8 +792,8 @@ export async function createAuthority(args: {
             policyId,
             policyVersion: POLICY_DOC.version,
             policyHash: POLICY_HASH,
-            decision: decision.decision,
-            failedRule: failed?.rule ?? null,
+            decision: verdict,
+            failedRule: failedOut?.rule ?? null,
             amountBase: String(Math.round(req.amount * 1_000_000)),
             recipient: req.recipient,
             token: TOKEN,
@@ -712,9 +804,9 @@ export async function createAuthority(args: {
           .catch(() => {});
 
         return {
-          decision: decision.decision,
+          decision: verdict,
           approved,
-          failedRule: failed?.rule ?? null,
+          failedRule: failedOut?.rule ?? null,
           reason: record.reason,
           intentHash: decision.intentHash,
           policyId,
