@@ -37,16 +37,20 @@ export const DEPLOYMENT = {
    * fallthrough walked through two guaranteed console errors before reaching a
    * working host.
    *
-   * These are the ones measured from `nickthelegend.github.io` itself, by
-   * `eth_blockNumber`, in Chrome. `publicnode` is last rather than first
-   * despite being the canonical Sepolia endpoint: it is the one this project
-   * uses server-side, and from the browser it currently fails CORS outright.
+   * Measured from `nickthelegend.github.io` itself, in Chrome, with the exact
+   * `eth_call` the page sends — not `eth_blockNumber`, because a host can
+   * answer one and refuse the other.
+   *
+   * The list is short because a host that reliably fails is not a fallback, it
+   * is guaranteed console noise on every check: `1rpc.io` was first here and
+   * CORS-blocks browser origins, so every proof check began with an error the
+   * page then recovered from. Both of these answer 200 today, and when they
+   * stop, the gateway fallback catches it and the page says so.
    *
    * All public and keyless on purpose: the check has to run in a visitor's own
    * browser with nothing configured, or it is not independent verification.
    */
   rpcUrls: [
-    "https://1rpc.io/sepolia",
     "https://sepolia.gateway.tenderly.co",
     "https://ethereum-sepolia-rpc.publicnode.com",
   ],
