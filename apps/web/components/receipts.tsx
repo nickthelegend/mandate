@@ -28,6 +28,7 @@ import { keccak256, concat } from "ethers";
 
 import { DEPLOYMENT, GATEWAY, short, tx as txUrl } from "@/lib/mandate";
 import { cn } from "@/lib/utils";
+import { unreachable } from "@/lib/unreachable";
 
 const RECEIPTS_ADDRESS = "0x64AE971Fda589E4C878F66452b8CE0533032f60d";
 
@@ -176,7 +177,7 @@ export function Receipts() {
       setRows(b.entries as Receipt[]);
       setMoved(b.moved as Record<string, number>);
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : String(e));
+      setError(unreachable(e));
     }
   }, []);
 

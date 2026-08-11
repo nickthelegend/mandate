@@ -28,6 +28,7 @@ import { stateOf } from "@/components/verdict";
 import { BoundBar, Renormalization } from "@/components/bound";
 import { DEPLOYMENT, tx as txUrl, address as addressUrl, short } from "@/lib/mandate";
 import { cn } from "@/lib/utils";
+import { unreachable } from "@/lib/unreachable";
 
 const GATEWAY =
   process.env.NEXT_PUBLIC_GATEWAY_URL ?? "https://gateway-production-944e.up.railway.app";
@@ -296,6 +297,17 @@ export function AuthorityConsole() {
   const [mandate, setMandate] = useState<Mandate | null>(null);
   const [busy, setBusy] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  /*
+   * Whether what is on screen is still known to be true.
+   *
+   * A failed refresh used to leave the last good figures rendered exactly as
+   * they were — "ACTIVE ON CHAIN" and a budget to the penny — with a small
+   * error line underneath. That is the page stating a number it can no longer
+   * confirm, which is the specific habit this project exists to object to. If
+   * the authority cannot be reached, the reader has to be told the numbers are
+   * from the last time it could.
+   */
+  const [stale, setStale] = useState(false);
   const [loading, setLoading] = useState(true);
   const [held, setHeld] = useState<Escalation[]>([]);
   /** The code is returned once, at creation, so the page has to keep it. */
@@ -342,11 +354,13 @@ export function AuthorityConsole() {
       else {
         setState(s);
         setError(null);
+        setStale(false);
       }
       setLog(l.entries ?? []);
       setHeld((e.entries ?? []).filter((x: Escalation) => x.status === "PENDING"));
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      setError(unreachable(e, { stale: true }));
+      setStale(true);
     } finally {
       setLoading(false);
     }
@@ -429,7 +443,7 @@ export function AuthorityConsole() {
       spending.current = false;
       await refresh();
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      setError(unreachable(e));
     } finally {
       spending.current = false;
       setBusy(null);
@@ -472,7 +486,7 @@ export function AuthorityConsole() {
       answering.current = false;
       await refresh();
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      setError(unreachable(e));
     } finally {
       answering.current = false;
       setResolving(null);
@@ -490,7 +504,9 @@ export function AuthorityConsole() {
       <div className="card-p card-p--bordered p-5">
         <div className="flex flex-wrap items-baseline justify-between gap-3">
           <div>
-            <p className="field-label">Spent today, from the persisted ledger</p>
+            <p className="field-label">
+              {stale ? "Spent today — as of the last answer, not now" : "Spent today, from the persisted ledger"}
+            </p>
             <p className="mt-1 text-3xl font-medium tracking-tight">
               <span className="figure">{money(spent)}</span>
               <span className="text-[var(--ink-4)]"> / {money(limit)}</span>
@@ -552,12 +568,30 @@ export function AuthorityConsole() {
           paused && "ring-1 ring-[var(--refused-line)]"
         )}
       >
-        <span className={cn("verdict", paused ? "verdict--refused" : "verdict--approved")}>
+        {/*
+          * Stale takes precedence over the status.
+          *
+          * Claiming ACTIVE ON CHAIN while unable to reach the thing that would
+          * know is worse than saying nothing: it is the page asserting a live
+          * fact from a cached one.
+          */}
+        <span
+          className={cn(
+            "verdict",
+            stale ? "verdict--held" : paused ? "verdict--refused" : "verdict--approved"
+          )}
+        >
           <svg viewBox="0 0 20 20" aria-hidden="true">
             <circle cx="10" cy="10" r="8" />
-            {paused && <path d="M3 17 L17 3" stroke="currentColor" strokeWidth="2.5" />}
+            {paused && !stale && <path d="M3 17 L17 3" stroke="currentColor" strokeWidth="2.5" />}
           </svg>
-          {loading ? "reading chain" : paused ? "PAUSED ON CHAIN" : "ACTIVE ON CHAIN"}
+          {stale
+            ? "LAST KNOWN — NOT CONFIRMED"
+            : loading
+              ? "reading chain"
+              : paused
+                ? "PAUSED ON CHAIN"
+                : "ACTIVE ON CHAIN"}
         </span>
         <span className="text-[var(--ink-3)]">
           Policy{" "}

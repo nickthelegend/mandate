@@ -21,6 +21,7 @@ import { CheckCircle2, Fuel, Loader2, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { tx } from "@/lib/mandate";
+import { unreachable } from "@/lib/unreachable";
 import { cn } from "@/lib/utils";
 import { PageHead } from "@/components/page-head";
 
@@ -88,7 +89,7 @@ export function Inspector() {
       }
       setData(body as Execution);
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : String(e));
+      setError(unreachable(e));
     } finally {
       setLoading(false);
     }

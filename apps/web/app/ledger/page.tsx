@@ -18,6 +18,7 @@ import { Fragment, useCallback, useEffect, useState } from "react";
 import { PageHead } from "@/components/page-head";
 import { VerdictMark, stateOf } from "@/components/verdict";
 import { Receipts } from "@/components/receipts";
+import { unreachable } from "@/lib/unreachable";
 
 const GATEWAY =
   process.env.NEXT_PUBLIC_GATEWAY_URL ?? "https://gateway-production-944e.up.railway.app";
@@ -89,7 +90,7 @@ export default function LedgerPage() {
        */
       setTotal(body.returned as number);
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : String(e));
+      setError(unreachable(e));
     } finally {
       setLoading(false);
     }

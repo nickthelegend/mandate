@@ -22,6 +22,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { GATEWAY } from "@/lib/mandate";
+import { unreachable } from "@/lib/unreachable";
 
 type Totals = {
   /*
@@ -46,7 +47,7 @@ export function LiveStats() {
         if (d.error) setError(d.error);
         else setT(d);
       })
-      .catch((e) => live && setError(e instanceof Error ? e.message : String(e)));
+      .catch((e) => live && setError(unreachable(e)));
     return () => {
       live = false;
     };
