@@ -51,3 +51,8 @@ recording/take.log
 # Vercel's local project link (contains the project and org ids).
 .vercel/
 .vercel
+
+# macOS directory metadata. Harmless, and it reappears every time Finder looks
+# at a folder — so it is ignored rather than repeatedly untracked.
+.DS_Store
+**/.DS_Store
