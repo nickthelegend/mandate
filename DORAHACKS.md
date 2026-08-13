@@ -26,46 +26,31 @@ Both are 11 KB, well under the 2 MB limit. Regenerate with `node scripts/logo-pn
 
 ## Vision
 
-> Paste the block below. It is ~1,900 characters.
+> The field asks for the problem, so it leads with the problem. **250 characters.**
 
 ```
-Agents can spend money now. The way that is done today is an API key in an environment
-variable and a system prompt that says "please stay under budget." That is not a limit.
-It is a suggestion — made to something that can be talked into anything.
-
-Mandate replaces it with a limit the agent has no key to break.
-
-An operator writes a spending policy: a daily budget, a cap on any single call, which
-category may be bought, and what has to happen before a payee with no history gets paid.
-That document is canonicalised (RFC 8785), hashed with keccak256, and the hash is
-registered in a PolicyRegistry contract on Sepolia — and the transaction that registers it
-is executed by KeeperHub, so the registry records KeeperHub's wallet as the policy's owner.
-Not ours. Not the agent's.
-
-From then on the limit is structural rather than advisory. The agent holds no signing key
-at any point: it asks the authority, fifteen rules run in a fixed order, and only an
-approval reaches KeeperHub, which signs and broadcasts the payment. Edit one character of
-the policy file and its hash no longer matches the anchor — every spend is refused with
-PolicyAnchorMismatch until a human re-anchors it, which is itself a transaction the agent
-cannot send.
-
-This matters because prompt injection works on the agent, not on the authority. Convincing
-a model that a $5,000 spend was pre-approved changes nothing, because the tool that spends
-money is the same tool that enforces the cap. In our demo the agent is told exactly that,
-believes it, and works out on its own that it cannot route around the refusal — including
-that splitting the spend into 5,000 sub-$1 calls fails on the rate limit.
-
-A refusal is never just "denied". It names the rule and how far the chain got —
-"BLOCKED_DUPLICATE at duplicate.taskHash_endpoint_paramsHash, stopped at rule 2 of 15" —
-which is something an operator can act on. Vendor reputation is compared as a lower
-confidence bound rather than a raw score, so a payee with thin evidence escalates to a
-person instead of being flattered by a small sample.
-
-Every decision is on a public record, and every one can be verified with none of our code:
-recompute the Merkle root from the receipt, compare it against the root anchored on chain.
-
-Live now on Sepolia: 472 decisions judged, 114 approved, 190 refused, 168 held for a human.
+Today an agent's spending limit is a sentence in a prompt — and anything you can talk to, you can talk around. Mandate anchors the policy hash on Sepolia and gives KeeperHub the only key, so the limit holds even when the agent is convinced otherwise.
 ```
+
+Alternatives, all inside 256:
+
+**More concrete about the mechanism** — 245
+```
+AI agents spend money on a prompt that says "stay under budget". That is a suggestion, not a limit. Mandate anchors the policy hash on Sepolia and leaves the only key with KeeperHub, so the agent has nothing to sign with and no way to exceed it.
+```
+
+**Leads with the claim, ends on the attack** — 235
+```
+Give an AI agent a budget it cannot exceed. The spending policy is hashed and anchored on Sepolia, and KeeperHub holds the only signing key. Fifteen rules judge every spend. Prompt injection works on the agent — never on the authority.
+```
+
+**Closest to the site's own words** — 245
+```
+Give an agent a budget it cannot exceed. Not a limit it agrees to respect — one it has no key to break. The policy is hashed onto Sepolia; KeeperHub signs every payment; fifteen ordered rules decide, and a refusal names the rule that refused it.
+```
+
+The long-form version of this argument now lives in `DORAHACKS-DETAILS.md`, which is what
+goes in the Details rich-text field — so nothing is lost by keeping Vision to one breath.
 
 ---
 
