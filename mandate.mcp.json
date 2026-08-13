@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "mandate": {
+      "command": "npx",
+      "args": ["-y", "mandate-mcp"],
+      "env": {
+        "MANDATE_GATEWAY_URL": "https://gateway-production-944e.up.railway.app"
+      }
+    }
+  }
+}

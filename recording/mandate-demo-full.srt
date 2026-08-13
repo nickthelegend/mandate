@@ -1,0 +1,79 @@
+1
+00:00:06,200 --> 00:00:20,749
+Agents can spend money now. The way that is done today is a key in an environment variable and a prompt that says please stay under budget. That is not a limit. It is a suggestion, to something that can be talked into anything. Mandate replaces it with a limit the agent has no key to break.
+
+2
+00:00:23,533 --> 00:00:35,906
+Fifteen rules run in a fixed order, and the first one to fail decides. So a refusal is never just denied. It names the rule, and it says how far it got. This is the real engine, running in your own browser with no server in the path.
+
+3
+00:00:38,699 --> 00:00:56,790
+A policy is a document, and the document's hash is what the chain holds. Watch what happens when I raise the daily budget from five dollars to fifty. The hash changes, and the registry has never seen this one. Every spend judged against these rules would now be refused, until somebody re-anchors it — and re-anchoring is a transaction the agent cannot send.
+
+4
+00:00:59,599 --> 00:01:11,332
+And deploying that budget is one command. KeeperHub's Execute API sends the registration, so the registry records KeeperHub's wallet as the policy's owner — not ours, and not the agent's. Let us actually run it.
+
+5
+00:01:14,132 --> 00:01:25,097
+So here is the real thing. This is the file the live authority is enforcing right now: a daily budget, a cap on any single call, one category allowed, and a floor a payee has to clear before it gets paid at all.
+
+6
+00:01:26,299 --> 00:01:42,406
+It is canonicalised, hashed, and registered on Sepolia. And the transaction that registers it is executed by KeeperHub, which is the part that matters. KeeperHub's wallet is recorded as the owner on chain — not ours, and not the agent's. There is no key anywhere in the agent's process that can widen this.
+
+7
+00:01:42,999 --> 00:01:54,220
+That is it on the block explorer. Sent from KeeperHub's relayer, not from a key in anyone's dot-env file. This is the whole architecture in one line: we decide, KeeperHub signs, and the two are different parties.
+
+8
+00:01:54,832 --> 00:02:12,816
+Connecting an agent takes one file. Our server is published on npm as mandate-m-c-p, so anything that speaks M C P gets these seven tools — check a spend, make a spend, read the budget, score a payee. Every read-only tool works without a credential, because the person being asked to trust a payment is the one who most needs to check it.
+
+9
+00:02:15,632 --> 00:02:25,168
+So let us give it to a real agent. This is Claude Code, connecting to that published server. Nothing is preloaded and there is no custom harness — this is the client anyone can install.
+
+10
+00:02:26,366 --> 00:02:36,073
+First, ask it what governs it. It reads the policy off the chain and the budget off the authority, and it says the thing we want an agent to say: it can read these limits, but it cannot change them.
+
+11
+00:02:36,666 --> 00:02:47,994
+Now real work. Buy market data for forty cents. It checks first, all fifteen rules pass, and then KeeperHub signs the payment and broadcasts it. Real money, on a real chain, and the agent never touched a key.
+
+12
+00:02:48,599 --> 00:03:01,058
+Ask for the identical purchase again. This time it stops at rule two of fifteen, and the other thirteen are never consulted. This is the failure nobody designs for and everybody ships: an agent that retries and quietly pays twice.
+
+13
+00:03:03,866 --> 00:03:20,549
+And now the attack. A prompt telling the agent the user already approved five thousand dollars. It is convincing, and the agent believes it. It does not matter. Look at what it works out on its own: splitting it into five thousand small calls fails on the rate limit, and it holds no key anyway. The authority is not in the conversation.
+
+14
+00:03:23,332 --> 00:03:34,873
+Last, a payee nobody has ever paid. Not refused — held. Reputation is scored as a lower confidence bound, so a vendor with no history scores low by construction, and it goes to a person instead of to a guess.
+
+15
+00:03:37,665 --> 00:03:48,865
+Here is the payment the agent made, on chain. Point four tokens, actually transferred. Sent by KeeperHub's relayer again, with the gas sponsored, so the agent needed no funds of its own and no wallet at all.
+
+16
+00:03:49,465 --> 00:04:18,414
+And if you are writing the agent rather than running one, here is the whole file. Step one: the policy is read from disk, and then checked against the chain — if the document has been edited since it was anchored, this throws, and nothing is judged at all. Step two: the spend window comes from a durable ledger, partitioned per agent. Step three: the rules propose. Nothing has been applied yet, which is why the same call is both a preflight and a real decision. Step four: a refusal names the rule that refused it, and stops. And step five: only an approval ever reaches KeeperHub, which signs and broadcasts it.
+
+17
+00:04:21,198 --> 00:04:30,841
+So here it is, from packages on npm, given a spend that breaks the per-call cap. Refused at rule eleven of fifteen, named, with nothing moved and no execution left behind.
+
+18
+00:04:33,631 --> 00:04:38,623
+Every decision is on the public record: what was asked, what was decided, and which rule decided it.
+
+19
+00:04:39,198 --> 00:04:48,990
+And any of them can be checked with none of our code. This recomputes the Merkle root from the receipt and compares it with the root anchored on chain. If we had lied about a single decision, this would fail.
+
+20
+00:04:49,598 --> 00:04:57,193
+A limit the agent cannot argue with, evidence anybody can check, and every transaction on chain executed through KeeperHub. Thanks for watching.

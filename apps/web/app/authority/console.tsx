@@ -11,7 +11,7 @@
  *
  * This is the same authority with nothing supplied by the visitor. The policy
  * is read from PolicyRegistry on Sepolia, the ledger is in MongoDB, and an
- * approved spend moves real tUSDC through KeeperHub. Spend it down and the
+ * approved spend moves real pUSDC through KeeperHub. Spend it down and the
  * refusal at the end is the `budget.daily` rule reading a number that was
  * already there before the page loaded.
  *

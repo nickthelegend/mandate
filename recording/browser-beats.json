@@ -1,0 +1,44 @@
+{
+  "base": "http://localhost:4199",
+  "anchorTx": "0xb314c15cd7053e8f8a714043fe8562f2af1e84b83b67051c40f377a4486e0e0d",
+  "spendTx": "0x33e133b2d3b9defb4ec665acc483003ef35a2c6728e46d372af8d83b34907994",
+  "tookMs": 181032,
+  "marks": [
+    {
+      "id": "problem",
+      "at": 3687
+    },
+    {
+      "id": "try-it",
+      "at": 21831
+    },
+    {
+      "id": "policy-build",
+      "at": 38711
+    },
+    {
+      "id": "deploy",
+      "at": 60956
+    },
+    {
+      "id": "explorer-anchor",
+      "at": 81430
+    },
+    {
+      "id": "connect",
+      "at": 97963
+    },
+    {
+      "id": "explorer-spend",
+      "at": 125099
+    },
+    {
+      "id": "sdk",
+      "at": 142830
+    },
+    {
+      "id": "end",
+      "at": 178617
+    }
+  ]
+}

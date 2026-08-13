@@ -12,7 +12,7 @@ export default function AuthorityPage() {
     <>
       <PageHead rubric="Live" title="Spend it down.">
         The policy is read from PolicyRegistry on Sepolia and the budget from a database, so
-        neither is something this page can decide. Approved spends move real tUSDC through
+        neither is something this page can decide. Approved spends move real pUSDC through
         KeeperHub. Keep going until the money runs out — then reload, and watch the refusal still
         be true.
       </PageHead>

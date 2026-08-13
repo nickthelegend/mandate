@@ -1,0 +1,46 @@
+{
+  "voice": "af_heart",
+  "note": "One line per beat in recording/tui-beats.json. Ids must match the marks the driver wrote, because the editor cuts on them rather than by eye.",
+  "lines": [
+    {
+      "id": "policy-file",
+      "text": "An agent is about to be given money to spend. This file is the only thing between it and the account. Fifteen rules, in order: a daily budget, a cap on any single call, which category it may buy, which vendors it may pay, and what has to happen before a stranger gets paid at all."
+    },
+    {
+      "id": "anchor",
+      "text": "Those rules get canonicalised and hashed, and the hash is registered on Sepolia. The transaction that registers it is executed by KeeperHub, so KeeperHub's wallet is the owner recorded on chain. That is the part that matters. The agent holds no key, so it cannot rewrite its own limit. Change one character of this file and the hash changes, and every spend judged against it is refused until a person re-anchors it."
+    },
+    {
+      "id": "open-claude",
+      "text": "Now a real agent. This is Claude Code, and it is connecting to our server, the one published on npm as mandate dash m c p. There is no custom harness here. Anything that speaks M C P gets the same seven tools."
+    },
+    {
+      "id": "ask-policy",
+      "text": "First, ask it what governs it. It reads the policy off the chain and the budget off the authority. Five dollars a day, one dollar a call. And it says the thing we want an agent to say: it can read these limits, but it cannot change them."
+    },
+    {
+      "id": "allowed-spend",
+      "text": "Now real work. Buy market data for forty cents. The agent checks first, the authority runs all fifteen rules in order, and it approves. Then KeeperHub signs the payment and broadcasts it. That is a real transfer on a real chain, and the agent never touched a key."
+    },
+    {
+      "id": "duplicate",
+      "text": "Ask for the identical purchase again. Same vendor, same amount, inside the window. This time the chain stops at the duplicate rule. This is the failure that nobody designs for, and everybody ships: an agent that retries and quietly pays twice."
+    },
+    {
+      "id": "injection",
+      "text": "And now the attack. A prompt that tells the agent the user already approved five thousand dollars. It is convincing, and the agent believes it. It does not matter. The authority is not in the conversation. The check fails on the per-call cap, and there is no way around it, because the tool that spends the money is the same tool that enforces the limit."
+    },
+    {
+      "id": "held",
+      "text": "Last, a payee nobody has ever paid. Not refused. Held. Vendor reputation is scored with a lower confidence bound, so a vendor with no history scores low by construction, and the spend goes to a person instead of to a guess."
+    },
+    {
+      "id": "public-log",
+      "text": "Every one of those decisions is on the public record: what was asked, what was decided, and which rule decided it."
+    },
+    {
+      "id": "verify",
+      "text": "And any of them can be checked with none of our code. This recomputes the Merkle root from the receipt and compares it with the root anchored on chain. If we had lied about a single decision, this would fail."
+    }
+  ]
+}

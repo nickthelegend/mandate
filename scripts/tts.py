@@ -29,10 +29,13 @@ MODELS = pathlib.Path(
         "b7802fc1-e0d1-457d-9e91-ee852cb82fb2/scratchpad/kokoro",
     )
 )
-OUT = ROOT / "recording" / "audio"
+# Which script, and where its audio goes. Defaults to the original take so the
+# earlier cut still rebuilds; the terminal take passes its own pair.
+SCRIPT = ROOT / (sys.argv[1] if len(sys.argv) > 1 else "scripts/narration.json")
+OUT = ROOT / "recording" / (sys.argv[2] if len(sys.argv) > 2 else "audio")
 OUT.mkdir(parents=True, exist_ok=True)
 
-spec = json.loads((ROOT / "scripts" / "narration.json").read_text())
+spec = json.loads(SCRIPT.read_text())
 lines = spec["lines"]
 
 model = MODELS / "kokoro-v1.0.onnx"
@@ -45,7 +48,7 @@ kokoro = Kokoro(str(model), str(voices))
 durations = {}
 total = 0.0
 for line in lines:
-    samples, rate = kokoro.create(line["text"], voice=spec["voice"], speed=spec["speed"], lang="en-us")
+    samples, rate = kokoro.create(line["text"], voice=spec["voice"], speed=spec.get("speed", 1.0), lang="en-us")
     path = OUT / f"{line['id']}.wav"
     sf.write(path, samples, rate)
 

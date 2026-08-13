@@ -57,7 +57,11 @@ export const DEPLOYMENT = {
   /** PolicyRegistry: where a spend policy is anchored, and where a pause takes effect. */
   registry: "0x13452fcA19819d37Fa4b01a0e64C8Fce60C5E304",
   token: "0x49C86277a91002c4943837bf20F6ED41976Db09F",
-  tokenSymbol: "tUSDC",
+  /* Read off the contract, not chosen: `symbol()` on the token above returns
+   * "pUSDC" and `name()` returns "Polaris USD". This said "tUSDC" for a while,
+   * which is a symbol that exists nowhere — a reader who followed the address
+   * to Etherscan found a different token than the one the page named. */
+  tokenSymbol: "pUSDC",
   decimals: 6,
   explorer: "https://sepolia.etherscan.io",
 } as const;

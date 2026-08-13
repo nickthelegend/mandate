@@ -20,15 +20,22 @@ import { MandateMark } from "@/components/logo";
 import { cn } from "@/lib/utils";
 
 /*
- * Four, and the order is the argument: here is the authority actually running,
- * here is how you check it, here is an agent paid without a key, here is the
- * package. A fifth would make it a menu instead of a path -- so the x402 demo,
- * which argues the older thesis, sits in the footer with the other evidence.
+ * Five, and the order is the argument, read left to right: here is where a
+ * limit comes from, here it is enforcing itself, here is what it decided, here
+ * is how to put your own agent behind it, here is the package.
+ *
+ * It was four until the policy builder and the connect page existed, and the
+ * two ends were the ones missing — the site could show a policy being enforced
+ * but never one being written, and could argue you should use this without
+ * saying how. `/inspect` moved to the footer to make room: KeeperHub execution
+ * records are evidence for a claim made elsewhere, not a step in the path.
  */
+/* One word each: five two-word labels wrap inside the pill at laptop widths. */
 const NAV = [
-  { href: "/authority", label: "The authority" },
+  { href: "/policy", label: "Policy" },
+  { href: "/authority", label: "Authority" },
   { href: "/ledger", label: "Decisions" },
-  { href: "/inspect", label: "Executions" },
+  { href: "/connect", label: "Connect" },
   { href: "/docs", label: "Docs" },
 ];
 

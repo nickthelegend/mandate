@@ -28,3 +28,22 @@ recording/frames/
 recording/audio/*.wav
 recording/*.gif
 recording/*.cast
+
+# Recording artefacts: takes, intermediates and renders.
+#
+# The scripts that produce these are committed and the inputs are the live
+# system, so a take is reproducible rather than precious — and the directory
+# runs to hundreds of megabytes, which is not something to push through a repo
+# whose whole point is being auditable. What IS kept: the beat manifests (a cut
+# is described by them), the subtitle files, and the brand PNGs.
+recording/browser/
+recording/cut-full/
+recording/cut-tui/
+recording/audio-full/
+recording/audio-tui/
+recording/subs/
+recording/*.mp4
+recording/*.webm
+recording/*.wav
+recording/live.txt
+recording/take.log
