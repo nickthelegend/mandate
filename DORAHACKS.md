@@ -93,25 +93,34 @@ https://github.com/nickthelegend/mandate
 ### Project website (optional)
 
 ```
-https://nickthelegend.github.io/mandate
+https://mandate-keeperhub.vercel.app
 ```
 
-Deployed 2026-08-13. Every route in the demo video is live — verified from the deployed
-origin, not just built locally:
+Deployed 2026-08-13 to Vercel — served from the root, so no `/mandate` path segment. The
+GitHub Pages build stays live at `https://nickthelegend.github.io/mandate` as a mirror; the
+Actions workflow still runs on every push, so the two do not drift.
+
+Every route in the demo video is live and public — verified by following redirects and
+checking the returned content, not just the status code:
 
 | Page | | What a judge can do there |
 |---|---|---|
-| [`/`](https://nickthelegend.github.io/mandate/) | 200 | The claim, and the authority's running totals read from the live gateway |
-| [`/policy/`](https://nickthelegend.github.io/mandate/policy/) | 200 | Change a number and watch keccak256 recompute in their own browser |
-| [`/connect/`](https://nickthelegend.github.io/mandate/connect/) | 200 | The MCP config, the 7 tools, the SDK in an editor |
-| [`/authority/`](https://nickthelegend.github.io/mandate/authority/) | 200 | Spend the budget down and watch it refuse |
-| [`/ledger/`](https://nickthelegend.github.io/mandate/ledger/) | 200 | Every decision, and verify one against the chain |
-| [`/docs/`](https://nickthelegend.github.io/mandate/docs/) | 200 | Quickstart |
-| [`/inspect/`](https://nickthelegend.github.io/mandate/inspect/) | 200 | KeeperHub's own execution record |
+| [`/`](https://mandate-keeperhub.vercel.app/) | 200 | The claim, and the authority's running totals read from the live gateway |
+| [`/policy/`](https://mandate-keeperhub.vercel.app/policy/) | 200 | Change a number and watch keccak256 recompute in their own browser |
+| [`/connect/`](https://mandate-keeperhub.vercel.app/connect/) | 200 | The MCP config, the 7 tools, the SDK in an editor |
+| [`/authority/`](https://mandate-keeperhub.vercel.app/authority/) | 200 | Spend the budget down and watch it refuse |
+| [`/ledger/`](https://mandate-keeperhub.vercel.app/ledger/) | 200 | Every decision, and verify one against the chain |
+| [`/docs/`](https://mandate-keeperhub.vercel.app/docs/) | 200 | Quickstart |
+| [`/inspect/`](https://mandate-keeperhub.vercel.app/inspect/) | 200 | KeeperHub's own execution record |
 
-Confirmed working in production: `/policy` starts at `0x81575c62…f095a` **ANCHORED ON
-SEPOLIA** and flips to `0xddeae871…` **NOT ANCHORED** on a single keystroke, and `/connect`
-reports **AUTHORITY UP · policy 1096875157…736629 · ACTIVE, v3**.
+Confirmed working on the deployed origin: `/policy` starts at `0x81575c62…f095a`
+**ANCHORED ON SEPOLIA** and flips to `0xddeae871…` **NOT ANCHORED** on a single keystroke,
+and `/connect` reports **AUTHORITY UP · policy 1096875157…736629 · ACTIVE, v3**.
+
+> Vercel enables SSO Deployment Protection by default on team projects, which 302s every
+> visitor to a Vercel login page. It was turned off for this project — worth re-checking
+> after any settings change, because a status-code check alone does not catch it: the
+> redirect ends at a login page that returns 200.
 
 ### Demo video *
 
@@ -180,11 +189,11 @@ CHAPTERS
 4:39  Verified with none of our code
 
 TRY IT
-Live site   https://nickthelegend.github.io/mandate
+Live site   https://mandate-keeperhub.vercel.app
 Write a policy and watch the hash move:
-            https://nickthelegend.github.io/mandate/policy/
+            https://mandate-keeperhub.vercel.app/policy/
 Connect your own agent:
-            https://nickthelegend.github.io/mandate/connect/
+            https://mandate-keeperhub.vercel.app/connect/
 Source      https://github.com/nickthelegend/mandate
 
 Connect any MCP client in one line:

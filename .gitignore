@@ -47,3 +47,7 @@ recording/*.webm
 recording/*.wav
 recording/live.txt
 recording/take.log
+
+# Vercel's local project link (contains the project and org ids).
+.vercel/
+.vercel

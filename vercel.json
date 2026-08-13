@@ -1,0 +1,19 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "npm run build -w mandate-policy && npm run build -w mandate-sdk && npm run build -w mandate-web",
+  "installCommand": "npm ci",
+  "outputDirectory": "apps/web/out",
+  "framework": null,
+  "trailingSlash": true,
+  "github": { "silent": true },
+  "headers": [
+    {
+      "source": "/_next/static/(.*)",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+    },
+    {
+      "source": "/hero/(.*)",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=604800" }]
+    }
+  ]
+}
