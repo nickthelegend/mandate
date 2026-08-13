@@ -305,3 +305,102 @@ Sepolia. Zero dependencies — it hand-rolls keccak256 rather than importing our
 - [ ] Pick a category, add one social link
 - [ ] **Rotate the six credentials** that were pasted in plaintext — npm token first,
       since it was used to publish
+
+---
+
+# The four form questions
+
+## Which KeeperHub surfaces did you use?
+
+```
+Execute API, MCP server, CLI, workflow builder, x402, and the audit trail — five of the
+six listed, plus KeeperHub's own MCP. MPP is the one we did not use.
+
+- Execute API — every on-chain write goes through it: anchoring a policy in
+  PolicyRegistry, every authorised transfer, and the kill-switch pause. Nothing in this
+  project signs with a local key.
+- MCP server — two ways. We publish our own, mandate-mcp on npm, giving any MCP client
+  seven tools (can_spend, spend, budget, policy, score, decisions, escalations). And we
+  used KeeperHub's MCP to publish our marketplace listing.
+- CLI — `kh execute contract-call` anchored a policy.
+- Workflow builder — "Mandate — Is This Spending Policy Live" is published and live. It
+  answers whether a given policy id is still ACTIVE on chain, priced through x402.
+- x402 — a spec-exact adapter and an autonomous payer in mandate-sdk, plus the guard that
+  decides whether an autonomous purchase is allowed to happen at all.
+- Audit trail — KeeperHub's execution record is the second source on every payment,
+  alongside our own decision ledger. Each approved spend carries its execution id, which
+  resolves in KeeperHub's own record.
+
+Not used: MPP. Tempo is reachable and the adapter is written, but the wallet holds no
+balance there, so a payment cannot settle. Said plainly rather than counted.
+```
+
+## Link to a transaction your agent landed onchain via KeeperHub
+
+```
+https://sepolia.etherscan.io/tx/0x33e133b2d3b9defb4ec665acc483003ef35a2c6728e46d372af8d83b34907994
+```
+
+> This is the agent's own payment, made during the demo recording: it asked the authority,
+> all fifteen rules passed, and KeeperHub signed and broadcast it. `From` is KeeperHub's
+> relayer `0xA17cb6adb58277E5b4A44B8c1ECB449BB6614E87` — which also paid the gas, so the
+> agent needed no funds and no wallet. The ERC-20 transfer row shows 0.4 tokens actually
+> moving. Confirmed in block 11467145.
+>
+> The policy those rules came from was anchored, also through KeeperHub, at
+> `0xb314c15cd7053e8f8a714043fe8562f2af1e84b83b67051c40f377a4486e0e0d`.
+
+## Testnet or mainnet?
+
+```
+Testnet — Ethereum Sepolia (chain ID 11155111).
+```
+
+> One caveat worth stating: the marketplace listing is priced on **Base mainnet**
+> (`eip155:8453`), because that is what KeeperHub's x402 gating uses. The listing is
+> published and returns a valid payment challenge, but we have not executed a mainnet
+> purchase through it.
+
+## What still breaks or is unfinished?
+
+```
+1. Operator notification does not go through KeeperHub, which is the one place our
+   architecture is weaker than we would like. When a spend is held for a human, KeeperHub
+   should carry the message — then "was the operator reached" is answered by KeeperHub's
+   execution record rather than by us. Both actions that could do it (webhook/send-webhook
+   and the System HTTP Request) return 402 upgrade_required, requiredPlan: pro. The
+   workflow definition is written and ready in scripts/create-notify-workflow.mjs; it is
+   one plan upgrade from running. What we do instead is the half that needs no plan: the
+   receiving end writes the arrival down, so it is evidence of arrival rather than our
+   assertion of dispatch. Honest, but weaker.
+
+2. MPP is unused. Tempo is reachable, the wallet has no balance, a payment cannot settle.
+
+3. The token naming is inconsistent and it looks sloppy on the explorer. The policy's
+   `budgets.token` field reads "USDT", but that field is a display label — the engine
+   compares the ERC-20 contract address. The token deployed on Sepolia is named
+   "Polaris USD (pUSDC)", left over from an earlier project. So the agent says "USDT" and
+   Etherscan says "Polaris USD". Fixing it properly means re-anchoring the policy, since
+   the label is inside the hashed document.
+
+4. Three of the six packages are not published. mandate-sdk, mandate-mcp and
+   mandate-policy are on npm; mandate-bureau, mandate-escalation and mandate-receipts are
+   in the repo but unpublished, so "six packages" would be an overstatement.
+
+5. The gateway is a single instance. If it goes down, agents cannot get new decisions.
+   The anchor, the receipts and the decision log stay independently verifiable — that
+   part does not depend on us being up — but there is no failover for the decision path.
+
+6. Escalation resolution is an API call with a one-time code, not a proper operator
+   inbox. A human can resolve a held spend, and expiry defaults to denied so nothing
+   leaks through by timeout, but there is no dedicated approvals UI.
+
+7. The build fetches Inter from Google Fonts at build time, and that fetch failed one of
+   two deploys. A retry cleared it. It should be self-hosted; it is not yet.
+
+8. Vendor scoring is thin by construction. It runs on our own decision history plus
+   on-chain signals for the payee, and the system is new — so most payees have little
+   evidence. That is handled correctly (a lower confidence bound means thin evidence
+   escalates rather than flatters), but it means the floor is doing most of the work
+   right now, not the ranking.
+```
