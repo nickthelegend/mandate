@@ -87,16 +87,8 @@ Live now on Sepolia: 472 decisions judged, 114 approved, 190 refused, 168 held f
 https://github.com/nickthelegend/mandate
 ```
 
-> ⚠️ **Fix the repo description before you submit.** It currently reads:
-> *"Pay per verified result, not per request. Agent payment escrow with on-chain outcome
-> verification…"* — that is the old escrow product that no longer exists. A judge opening
-> the repo reads a description of software that isn't there. Suggested replacement:
->
-> ```
-> Give an agent a budget it cannot exceed. A spending policy hashed and anchored on Sepolia, enforced by 15 ordered rules, with every transaction executed through KeeperHub — the agent never holds a key. Agents Onchain 2026.
-> ```
->
-> I can apply this with one command if you want it.
+> Description and homepage updated 2026-08-13 — the repo no longer advertises the old
+> escrow product.
 
 ### Project website (optional)
 
@@ -104,27 +96,69 @@ https://github.com/nickthelegend/mandate
 https://nickthelegend.github.io/mandate
 ```
 
-> ⚠️ **Deploy first.** `/policy` and `/connect` currently 404 on the live site, and the demo
-> video spends about ninety seconds on both. Anyone who follows the video to the site hits
-> two dead pages.
+Deployed 2026-08-13. Every route in the demo video is live — verified from the deployed
+origin, not just built locally:
+
+| Page | | What a judge can do there |
+|---|---|---|
+| [`/`](https://nickthelegend.github.io/mandate/) | 200 | The claim, and the authority's running totals read from the live gateway |
+| [`/policy/`](https://nickthelegend.github.io/mandate/policy/) | 200 | Change a number and watch keccak256 recompute in their own browser |
+| [`/connect/`](https://nickthelegend.github.io/mandate/connect/) | 200 | The MCP config, the 7 tools, the SDK in an editor |
+| [`/authority/`](https://nickthelegend.github.io/mandate/authority/) | 200 | Spend the budget down and watch it refuse |
+| [`/ledger/`](https://nickthelegend.github.io/mandate/ledger/) | 200 | Every decision, and verify one against the chain |
+| [`/docs/`](https://nickthelegend.github.io/mandate/docs/) | 200 | Quickstart |
+| [`/inspect/`](https://nickthelegend.github.io/mandate/inspect/) | 200 | KeeperHub's own execution record |
+
+Confirmed working in production: `/policy` starts at `0x81575c62…f095a` **ANCHORED ON
+SEPOLIA** and flips to `0xddeae871…` **NOT ANCHORED** on a single keystroke, and `/connect`
+reports **AUTHORITY UP · policy 1096875157…736629 · ACTIVE, v3**.
 
 ### Demo video *
 
 **[YOU]** — upload `recording/mandate-demo-subtitled.mp4` (4:58, 23 MB, subtitles burned in)
-to YouTube and paste the link.
+to YouTube and paste the link here.
 
-Suggested title:
+### YouTube title
+
 ```
-Mandate — give an agent a budget it cannot exceed (Agents Onchain 2026)
+Mandate — Give an Agent a Budget It Cannot Exceed | KeeperHub Agents Onchain 2026
 ```
 
-Suggested YouTube description:
-```
-An agent with a spending policy it has no key to break. The policy is hashed
-(RFC 8785 + keccak256) and anchored in a PolicyRegistry contract on Sepolia; the
-anchoring transaction and every payment are executed through KeeperHub, so KeeperHub's
-wallet — not ours, not the agent's — is the owner recorded on chain.
+Alternatives, if you want a different angle:
 
+```
+I told an AI agent it was approved to spend $5,000. Watch what stopped it.
+```
+```
+Mandate — an on-chain spending limit an AI agent has no key to break (KeeperHub)
+```
+
+### YouTube description
+
+```
+An AI agent with a spending limit it has no key to break.
+
+Today an agent that can spend money has an API key in an environment variable and a
+prompt that says "please stay under budget." That is not a limit — it is a suggestion,
+made to something that can be talked into anything.
+
+Mandate makes it structural. A spending policy is canonicalised (RFC 8785), hashed with
+keccak256, and the hash is registered in a PolicyRegistry contract on Sepolia. The
+transaction that registers it is executed through KeeperHub, so KeeperHub's wallet — not
+ours, and not the agent's — is the owner recorded on chain. The agent holds no signing key
+at any point: it asks the authority, fifteen rules run in a fixed order, and only an
+approval ever reaches KeeperHub, which signs and broadcasts the payment.
+
+Everything in this video is real. The policy is anchored on chain during the recording,
+the agent is Claude Code connected to our published MCP server, the payment settles on
+Sepolia, and the block explorer shows KeeperHub's relayer as the sender. Nothing is
+preloaded and nothing is re-enacted.
+
+The best part is at 3:03, where the agent is told the user already approved a $5,000
+spend. It believes it — and works out on its own that it cannot route around the refusal,
+including that splitting it into 5,000 sub-$1 calls fails on the rate limit.
+
+CHAPTERS
 0:06  The problem
 0:23  Fifteen rules, judged in your own browser
 0:38  Writing a policy — watch the hash move
@@ -145,9 +179,30 @@ wallet — not ours, not the agent's — is the owner recorded on chain.
 4:33  The public decision record
 4:39  Verified with none of our code
 
-Live: https://nickthelegend.github.io/mandate
-Code: https://github.com/nickthelegend/mandate
-npm:  mandate-sdk · mandate-mcp · mandate-policy
+TRY IT
+Live site   https://nickthelegend.github.io/mandate
+Write a policy and watch the hash move:
+            https://nickthelegend.github.io/mandate/policy/
+Connect your own agent:
+            https://nickthelegend.github.io/mandate/connect/
+Source      https://github.com/nickthelegend/mandate
+
+Connect any MCP client in one line:
+  claude --mcp-config mandate.mcp.json --strict-mcp-config --allowedTools mcp__mandate
+
+ON NPM
+  mandate-sdk     anchoring, the durable ledger, the gate before execution
+  mandate-mcp     7 MCP tools; the read-only ones need no credential
+  mandate-policy  the 15-rule engine and the RFC 8785 canonicaliser
+
+ON CHAIN (Sepolia)
+  PolicyRegistry   0x13452fcA19819d37Fa4b01a0e64C8Fce60C5E304
+  MandateReceipts  0x64AE971Fda589E4C878F66452b8CE0533032f60d
+  KeeperHub relayer 0xA17cb6adb58277E5b4A44B8c1ECB449BB6614E87
+
+Built for KeeperHub Agents Onchain 2026.
+
+#AIAgents #KeeperHub #Ethereum #Sepolia #MCP #AgentPayments #Web3
 ```
 
 ### Social links (at least one)
@@ -235,8 +290,8 @@ Sepolia. Zero dependencies — it hand-rolls keccak256 rather than importing our
 
 ## Before you hit submit
 
-- [ ] Fix the stale GitHub repo description (above)
-- [ ] Deploy the site so `/policy` and `/connect` stop 404-ing
+- [x] ~~Fix the stale GitHub repo description~~ — done 2026-08-13
+- [x] ~~Deploy the site so `/policy` and `/connect` stop 404-ing~~ — done, all 7 routes 200
 - [ ] Upload the video to YouTube, paste the link
 - [ ] Pick a category, add one social link
 - [ ] **Rotate the six credentials** that were pasted in plaintext — npm token first,
